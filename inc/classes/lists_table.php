@@ -118,11 +118,19 @@ class SendPress_Lists_Table extends WP_List_Table {
             // ),
             //'delete'    => sprintf('<a href="?page=%s&action=%s&listID=%s">Delete</a>',$_REQUEST['page'],'delete-list',$item->listID),
         );
+
+        if($item->public){
+            $p = 'public';
+        } else {
+            $p = 'private';
+        }
+
         
         //Return the title contents
-        return sprintf('%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
+        return sprintf('%1$s <span style="color:silver">( id:%2$s )</span>%3$s',
             /*$1%s*/ $item->name,
-            /*$2%s*/ $item->listID,
+            /*$2%s*/ $item->listID .' - ' .$p,
+    
             /*$3%s*/ $this->row_actions($actions)
         );
     }
