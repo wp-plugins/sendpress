@@ -57,6 +57,21 @@ switch ( $this->_current_action ) {
                 wp_redirect( admin_url('admin.php?page=sp-templates&view=account') );
             
             break;
+             case 'feedback-setup':
+            
+                
+                $options =  array();
+
+                $options['feedback'] = $_POST['feedback'];
+
+              
+
+                $this->update_options($options);
+
+                
+                wp_redirect( admin_url('admin.php?page=sp-templates&view=feedback') );
+            
+            break;
 
             case 'create-subscriber':
             
@@ -290,9 +305,10 @@ switch ( $this->_current_action ) {
     
                 $newsubscribers = $this->subscriber_csv_post_to_array($csvadd);
 
-                foreach( $newsubscribers as $subscriber){
-                    if( is_email( $subscriber['email'] ) ){
-                    $result = $this->addSubscriber( array('firstname'=> $subscriber['firstname'] ,'email'=> $subscriber['email'],'lastname'=>$subscriber['lastname'] ) );
+                foreach( $newsubscribers as $subscriberx){
+                    if( is_email( trim($subscriberx['email'] ) ) ){
+                  
+                    $result = $this->addSubscriber( array('firstname'=> trim($subscriberx['firstname']) ,'email'=> trim($subscriberx['email']),'lastname'=> trim($subscriberx['lastname']) ) );
                     $this->linkListSubscriber($listID, $result, 2);
                     }
                 }

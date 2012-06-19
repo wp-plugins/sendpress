@@ -8,6 +8,37 @@ $view = isset($_GET['view']) ? $_GET['view'] : '' ;
 
 
 switch($view){
+case 'feedback': ?>
+<form method="post" id="post">
+
+<br class="clear">
+<div style="float:right;" >
+	<a href="?page=sp-templates&view=feedback" class="btn btn-large" ><i class="icon-remove"></i> Cancel</a> <a href="#" id="save-update" class="btn btn-primary btn-large"><i class="icon-white icon-ok"></i> Save</a>
+</div>
+<input type="hidden" name="action" value="feedback-setup" />
+<br class="clear">
+<div class="boxer form-box">
+	<h2>Hi,
+	<p>We are using presstrends.io to track items like adoption from month-to-month & other trends. We only collect anonymous data and nothing is sent unless you activate the option below.</p>
+	
+	Thanks for helping,<br>
+	<b>The SendPress Team</b>
+	</h2>
+	<br><br>
+	<h2>Feeback Opt-in</h2>
+	<p><input name="feedback" type="radio"  <?php if($this->get_option('feedback') == 'yes' ) { ?>checked="checked"<?php } ?>   id="feedback" value="yes" > I would like to help out.</p>
+	<p><input name="feedback" type="radio"  <?php if($this->get_option('feedback') == 'no' ) { ?>checked="checked"<?php } ?>   id="feedback" value="no" > No Thanks!</p>
+	<br><br>
+	<h2>Support</h2>
+	If you are looking for support or would like to provide written feedback please go to <a href="http://sendpress.zendesk.com"> our support site</a> and submit a ticket.
+
+</div>
+
+<?php wp_nonce_field($this->_nonce_value); ?>
+</form>
+<?php
+break;
+
 case 'account': ?>
 <form method="post" id="post">
 

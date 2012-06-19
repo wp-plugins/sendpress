@@ -142,31 +142,29 @@ jQuery(document).ready(function($) {
             $element.focus(function(){
                 var p = $element.position();
                 $holder.css('top',p.right+"px").css('left',p.left+"px").toggle('slow');
-            }).blur(function(){
+            })
+            .change(function(){
+                $item = $(this);
+                $( $item.attr('link-id') ).css($item.attr('css-id') , $item.val() );
+            })
+            .blur(function(){
                 var p = $element.position();
-                 $item = $(this);
-                $( $item.attr('link-id') ).css($item.attr('css-id') , $item.val() );
                 $holder.css('top',p.right+"px").css('left',p.left+"px").toggle('slow');
-            }).change(function(){
-                $item = $(this);
-                $( $item.attr('link-id') ).css($item.attr('css-id') , $item.val() );
-
-            }).keyup(function(){
-                $item = $(this);
-                var _hex = $item.val(), hex = _hex;
+            })
+            .keyup(function(){
+                var _hex = $element.val(), hex = _hex;
                 if ( hex[0] != '#' ){
                     hex = '#' + hex;
                 }
                 hex = hex.replace(/[^#a-fA-F0-9]+/, '');
                 if ( hex != _hex ){
-                    $item.val(hex);
+                    $element.val(hex);
                 }
                 if ( hex.length == 4 || hex.length == 7 ){
                         var cp = $.farbtastic('#'+ id +'_colorpicker');
                         cp.setColor(hex);
                 }
             });
-            
             $holder.hide();
         });
 

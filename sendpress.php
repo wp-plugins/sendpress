@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress
-Version: 0.8.2
+Version: 0.8.3
 Plugin URI: http://sendpress.com
 Description: The first true all-in-one Email Markteing and Newsletter plugin for WordPress.
 Author: SendPress
@@ -11,7 +11,7 @@ Author URI: http://sendpress.com/
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.8.2' );
+define( 'SENDPRESS_VERSION', '0.8.3' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -126,6 +126,7 @@ class SendPress{
 			 $this->update_option('permalink_rebuild',false);
 		}
 
+
 		
 	}
 
@@ -217,6 +218,56 @@ class SendPress{
 		 
 		    return $schedules;
 		}
+
+		// Start of Presstrends Magic
+		function presstrends_plugin() {
+
+		// PressTrends Account API Key
+		$api_key = 'eu1x95k67zut64gsjb5qozo7whqemtqiltzu';
+		$auth = 'j0nc5cpqb2nlv8xgn0ouo7hxgac5evn0o';
+
+		// Start of Metrics
+		global $wpdb;
+		$data = get_transient( 'presstrends_data' );
+		if (!$data || $data == ''){
+		$api_base = 'http://api.presstrends.io/index.php/api/pluginsites/update/auth/';
+		$url = $api_base . $auth . '/api/' . $api_key . '/';
+		$data = array();
+		$count_posts = wp_count_posts();
+		$count_pages = wp_count_posts('page');
+		$comments_count = wp_count_comments();
+		$theme_data = get_theme_data(get_stylesheet_directory() . '/style.css');
+		$plugin_count = count(get_option('active_plugins'));
+		$all_plugins = get_plugins();
+		foreach($all_plugins as $plugin_file => $plugin_data) {
+		$plugin_name .= $plugin_data['Name'];
+		$plugin_name .= '&';}
+		$plugin_data = get_plugin_data( __FILE__ );
+		$plugin_version = $plugin_data['Version'];
+		$posts_with_comments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE post_type='post' AND comment_count > 0");
+		$comments_to_posts = number_format(($posts_with_comments / $count_posts->publish) * 100, 0, '.', '');
+		$pingback_result = $wpdb->get_var('SELECT COUNT(comment_ID) FROM '.$wpdb->comments.' WHERE comment_type = "pingback"');
+		$data['url'] = stripslashes(str_replace(array('http://', '/', ':' ), '', site_url()));
+		$data['posts'] = $count_posts->publish;
+		$data['pages'] = $count_pages->publish;
+		$data['comments'] = $comments_count->total_comments;
+		$data['approved'] = $comments_count->approved;
+		$data['spam'] = $comments_count->spam;
+		$data['pingbacks'] = $pingback_result;
+		$data['post_conversion'] = $comments_to_posts;
+		$data['theme_version'] = $plugin_version;
+		$data['theme_name'] = urlencode($theme_data['Name']);
+		$data['site_name'] = str_replace( ' ', '', get_bloginfo( 'name' ));
+		$data['plugins'] = $plugin_count;
+		$data['plugin'] = urlencode($plugin_name);
+		$data['wpversion'] = get_bloginfo('version');
+		foreach ( $data as $k => $v ) {
+		$url .= $k . '/' . $v . '/';}
+		$response = wp_remote_get( $url );
+		set_transient('presstrends_data', $data, 60*60*24);}
+		}
+
+	
 
 	function template_include( $template ) { 
 	  	global $post; 
@@ -449,6 +500,8 @@ class SendPress{
 		}
 
 
+		
+
 
 		/*
 		add_meta_box( 'email-status', __( 'Email Status', 'sendpress' ), array( $this, 'email_meta_box' ), $this->_email_post_type, 'side', 'low' );
@@ -575,6 +628,7 @@ class SendPress{
 		  </li>
 		  <li <?php if($this->_current_view == 'information'){ ?>class="active"<?php } ?> ><a href="<?php echo esc_url( admin_url('admin.php?page=sp-templates&view=information') ); ?>"><i class="icon-envelope"></i> Information</a></li>
 		  <li <?php if($this->_current_view == 'account'){ ?>class="active"<?php } ?> ><a href="<?php echo esc_url( admin_url('admin.php?page=sp-templates&view=account') ); ?>"><i class="icon-user"></i> Sending Account</a></li>
+			 <li <?php if($this->_current_view == 'feedback'){ ?>class="active"<?php } ?> ><a href="<?php echo esc_url( admin_url('admin.php?page=sp-templates&view=feedback') ); ?>"><i class="icon-wrench"></i> Feedback</a></li>	
 		</ul>
 	</div>
 
@@ -672,7 +726,9 @@ class SendPress{
 	   	add_submenu_page('sp', __('Settings','sendpress'), __('Settings','sendpress'), 'manage_options', 'sp-templates', array(&$this,'page_templates'));
 	   	add_submenu_page('sp', __('Queue','sendpress'), __('Queue','sendpress'), 'manage_options', 'sp-queue', array(&$this,'page_queue'));
 	   
-	   
+	   	if($this->get_option('feedback') == 'yes'){
+			$this->presstrends_plugin();
+		}
 	   	/*
 	    add_action( 'load-toplevel_page_sp', array($this,'my_help_tabs_to_theme_page' ));
 	    add_action( 'load-sendpress_page_sp-emails', array($this,'my_help_tabs_to_theme_page' ));
@@ -785,7 +841,7 @@ class SendPress{
 
 	function maybe_upgrade() {
 		$current_version = $this->get_option('version', '0' );
-		//$current_version = '0.8.0';
+		//$current_version = '0.8.2';
 		//error_log($current_version);
 
 		
@@ -812,8 +868,11 @@ class SendPress{
 		if(version_compare( $current_version, '0.8.1', '<' )){
 			require_once(SENDPRESS_PATH . 'inc/db/alter-lists-subs.php');
 		}
+		if(version_compare( $current_version, '0.8.3', '<' )){
+			$this->update_option( 'feedback' , 'no' );
+		}
 
-
+		
 		
 
 		$this->update_option( 'version' , SENDPRESS_VERSION );
@@ -943,11 +1002,12 @@ class SendPress{
 
 
 		$result = $this->wpdbQuery("SELECT subscriberID FROM $table WHERE email = '$email' ", 'get_var');
-		if($result){ return $result; }
+		
+
+		if(	$result ){ return $result; }
 		global $wpdb;
 		$result = $wpdb->insert($table,$values);
 		//$result = $this->wpdbQuery("SELECT @lastid2 := LAST_INSERT_ID()",'query');
-		
 		return $wpdb->insert_id;
 	}
 
@@ -1113,6 +1173,7 @@ class SendPress{
 	*/
 	function plugin_deactivation(){
 		flush_rewrite_rules( false );
+		wp_clear_scheduled_hook( 'sendpress_cron_action' );
 	} 
 
 	function subscriber_table(){
@@ -1194,8 +1255,9 @@ class SendPress{
 	    $r = array(); 
 	    $rows = explode($terminator,trim($csv)); 
 	    $names = array_shift($rows); 
-	    $names = str_getcsv($names,$delimiter,$enclosure,$escape); 
-	    $nc = count($names); 
+	    $names = explode(',', $names);
+		$nc = count($names);
+ 
 	    foreach ($rows as $row) { 
 	        if (trim($row)) { 
 	        	$needle = substr_count($row, ',');
@@ -1206,13 +1268,13 @@ class SendPress{
 	        		$row .=',';
 	        	} 
 
-	            $values = str_getcsv($row,$delimiter,$enclosure,$escape); 
+	            $values = explode(',' , $row);
 	            if (!$values) $values = array_fill(0,$nc,null); 
 	            $r[] = array_combine($names,$values); 
 	        } 
 	    } 
 	    return $r; 
-	} 
+	   } 
 
 	function get_default_templates(){
 		$mainfiles = $this->glob_php( SENDPRESS_PATH . 'templates' );

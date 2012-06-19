@@ -21,14 +21,18 @@ SendPress is designed to be lightweight and user friendly newsletter/email syste
 * Get stats for each newsletter: opens, clicks, unsubscribes
 * Add a subscription form as a sidebar widget or in your pages
 * Your newsletters will look great on the iPhone, in Gmail, Android, Yahoo, Hotmail, etc.
-* Send with your web host, Gmail or SendPress ( coming soon )
-* Segment your lists based on opened, clicked & bounced
+* Send with your web host, Gmail or SendPress Account( coming soon )
+
 
 = Upcoming major release =
 
 We are working our way to 1.0 with lots of features on the development list. Items like autoresponders, advanced reports, scheduled sending and more.
 
 Find out more at [SendPress.com](http://sendpress.com/ "Email Marketing and Newsletters for WordPress") 
+
+= Support =
+
+Please check out our support site [http://sendpress.zendesk.com](http://sendpress.zendesk.com) if you need help with anything.
 
 
 == Installation ==
@@ -57,7 +61,16 @@ Find out more at [SendPress.com](http://sendpress.com/ "Email Marketing and News
 
 = How do you contact us? =
 
-Our support site will be up shortly but until then you can reach us on twitter [@sendpress](http://twitter.com/sendpress) or via email hello@sendpress.com
+Main Site: [http://sendpress.com](http://sendpress.com)
+Support Site: [http://sendpress.zendesk.com](http://sendpress.zendesk.com)
+Twitter: [@sendpress](http://twitter.com/sendpress)
+Email: help@sendpress.com
+
+= Can I get a SendPress sending account? =
+
+Our own sending accounts are currently in beta. If you have interest in testing for us please contact us at help@sendpress.com.
+
+
 
 == Screenshots ==
 
@@ -71,11 +84,19 @@ Our support site will be up shortly but until then you can reach us on twitter [
 
 == Changelog ==
 
+= 0.8.3 =
+* removed use of str_getcsv
+* added unofficial support of WP 3.2+
+* added opt-in feedback option
+
 
 = 0.8.2 =
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.8.3 =
+PHP error fix for str_getcsv
 
 = 0.8.2 =
 Minor bug fixes and other updates

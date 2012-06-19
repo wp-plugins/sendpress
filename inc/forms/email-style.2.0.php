@@ -284,7 +284,11 @@ if(strlen($active_header['value']) > 0){
 
 							<?php
 							if( isset($emailID) ){ 
-								wp_editor($post->post_content,'content');
+								if(function_exists('wp_editor')){ //Added Check for 3.2.1
+									wp_editor($post->post_content,'content');
+								} else {
+									the_editor($post->post_content,'content');
+								}
 							} else {
 								echo $display_content; 
 							}
