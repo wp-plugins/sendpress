@@ -14,6 +14,7 @@ Easily create, send, manage and track your email right from WordPress.
 
 SendPress is designed to be lightweight and user friendly newsletter/email system for WordPress. Quickly create, design and edit emails to send to your subscribers. 
 
+
 = Features =
 
 * Simple editor. With an html-free experience
