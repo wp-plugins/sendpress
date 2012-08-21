@@ -28,7 +28,7 @@ default:
 	<div id="taskbar" class="lists-dashboard rounded group"> 
 
 	<div id="button-area">  
-	<a id="send-now" class="btn btn-primary btn-large " data-toggle="modal" href="#myModal"   ><i class="icon-white icon-refresh"></i> Send Emails Now</a>
+	<a id="send-now" class="btn btn-primary btn-large " data-toggle="modal" href="#sendpress-sending"   ><i class="icon-white icon-refresh"></i> Send Emails Now</a>
 	</div>
 	
 		
@@ -42,7 +42,7 @@ default:
 	    <?php $testListTable->display() ?>
 	    <?php wp_nonce_field($this->_nonce_value); ?>
 	</form>
-	<div class="modal hide fade" id="myModal">
+	<div class="modal hide fade" id="sendpress-sending">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal">×</button>
     <h3>Sending Emails</h3>

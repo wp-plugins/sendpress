@@ -91,6 +91,100 @@ case 'account': ?>
 </div>
 <?php wp_nonce_field($this->_nonce_value); ?>
 </form>
+<form method="post" id="post" class="form-horizontal">
+<input type="hidden" name="action" value="test-account-setup" />
+<br class="clear">
+<h3>Send Test Email</h3>
+<input name="testemail" type="text" id="appendedInputButton" value="<?php echo $this->get_option('testemail'); ?>" style="width:100%;" />
+<button class="btn btn-primary" type="submit">Send Test!</button><button class="btn" data-toggle="modal" data-target="#debugModal" type="button">Debug Info</button>
+<br class="clear">
+
+
+
+
+<?php wp_nonce_field($this->_nonce_value); ?>
+</form>
+<?php
+$error= 	$this->get_option('phpmailer_error');
+$hide = 'hide';
+if(!empty($error)){
+	$hide = '';
+	$phpmailer_error = '<pre>'.$error.'</pre>';
+	?>
+	<script type="text/javascript">
+	jQuery(document).ready(function($) {
+		$('#debugModal').modal('show');
+	});
+	</script>
+
+	<?php
+}
+
+
+?>
+
+<div class="modal hide fade" id="debugModal">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">×</button>
+    <h3>SMTP Debug Info</h3>
+  </div>
+  <div class="modal-body">
+  	<?php 
+  	if(!empty($phpmailer_error)){
+  	$server  = "smtp.sendgrid.net";
+  	$port   = "25";
+  	$port2   = "465";
+  	$port3   = "587";
+  	$timeout = "1";
+
+  if ($server and $port and $timeout) {
+    $port25 =  @fsockopen("$server", $port, $errno, $errstr, $timeout);
+    $port465 =  @fsockopen("$server", $port2, $errno, $errstr, $timeout);
+    $port587 =  @fsockopen("$server", $port3, $errno, $errstr, $timeout);
+  }	
+  if(!$port25){
+  	echo '<div class="alert alert-error">';
+  	echo 'Port 25 seems to be blocked.';
+	echo '</div>';
+
+  }
+  if(!$port465){
+  	echo '<div class="alert alert-error">';
+  	echo 'Port 465 seems to be blocked. Gmail may have trouble';
+	echo '</div>';
+
+  }
+  if(!$port587){
+  	echo '<div class="alert alert-error">';
+  	echo 'Port 25 seems to be blocked.  Gmail may have trouble';
+	echo '</div>';
+
+  }
+
+  	echo $phpmailer_error;
+  	} ?>
+   	
+
+    <pre>
+<?php 
+
+
+
+
+	$whoops = $this->get_option('last_test_debug');
+	if(empty( $whoops ) ){
+		echo 'No Debug info saved.';
+	} else {
+		echo$whoops; 
+	}
+?>
+</pre>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn" data-dismiss="modal">Close</a>
+  </div>
+</div>
+
 <?php
 break;
 case 'information': 

@@ -82,6 +82,7 @@ case 'subscribers':
 	<form id="movies-filter" method="get">
 		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
 	    <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
+	    <input type="hidden" name="listID" value="<?php echo $_GET['listID']; ?>" />
 	    <!-- Now we can render the completed list table -->
 	    <?php $testListTable->display() ?>
 	    <?php wp_nonce_field($this->_nonce_value); ?>
@@ -167,7 +168,7 @@ case 'listcreate':
 		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
 	    <input type="hidden" name="action" value="create-list" />
 	    <p><input type="text" name="name" value="" /></p>
-	    <p><input type="checkbox" class="edit-list-checkbox" name="public" value="0" /><label for="public">Allow user to sign up to this list</label></p>
+	    <p><input type="checkbox" class="edit-list-checkbox" name="public" value="1" checked /><label for="public">Allow user to sign up to this list</label></p>
 	    <!-- Now we can render the completed list table -->
 	   	<input type="submit" value="save" class="button-primary"/>
 	   	<?php wp_nonce_field($this->_nonce_value); ?>

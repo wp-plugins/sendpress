@@ -1,110 +1,253 @@
+/*
+    SendPress Admin Code v0.5
+*/
+;(function ( $, window, document, undefined ) {
+    this.$ = $;
+    
+    this.init = function($, document){
+        $(document).ready(function($){
+           spadmin.log("SP Init Started");
+         
+           //Load SendPress Sections with refence to themselves :)
+           spadmin.menu.init.call(spadmin.menu, $);
+           spadmin.edit.init.call(spadmin.edit, $);
+           spadmin.emailmanager.init.call(spadmin.emailmanager, $);
+
+           spadmin.log("SP Finished Started");
+           spadmin.log(spvars);
+
+        });
+    }
+
+    this.log= function($msg){
+        if(window.console !== undefined){
+            console.log($msg);
+        }
+    }    
+
+    //Stuff used by the SendPress Editor
+    this.edit = {
+        init: function($){
+            spadmin.log('SendPress Editor');
+            //Make sure header editors are hidden to start
+            this.imagebox = $('#imageaddbox');
+            this.textbox = $('#textaddbox');
+
+            //Header Buttons
+            $('#addimage').click(function(e){
+                e.preventDefault();
+                spadmin.edit.imagebox.show();
+                spadmin.edit.textbox.hide();
+            });
+
+            $('#addtext').click(function(e){
+                e.preventDefault();
+                spadmin.edit.textbox.show();
+                spadmin.edit.imagebox.hide();
+            });
+
+            //Image Header Editing
+            $('#activate-image').click(function(e){
+                e.preventDefault();
+                var $img = $('#upload_image').val();
+                if($img.length > 0){
+                    $('#active_header').attr('value','image');
+                    $('#post').submit();
+                }else{
+                    $('#imageaddbox .error').show();
+                }
+            });
+
+            $('#close-image').click(function(e){
+                e.preventDefault();
+                spadmin.edit.imagebox.hide();
+            });
+
+            //Txt Header Editing
+            $('#activate-text').click(function(e){
+                e.preventDefault();
+                $('#active_header').attr('value','text');
+                $('#post').submit();
+            });
+            
+            $('#save-text').click(function(e){
+                e.preventDefault();
+                $('#post').submit();
+
+            });
+        }
+    }
+
+    //General Menu's
+    this.menu = {
+        init: function($){
+
+            $('#next-style').click(function(e){
+                e.preventDefault();
+                $('#save-type').val('save-style');
+                $('#post').submit();
+            });
+
+            $('#save-edit-email').click(function(e){
+                e.preventDefault();
+                $('#save-action').val('save-edit');
+                $('#post').submit();
+            });
+
+            $('#confirm-send').click(function(e){
+               e.preventDefault();
+               $('#post').submit();
+            });
+
+            $('#save-send-email').click(function(e){
+                e.preventDefault();
+                $('#save-action').val('save-send');
+
+                $('#post').submit();
+            });
+
+            $('#save-style-email').click(function(e){
+                e.preventDefault();
+                $('#save-action').val('save-style');
+
+                $('#post').submit();
+            });
+
+
+            $('#save-update').click(function(e){
+                e.preventDefault();
+              
+                $('#post').submit();
+
+            });
+
+        }
+    }
+
+    this.emailmanager = {
+        init:function($){
+            $('.view-btn').click(function(e) { 
+                e.preventDefault();
+                $v = $(this).attr('href')+'?TB_iframe=1';
+                tb_show($(this).attr('title'), $v );
+            });
+        }
+    }
+
+    this.queue = {
+        count: 0,
+        total: 0,
+        updatetotal:function(){
+
+            $.post(
+                spvars.ajaxurl,
+                {
+                    action:'sendpress-sendcount',
+                    spnonce: spvars.sendpressnonce
+                }, function(response) {
+                    try {
+                        
+                        response = $.parseJSON(response);
+                     
+                        var $qt = $("#queue-total");
+                        spadmin.queue.total = parseInt(response.total);
+                        $qt.html(response.total);
+                         
+                    } catch (err) {
+                        spadmin.log(err);
+                    }
+
+                    
+                 }
+            );
+
+        },
+        sendbatch: function(){
+            $.post(
+                spvars.ajaxurl,
+                {
+                    action:'sendpress-sendbatch',
+                    spnonce: spvars.sendpressnonce
+                }, 
+                function(data){
+                    spadmin.queue.batchsent(data);
+                }); 
+        },
+        batchsent: function(response){
+            response = $.parseJSON(response);
+            spadmin.log(response);
+            if(parseInt(response.attempted) > 0){
+                spadmin.queue.count = spadmin.queue.count + parseInt(response.sent);
+                var $qt =$("#queue-sent");
+                $qt.html(spadmin.queue.count);
+                $p = parseInt( spadmin.queue.count / spadmin.queue.total * 100 );
+                $('#sendbar-inner').css('width', $p+'%');
+
+                spadmin.queue.sendbatch();
+                spadmin.log('We should check for more emails');
+            } else {
+                spadmin.queue.closesend();
+                spadmin.log('Should die');
+            }
+        },
+        closesend:function(){
+            $('#sendpress-sending').modal('hide');
+        }
+    }
+
+    this.init( $, document);
+
+}).call( window.spadmin=window.spadmin || {}, jQuery, window, document );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 jQuery(document).ready(function($) {
 
-        $('#imageaddbox').hide();
-        $('#textaddbox').hide();
+    /*
+    tinymce.dom.Event.add(document, 'blur', function(e) {
+                        alert("blur");
+                    });
 
-        $('#addimage').click(function(e){
-            e.preventDefault();
-            $('#imageaddbox').show();
-            $('#textaddbox').hide();
-            // $('#header-controls').hide();
-            // $('#header-text').hide();
-            // $('#header-image').show();
-
-        });
-
-        $('#activate-image').click(function(e){
-            e.preventDefault();
-            var $img = $('#upload_image').val();
-            if($img.length > 0){
-                $('#active_header').attr('value','image');
-                $('#post').submit();
-            }else{
-                $('#imageaddbox .error').show();
-            }
-        });
-
-        $('#close-image').click(function(e){
-            e.preventDefault();
-            $('#imageaddbox').hide();
-        });
-
-        $('#activate-text').click(function(e){
-            e.preventDefault();
-            $('#active_header').attr('value','text');
-            $('#post').submit();
-        });
-
-        $('#addtext').click(function(e){
-            e.preventDefault();
-            $('#textaddbox').show();
-            $('#imageaddbox').hide();
-            //$('#header-controls').hide();
-            // $('#header-text').show();
-            // $('#header-image').show();
-        });
-
-        $('#next-style').click(function(e){
-            e.preventDefault();
-            $('#save-type').val('save-style');
-            $('#post').submit();
-
-        });
-
-        $('#save-edit-email').click(function(e){
-            e.preventDefault();
-            $('#save-action').val('save-edit');
-
-            $('#post').submit();
-        });
-
-        $('#confirm-send').click(function(e){
-           e.preventDefault();
-           $('#post').submit();
-        });
-
-        $('#save-send-email').click(function(e){
-            e.preventDefault();
-            $('#save-action').val('save-send');
-
-            $('#post').submit();
-        });
-
-        $('#save-style-email').click(function(e){
-            e.preventDefault();
-            $('#save-action').val('save-style');
-
-            $('#post').submit();
-        });
-
-
-        $('#save-update,#save-text').click(function(e){
-            e.preventDefault();
-          
-            $('#post').submit();
-
-        });
-
-        $('.view-btn').click(function(e) { 
-            e.preventDefault();
-        $v = $(this).attr('href')+'?TB_iframe=1';
-        tb_show($(this).attr('title'), $v );
-        return false;
-       });
+        //tinymce.dom.Event._add(document,"focus",function(){ alert('asdf'); });
+        /*
+        wpActiveEditor.onClick.add(function(ed, l) {
+                  console.debug('Editor contents was modified. Contents: ' + l.content);
+          });
+        /*
 
         $('#test').click(function(){
            console.debug(tinyMCE.activeEditor.getContent());
             $('#wp-content-wrap').toggle();
-          tinyMCE.
+            tinyMCE.
            alert($c);
 
-        });    
+        });  
+         
 
+        jQuery('.wp-editor-wrap').mousedown(function(e){
+            wpActiveEditor = this.id.slice(3, -5);
+        });
+*/ 
                 //Build the Reset Button Actions
         $(".reset-line").click(function(e){
             var $reset = $(this);
             var id = $reset.attr("data-id");
-        
+            
+            //console.log(tinyMCE.get('content'));
+
+            //$('#content_ifr' ).contents().find('a').attr('style','color:#ff0000');
+
             switch($reset.attr('data-type')){
                 case "cp":
                     e.preventDefault();
@@ -137,15 +280,30 @@ jQuery(document).ready(function($) {
             var id = $element.attr('data-id');
             var $holder = $('#pickholder_' + id);
             var $fb = $('#'+ id +'_colorpicker').farbtastic($element);
-           // $.farbtastic('#'+ id +'_colorpicker').linkTo( cb  );
-           $( $element.attr('link-id') ).css($element.attr('css-id') , $element.val() );
+            // $.farbtastic('#'+ id +'_colorpicker').linkTo( cb  );
+            
+            if( $element.attr('iframe') == 'true' ) {
+                console.log( $element.val() );
+                // $('#content').html('data fix');
+                    
+                //$('#content a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
+                $('#content_ifr' ).contents().find('a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
+            } else {
+                $( $element.attr('link-id') ).css($element.attr('css-id') , $element.val() );
+            }
+
             $element.focus(function(){
                 var p = $element.position();
                 $holder.css('top',p.right+"px").css('left',p.left+"px").toggle('slow');
             })
             .change(function(){
                 $item = $(this);
-                $( $item.attr('link-id') ).css($item.attr('css-id') , $item.val() );
+                if( $item.attr('iframe') == 'true' ){
+                     $('#content_ifr' ).contents().find('a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
+                    // $('#content').html('data fix');
+                } else {
+                    $( $item.attr('link-id') ).css($item.attr('css-id') , $item.val() );
+                }
             })
             .blur(function(){
                 var p = $element.position();
@@ -218,10 +376,10 @@ jQuery(document).ready(function($) {
 
             //console.debug(list);
 
-            jQuery.post(sendpress.ajaxurl, list, function(response){
+            jQuery.post(spvars.ajaxurl, list, function(response){
                 
                 try {
-                    response = JSON.parse(response);
+                    response = $.parseJSON(response);
                 } catch (err) {
                     // Invalid JSON.
                     if(!jQuery.trim(response).length) {
@@ -240,27 +398,40 @@ jQuery(document).ready(function($) {
 
         });
 
-        
-    $('#myModal').on('show',function(){
-        $.get(sendpress.ajaxurl+'?action=sendpress-stopcron', function(data) {
-             $.get(sendpress.ajaxurl+'?action=sendpress-sendcount', function(data) {
-                var $qt = $("#queue-total");
-                sendpress.queue = data;
-                $qt.html(data);
-                 sendpress.sendemail();
-            });
-        });
+
+
+
+
+    $('#sendpress-sending').on('show',function(){
+        $.post(
+            spvars.ajaxurl,
+            {
+                action:'sendpress-stopcron',
+                spnonce: spvars.sendpressnonce
+            },
+            function(response){
+                try {
+                    response = $.parseJSON(response);
+                } catch (err) {
+                    // Invalid JSON.
+                    if(!$.trim(response).length) {
+                        response = { error: 'Server returned empty response during charge attempt'};
+                    } else {
+                        response = {error: 'Server returned invalid response:<br /><br />' + response};
+                    }
+                }
+                spadmin.queue.updatetotal();
+                spadmin.queue.sendbatch();
+            }
+
+        );
     }).on('hidden', function () {
-        sendpress.sending = false;
         $('#sendbar-inner').css('width', '100%');
         location.reload();
         // do something…
     }).on('shown', function(){ 
-        sendpress.count = 0;
-         $('#sendbar-inner').css('width', '0%');
-        sendpress.sending = true;
-       
-       
+        spadmin.queue.count = 0;
+        $('#sendbar-inner').css('width', '0%');
     });
 
 
@@ -268,46 +439,4 @@ jQuery(document).ready(function($) {
 
      
 });
-sendpress.sending= false;
-sendpress.count = 0;
-sendpress.sendemail = function(){
-    jQuery.get(sendpress.ajaxurl+'?action=sendpress-sendnow', function(data) {
-        if(sendpress.sending == false){
-                location.reload();
-               }
-               if(data != '0' && data != 'empty'){
-                    sendpress.count = parseInt(sendpress.count) + parseInt(data);
-                    var $qt =jQuery("#queue-sent");
-                    $qt.html(sendpress.count);
-                    $p = parseInt( sendpress.count/sendpress.queue * 100 );
-                    jQuery('#sendbar-inner').css('width', $p+'%');
-               }
-               if(sendpress.sending == true && data != 'empty'){
-                sendpress.sendemail();
-               }
-               if(data == 'empty'){
-                 jQuery('#myModal').modal('hide');
-               }
 
-
-    });
-       
-}
-
-
-var cb =   function (fb, color){
-    alert(this.callback);
-    // Set background/foreground color
-      jQuery(fb.callback).css({
-        backgroundColor: fb.color,
-        color: fb.hsl[2] > 0.5 ? '#000' : '#fff'
-      });
-
-      /*Change linked value
-      jQuery(fb.callback).each(function() {
-        if (this.value && this.value != fb.color) {
-          this.value = fb.color;
-        }
-      });
-*/
-}

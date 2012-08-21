@@ -24,15 +24,16 @@ switch ( $this->_current_action ) {
             break;
 
             case 'edit-list':
-            
+               
                 $listid = $_POST['listID'];
                 $name = $_POST['name'];
                 $public = 0;
                 if(isset($_POST['public'])){
                     $public = $_POST['public'];
                 }
-
+              
                 $this->updateList($listid, array( 'name'=>$name, 'public'=>$public ) );
+              
                 wp_redirect( '?page='.$_GET['page'] );
             
             break;
@@ -50,10 +51,23 @@ switch ( $this->_current_action ) {
                 $options['sp_user'] = $_POST['sp_user'];
                 $options['sp_pass'] = $_POST['sp_pass'];
 
-
+                $options['phpmailer_error'] = '';
+                $options['last_test_debug'] = '';
                 $this->update_options($options);
 
                 
+                wp_redirect( admin_url('admin.php?page=sp-templates&view=account') );
+            
+            break;
+             case 'test-account-setup':
+            
+                
+                
+                $options['testemail'] = $_POST['testemail'];
+                
+                $this->update_options($options);
+
+                $this->send('',true);
                 wp_redirect( admin_url('admin.php?page=sp-templates&view=account') );
             
             break;

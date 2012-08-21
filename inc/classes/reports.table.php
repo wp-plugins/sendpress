@@ -333,7 +333,7 @@ class SendPress_Reports_Table extends WP_List_Table {
             echo '</pre>';
             */
             $totalitems = $query->found_posts;
-            $perpage = 5;
+            $perpage = 20;
             //Which page is this?
             $paged = !empty($_GET["paged"]) ? mysql_real_escape_string($_GET["paged"]) : '';
             //Page Number

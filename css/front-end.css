@@ -21,6 +21,7 @@
 	.sendpress-signup-form #error{
 		color:#8B0000;
 		margin:10px 0px;
+		display: none;
 		
 	}
 	.sendpress-signup-form #thanks{

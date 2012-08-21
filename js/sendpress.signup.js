@@ -8,8 +8,11 @@ jQuery(document).ready(function($) {
             $error = $form.find('#error'),
             $thanks = $form.find('#thanks'),
             $formwrap = $form.find('#form-wrap'),
+            $submit = $form.find('#submit'),
+            
             submit_ok = true,
             emailReg = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
+         $error.hide();
 
         signup['first'] = $form.find('#firstname').val();
         signup['last'] = $form.find('#lastname').val();
@@ -18,21 +21,24 @@ jQuery(document).ready(function($) {
         signup['action'] = 'sendpress_subscribe_to_list';
 
         if( signup.email.length === 0 ){
-            $error.append('<div class="item">*Please enter your e-mail address.</div>');
+            $error.show();    
+            $error.html('<div class="item">*Please enter your e-mail address.</div>');
             submit_ok = false;
         }else if(!emailReg.test(signup.email)) {
-            $error.append('<div class="item">Enter a valid email address.</div>');
+            $error.show();
+            $error.html('<div class="item">Enter a valid email address.</div>');
             submit_ok = false;
         }
 
         if(submit_ok){
-            
+            $submit.attr("disabled", "disabled");
             jQuery.post(sendpress.ajaxurl, signup, function(response){
             
                 try {
                     response = JSON.parse(response);
                 } catch (err) {
                     // Invalid JSON.
+                    $submit.removeAttr("disabled");
                     if(!jQuery.trim(response).length) {
                         response = { error: 'Server returned empty response during charge attempt'};
                     } else {

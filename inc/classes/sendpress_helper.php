@@ -3,6 +3,9 @@
 class SP_Helper {
 
 	function log($args) {
+
+		 if( defined('WP_DEBUG') && WP_DEBUG === true ){
+
 			if ( isset($args) ) {
 				$log_message = '>--- '.date('r').'  ';
 
@@ -29,7 +32,7 @@ class SP_Helper {
 				$log_message .= '\n';
 				$this->append_log($log_message);
 			}
-
+		}
 		return $args;
 	}
 
@@ -41,17 +44,17 @@ class SP_Helper {
 		 * @param unknown_type $queueid : an optional queue id that the message is applied to, changes the output file name
 		 */
 	function append_log($msg, $queueid = -1 ) {
+		if( defined('WP_DEBUG') && WP_DEBUG === true ){
+			if ( !isset($queueid) || $queueid == -1 ) {
+					$logfile = WP_CONTENT_DIR . '/mail.log';
+			} else {
+					$logfile = WP_CONTENT_DIR . '/mail-'.$queueid.'.log';
+			}
 
-		if ( !isset($queueid) || $queueid == -1 ) {
-				$logfile = WP_CONTENT_DIR . '/mail.log';
-		} else {
-				$logfile = WP_CONTENT_DIR . '/mail-'.$queueid.'.log';
+		    $fp = fopen($logfile, 'a+');
+		    fwrite($fp, $msg."\n");
+		    fclose($fp);
 		}
-
-	    $fp = fopen($logfile, 'a+');
-	    fwrite($fp, $msg."\n");
-	    fclose($fp);
-
 	}
 
 

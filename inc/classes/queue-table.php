@@ -35,8 +35,8 @@ class SendPress_Queue_Table extends WP_List_Table {
         $this->_sendpress = new SendPress();
         //Set parent defaults
         parent::__construct( array(
-            'singular'  => 'list',     //singular name of the listed records
-            'plural'    => 'lists',    //plural name of the listed records
+            'singular'  => 'qemail',     //singular name of the listed records
+            'plural'    => 'qemails',    //plural name of the listed records
             'ajax'      => false        //does this table support ajax?
         ) );
         
@@ -84,6 +84,14 @@ class SendPress_Queue_Table extends WP_List_Table {
                 return get_avatar($item->to_email, 30);
             case 'last_attemp':
                  return date_i18n(get_option('date_format') , strtotime( $item->last_attempt ) );
+
+            case 'actions':
+                $buttons ='<a class="btn resend-btn" href="?page='.$_REQUEST['page'].'&action=queue-delete&emailID='. $item->id .'"><i class="icon-trash "></i> Delete</a> ';
+                if($item->attempts >= $item->max_attempts){
+                    $buttons .='<a class="btn resend-btn" href="?page='.$_REQUEST['page'].'&action=requeue&emailID='. $item->id .'"><i class="icon-repeat "></i> Requeue</a>';
+                }
+
+             return '<div class="inline-buttons">'.$buttons.'</div>';
            
             default:
                 return print_r($item,true); //Show the whole array for troubleshooting purposes
@@ -136,7 +144,7 @@ class SendPress_Queue_Table extends WP_List_Table {
         return sprintf(
             '<input type="checkbox" name="%1$s[]" value="%2$s" />',
             /*$1%s*/ $this->_args['singular'],  //Let's simply repurpose the table's singular label ("movie")
-            /*$2%s*/ $item->subscriberID                //The value of the checkbox should be the record's id
+            /*$2%s*/ $item->id                //The value of the checkbox should be the record's id
         );
     }
     
@@ -164,8 +172,8 @@ class SendPress_Queue_Table extends WP_List_Table {
             'title' => 'Email',
             'max_attempts' => 'Max Attempts',
             'attempts' => 'Attempted',
-            'last_attemp' => 'Last Attempt'
-            //'count_subscribers' => 'Subscribers'
+            'last_attemp' => 'Last Attempt',
+            'actions' => 'Actions'
 
             
         );
@@ -214,7 +222,7 @@ class SendPress_Queue_Table extends WP_List_Table {
      **************************************************************************/
     function get_bulk_actions() {
         $actions = array(
-            'delete'    => 'Delete'
+            'delete-email-queue' => 'Delete'
         );
         return $actions;
     }

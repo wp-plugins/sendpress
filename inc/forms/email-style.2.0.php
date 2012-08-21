@@ -225,7 +225,7 @@ if(strlen($active_header['value']) > 0){
 		<?php $this->create_color_picker( array('id'=>'content_text','value'=>$content_text['value'],'std'=>$content_text['std'], 'link'=>'#html-content' ,'css'=>'color' ) ); ?>
 		<br><br>
 		Link Color<br>
-		<?php $this->create_color_picker( array('id'=>'sp_content_link_color','value'=>$content_link['value'],'std'=>$content_link['std'],'link'=>'#html-content a' ,'css'=>'color' ) ); ?>
+		<?php $this->create_color_picker_iframe( array('id'=>'sp_content_link_color','value'=>$content_link['value'],'std'=>$content_link['std'],'link'=>'a' ,'css'=>'color' ) ); ?>
 		
 		</div>
 		</div>
@@ -299,7 +299,8 @@ if(strlen($active_header['value']) > 0){
 				</div>
 				<div  class="html-view-outer-text">
 					 <div id="can-spam-template">
-					 	<?if ( false !== $this->get_option('canspam') ){
+					 	<?php
+					 	if ( false !== $this->get_option('canspam') ){
 					 		echo wpautop( $this->get_option('canspam') );
 
 					 	} else { ?>	

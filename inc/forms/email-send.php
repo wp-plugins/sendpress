@@ -40,6 +40,10 @@ foreach($current_lists as $list){
 </div>
 </div>
 <div class="widerightcol">
-<iframe src="<?php echo get_permalink( $post->ID ); ?>?inline=true" width="100%" height="600px"></iframe>
-</div>
+<?php
+$link =  get_permalink( $post->ID ); 
+$sep = strstr($link, '?') ? '&' : '?';
+$link = $link.$sep.'inline=true';
+?>
+<iframe src="<?php echo $link; ?>" width="100%" height="600px"></iframe>
 </div>

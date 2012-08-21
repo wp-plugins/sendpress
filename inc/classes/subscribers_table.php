@@ -35,8 +35,8 @@ class SendPress_Subscribers_Table extends WP_List_Table {
         $this->_sendpress = new SendPress();
         //Set parent defaults
         parent::__construct( array(
-            'singular'  => 'list',     //singular name of the listed records
-            'plural'    => 'lists',    //plural name of the listed records
+            'singular'  => 'subscriber',     //singular name of the listed records
+            'plural'    => 'subscribers',    //plural name of the listed records
             'ajax'      => false        //does this table support ajax?
         ) );
         
@@ -103,7 +103,7 @@ class SendPress_Subscribers_Table extends WP_List_Table {
         //Build row actions
         $actions = array(
             'edit'      => sprintf('<a href="?page=%s&view=%s&subscriberID=%s&listID=%s">Edit</a>',$_REQUEST['page'],'subscriber',$item->subscriberID, $_GET["listID"] ),
-            'delete'    => sprintf('<a href="?page=%s&action=%s&movie=%s">Delete</a>',$_REQUEST['page'],'delete',$item->subscriberID),
+            'delete'    => sprintf('<a href="?page=%s&action=%s&subscriberID=%s&listID=%s">Delete</a>',$_REQUEST['page'],'delete-subscriber',$item->subscriberID, $_GET["listID"] ),
         );
         
         //Return the title contents
@@ -208,7 +208,7 @@ class SendPress_Subscribers_Table extends WP_List_Table {
      **************************************************************************/
     function get_bulk_actions() {
         $actions = array(
-            'delete'    => 'Delete'
+            'delete-subscribers-bulk'    => 'Delete'
         );
         return $actions;
     }

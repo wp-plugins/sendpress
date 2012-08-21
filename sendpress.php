@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress
-Version: 0.8.3
+Version: 0.8.5
 Plugin URI: http://sendpress.com
 Description: The first true all-in-one Email Markteing and Newsletter plugin for WordPress.
 Author: SendPress
@@ -11,7 +11,7 @@ Author URI: http://sendpress.com/
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.8.3' );
+define( 'SENDPRESS_VERSION', '0.8.5' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -25,6 +25,7 @@ define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
 if(!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
+
 require_once( SENDPRESS_PATH . 'inc/classes/lists_table.php' );
 require_once( SENDPRESS_PATH . 'inc/classes/subscribers_table.php' );
 require_once( SENDPRESS_PATH . 'inc/classes/emails_table.php' );
@@ -83,7 +84,6 @@ class SendPress{
 	 */
 	function &init() {
 		static $instance = array();
-		global $SendPress_Instance;
 		if ( !$instance ) {
 			load_plugin_textdomain( 'sendpress', false, SENDPRESS_PATH . 'languages/' );
 			$instance[0] =& new SendPress;
@@ -109,7 +109,6 @@ class SendPress{
 			add_action( 'wp_enqueue_scripts', array( &$instance[0], 'add_front_end_styles' ) );
 
 		}
-		$SendPress_Instance = $instance[0];
 		return $instance[0];
 	}
 
@@ -117,9 +116,6 @@ class SendPress{
 		
 		add_action( 'admin_print_scripts', array($this,'editor_insidepopup') );
 		add_filter( 'gettext', array($this, 'change_button_text'), null, 2 );
-		add_action('wp_ajax_sendpress-sendnow', array($this, 'ajax_sendnow'));
-		add_action('wp_ajax_sendpress-stopcron', array($this, 'ajax_stopcron'));
-		add_action('wp_ajax_sendpress-sendcount', array($this, 'ajax_sendcount'));
 		if($this->get_option('permalink_rebuild')){
 			 flush_rewrite_rules( false );
 			 error_log('rewrite rules');
@@ -130,28 +126,7 @@ class SendPress{
 		
 	}
 
-	function ajax_stopcron(){
-		$upload_dir = wp_upload_dir();
-		$filename = $upload_dir['basedir'].'/sendpress.pause';
-		$Content = "Stop the cron form running\r\n";
-		$handle = fopen($filename, 'w');
-		fwrite($handle, $Content);
-		fclose($handle);
-		die();
-	}
-
-	function ajax_sendcount(){
-		echo $this->countQueue();
-
-		
-		die();
-	}
-
-	function ajax_sendnow(){
-		$this->update_option('no_cron_send', 'true');
-		echo $this->send_single_from_queue();
-		exit();
-	}
+	
 
 	function admin_notice(){
 		//This is the WordPress one shows above menu area.
@@ -478,9 +453,21 @@ class SendPress{
 	function admin_head(){
 		//wp_editor( false );
 	}
-
+	
 	function create_color_picker( $value ) { ?>	
 		<input class="cpcontroller" data-id="<?php echo $value['id']; ?>" css-id="<?php echo $value['css']; ?>" link-id="<?php echo $value['link']; ?>" name="<?php echo $value['id']; ?>" id="<?php echo $value['id']; ?>" type="text" value="<?php  echo isset($value['value']) ? $value['value'] : $value['std'] ; ?>" />
+		<input type='hidden' value='<?php echo $value['std'];?>' id='default_<?php echo $value['id']; ?>'/>
+		<a href="#" class="btn btn-mini reset-line" data-type="cp" data-id="<?php echo $value['id']; ?>" >Reset</a>
+		<div id="pickholder_<?php echo $value['id']; ?>" class="colorpick clearfix" style="display:none;">
+			<a class="close-picker">x</a>
+			<div id="<?php echo $value['id']; ?>_colorpicker" class="colorpicker_space"></div>
+		</div>
+		<?php
+	}
+
+
+	function create_color_picker_iframe( $value ) { ?>	
+		<input class="cpcontroller" iframe="true" data-id="<?php echo $value['id']; ?>" css-id="<?php echo $value['css']; ?>" link-id="<?php echo $value['link']; ?>" name="<?php echo $value['id']; ?>" id="<?php echo $value['id']; ?>" type="text" value="<?php  echo isset($value['value']) ? $value['value'] : $value['std'] ; ?>" />
 		<input type='hidden' value='<?php echo $value['std'];?>' id='default_<?php echo $value['id']; ?>'/>
 		<a href="#" class="btn btn-mini reset-line" data-type="cp" data-id="<?php echo $value['id']; ?>" >Reset</a>
 		<div id="pickholder_<?php echo $value['id']; ?>" class="colorpick clearfix" style="display:none;">
@@ -495,13 +482,14 @@ class SendPress{
 		$this->set_template_default();
 		//wp_clear_scheduled_hook( 'sendpress_cron_action' );
 		// Schedule an action if it's not already scheduled
+		/*
 		if ( ! wp_next_scheduled( 'sendpress_cron_action' ) ) {
 		    wp_schedule_event( time(), 'tenminutes',  'sendpress_cron_action' );
 		}
+		*/
 
-
+		wp_clear_scheduled_hook( 'sendpress_cron_action' );
 		
-
 
 		/*
 		add_meta_box( 'email-status', __( 'Email Status', 'sendpress' ), array( $this, 'email_meta_box' ), $this->_email_post_type, 'side', 'low' );
@@ -532,29 +520,35 @@ class SendPress{
 			wp_enqueue_style('thickbox');
 			wp_register_script('spfarb', SENDPRESS_URL .'js/farbtastic.js' );
 			wp_enqueue_script( 'spfarb' );
-			wp_register_script('sendpress_js', SENDPRESS_URL .'js/sendpress.js' );
-			wp_enqueue_script('sendpress_js');
+			wp_register_script('sendpress-admin-js', SENDPRESS_URL .'js/sendpress.js' );
+			wp_enqueue_script('sendpress-admin-js');
 			wp_register_script('sendpress_bootstrap', SENDPRESS_URL .'bootstrap/js/bootstrap.min.js' );
 			wp_enqueue_script('sendpress_bootstrap');
 			wp_register_style( 'sendpress_bootstrap_css', SENDPRESS_URL . 'bootstrap/css/bootstrap.css', false, '1.0.0' );
     		wp_enqueue_style( 'sendpress_bootstrap_css' );
 
-			wp_localize_script( 'sendpress_js', 'sendpress', array( 'ajaxurl' => admin_url( 'admin-ajax.php', 'http' ) ) );
+			//wp_localize_script( 'sendpress_js', 'sendpress', array( 'ajaxurl' => admin_url( 'admin-ajax.php', 'http' ) ) );
 
 			wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', false, '1.0.0' );
     		wp_enqueue_style( 'sendpress_css_base' );
 
+	    	do_action('sendpress_admin_scripts');
+
+
 	    	if ( !empty($_POST) && check_admin_referer($this->_nonce_value) ){
 
 		    	$this->_current_action = isset( $_GET['action'] ) ? $_GET['action'] : '' ;
-		    	$this->_current_action = isset( $_POST['action'] ) ? $_POST['action'] : $this->_current_action ;
+		    	$this->_current_action = isset( $_GET['action2'] ) ? $_GET['action2'] : $this->_current_action ;
+		    	$this->_current_action = isset( $_POST['action2'] ) ? $_POST['action2'] : $this->_current_action ;
+		    	$this->_current_action = isset( $_POST['action'] ) && $_POST['action'] !== '-1' ? $_POST['action'] : $this->_current_action ;
 
+		    	
 		    	require_once( SENDPRESS_PATH . 'inc/helpers/sendpress-post-actions.php' );
 	    	
-	    	} else if ( isset( $_GET['action'] )  ){
+	    	} else if ( isset( $_GET['action']) || isset( $_GET['action2'] )  ){
 
 		    	$this->_current_action = $_GET['action'];
-		    	
+		    	$this->_current_action = ( isset( $_GET['action2'] ) && $_GET['action2'] !== '-1')  ? $_GET['action2'] : $this->_current_action ;
 		    	require_once( SENDPRESS_PATH . 'inc/helpers/sendpress-get-actions.php' );
 	    	
 	    	}
@@ -573,7 +567,7 @@ class SendPress{
    	}
 
    	function add_front_end_styles(){
-   		wp_enqueue_style( 'sendpress-fe-css', SENDPRESS_URL.'/css/front-end.css' );
+   		wp_enqueue_style( 'sendpress-fe-css', SENDPRESS_URL.'css/front-end.css' );
    	}
 
 
@@ -674,7 +668,7 @@ class SendPress{
 		$_title = 'file';
 
 		if ( isset( $_REQUEST['sp_title'] ) ) { $_title = $_REQUEST['sp_title']; } // End IF Statement
-?>
+	?>
 	<script type="text/javascript">
 	<!--
 	jQuery(function($) {
@@ -871,6 +865,9 @@ class SendPress{
 		if(version_compare( $current_version, '0.8.3', '<' )){
 			$this->update_option( 'feedback' , 'no' );
 		}
+		if(version_compare( $current_version, '0.8.4', '<' )){
+			require_once(SENDPRESS_PATH . 'inc/db/alter-list.php');
+		}
 
 		
 		
@@ -936,6 +933,19 @@ class SendPress{
 	}
 
 	// GET DETAIL (RETURN X WHERE Y = Z)
+	function delete_queue_email( $emailID ) {
+
+		$table = $this->queue_table();
+		$result = $this->wpdbQuery("DELETE FROM $table WHERE id = '$emailID'", 'query');
+
+		return $result;	
+	}
+
+
+
+
+
+	// GET DETAIL (RETURN X WHERE Y = Z)
 	function createList($values) {
 		$table = $this->lists_table();
 
@@ -951,8 +961,23 @@ class SendPress{
 		$table = $this->lists_table();
 
 		$result = $wpdb->update($table,$values, array('listID'=> $listID) );
-
 		return $result;
+	}
+
+	function requeue_email($emailid){
+		global $wpdb;
+
+		$table = $this->queue_table();
+
+		$result = $wpdb->update($table,array('attempts'=>0 ), array('id'=> $emailid) );
+	
+	}
+
+	// GET DETAIL (RETURN X WHERE Y = Z)
+	function unlink_list_subscriber($listID, $subscriberID) {
+		$table = $this->list_subcribers_table();
+		$result = $this->wpdbQuery("DELETE FROM $table WHERE listID = '$listID' AND subscriberID = '$subscriberID' ", 'query');
+		return $result;	
 	}
 
 	// GET DETAIL (RETURN X WHERE Y = Z)
@@ -965,6 +990,7 @@ class SendPress{
 		}
 		return $result;	
 	}
+
 
 	// COUNT DATA
 	function countData($table) {
@@ -1030,6 +1056,8 @@ class SendPress{
 		$result = $wpdb->update($table,array('status'=>$status,'updated'=>date('Y-m-d H:i:s')), array('subscriberID'=> $subscriberID,'listID'=>$listID) );
 		
 	}
+
+
 
 	function getSubscriber($subscriberID, $listID = false){
 		if($listID){
@@ -1466,7 +1494,7 @@ class SendPress{
 		}
 
 
-		function send( $email ) {
+		function send( $email , $sendtest = false) {
 			global $phpmailer;
 
 			// (Re)create it, if it's gone missing
@@ -1488,50 +1516,96 @@ class SendPress{
 			$phpmailer->ClearCustomHeaders();
 			$phpmailer->ClearReplyTos();
 
-			// Get any existing copy of our transient data
-			if ( false === ( $body_html = get_transient( 'sendpress_report_body_html_'. $email->emailID ) ) ) {
-			    // It wasn't there, so regenerate the data and save the transient
-			    $post_info = get_post( $email->emailID );
-			    $body_html = $this->render_template( $post_info->ID, false );
-			    set_transient( 'sendpress_report_body_html_'. $email->emailID, $body_html );
+			if(false == $sendtest){
+
+				// Get any existing copy of our transient data
+				if ( false === ( $body_html = get_transient( 'sendpress_report_body_html_'. $email->emailID ) ) ) {
+				    // It wasn't there, so regenerate the data and save the transient
+				    $post_info = get_post( $email->emailID );
+				    $body_html = $this->render_template( $post_info->ID, false );
+				    set_transient( 'sendpress_report_body_html_'. $email->emailID, $body_html );
+
+				}
+				// Get any existing copy of our transient data
+				if ( false === ( $email_subject = get_transient( 'sendpress_report_subject_'. $email->emailID ) ) ) {
+				    // It wasn't there, so regenerate the data and save the transient
+				    if(!$post_info){
+				    	$post_info = get_post( $email->emailID );
+					}
+				    $email_subject =  $post_info->post_title;
+				    set_transient( 'sendpress_report_subject_'. $email->emailID, $email_subject );
+				    // Get any existing copy of our transient data
+				
+				}
+
+
+
+
+				
+				$subscriber_key = trim( $this->getSubscriberKey( $email->subscriberID ) );
+
+
+
+
+				$tracker = "<img src='".site_url()."?sendpress=open&fxti=".$subscriber_key."&spreport=". $email->emailID ."' /></body>";
+				$body_html =str_replace("</body>",$tracker , $body_html );
+				$body_link			=	get_post_meta( $email->emailID , 'body_link', true );
+
+
+				//$pattern ="/(?<=href=(\"|'))[^\"']+(?=(\"|'))/";
+				//$body_html = preg_replace( $pattern , site_url() ."?sendpress=link&fxti=".$subscriber_key."&spreport=". $email->emailID ."&spurl=$0", $body_html );
+				
+
+				$dom = new DomDocument();
+				$dom->strictErrorChecking = false;
+				@$dom->loadHtml($body_html);
+				$aTags = $dom->getElementsByTagName('a');
+				foreach ($aTags as $aElement) {
+					$href = $aElement->getAttribute('href');
+					$href = site_url() ."?sendpress=link&fxti=".$subscriber_key."&spreport=". $email->emailID ."&spurl=".urlencode($href);
+					$aElement->setAttribute('href', $href);
+				}
+				$body_html = $dom->saveHtml();
+
+				$remove_me = 'Not interested anymore? <a href="'.site_url().'?sendpress=manage&fxti='.$subscriber_key.'&spreport='. $email->emailID.'&splist='. $email->listID.'"  style="color: '.$body_link.';" >Unsubscribe</a> Instantly.';
+				
+				$body_html = str_replace("*|SP:UNSUBSCRIBE|*", $remove_me , $body_html );
+				//print_r($email);
+				
+			
+				
+				//return $email;
+				$phpmailer->Subject = $email_subject;
+				$phpmailer->MsgHTML( $body_html );
+				$phpmailer->AddAddress( trim( $email->to_email ) );
+				
+			
+			} else {
+				$email->messageID = 'sptestemailfromadminarea';
+				$phpmailer->AltBody="This is text only alternative body.";
+				$phpmailer->AltBody="This is text only alternative body.";
+				$phpmailer->Subject = 'A Test Email from SendPress. : ą č ę ė į š ų ū ž';
+				$phpmailer->MsgHTML( 'SendPress test email :).' );
+				$testemails = explode(',' , $this->get_option('testemail') );
+				foreach ($testemails as $emailadd) {
+					$phpmailer->AddAddress( trim( $emailadd ) );
+				}
 			}
-			
-			$subscriber_key = trim( $this->getSubscriberKey( $email->subscriberID ) );
-
-			$tracker = "<img src='".site_url()."?sendpress=open&fxti=".$subscriber_key."&spreport=". $email->emailID ."' /></body>";
-			$body_html =str_replace("</body>",$tracker , $body_html );
-			$body_link			=	get_post_meta( $email->emailID , 'body_link', true );
-
-
-			$pattern ="/(?<=href=(\"|'))[^\"']+(?=(\"|'))/";
-			$body_html = preg_replace( $pattern , site_url() ."?sendpress=link&fxti=".$subscriber_key."&spreport=". $email->emailID ."&spurl=$0", $body_html );
-			
-			$remove_me = 'Not interested anymore? <a href="'.site_url().'?sendpress=manage&fxti='.$subscriber_key.'&spreport='. $email->emailID.'&splist='. $email->listID.'"  style="color: '.$body_link.';" >Unsubscribe</a> Instantly.';
-			
-			$body_html = str_replace("*|SP:UNSUBSCRIBE|*", $remove_me , $body_html );
-			//print_r($email);
 
 			$content_type = 'text/html';
-			
 			$phpmailer->ContentType = $content_type;
-			// Set whether it's plaintext, depending on $content_type
-			//if ( 'text/html' == $content_type )
-			$phpmailer->IsHTML( true );
-			//return $email;
-
-			$phpmailer->Subject = $email->subject;
-			$phpmailer->MsgHTML( $body_html );
-			$phpmailer->AltBody="This is text only alternative body.";
-
+				// Set whether it's plaintext, depending on $content_type
+				//if ( 'text/html' == $content_type )
+				$phpmailer->IsHTML( true );
 			
 			
 			// If we don't have a charset from the input headers
 			if ( !isset( $charset ) )
-			$charset = get_bloginfo( 'charset' );
+			//$charset = get_bloginfo( 'charset' );
 			
 			// Set the content-type and charset
-			$phpmailer->CharSet = apply_filters( 'wp_mail_charset', $charset );
-
+			$phpmailer->CharSet = 'UTF-8';
+			$phpmailer->Encoding = 'quoted-printable';
 			/**
 			* We'll let php init mess with the message body and headers.  But then
 			* we stomp all over it.  Sorry, my plug-inis more important than yours :)
@@ -1542,7 +1616,7 @@ class SendPress{
 			$from_email = $this->get_option('fromemail');//$this->get_option['login'];
 			$phpmailer->From = $from_email;
 			$phpmailer->FromName = $this->get_option('fromname');//$from_name;
-			$phpmailer->AddAddress( trim( $email->to_email ) );
+			
 	
 			$sending_method  = $this->get_option('sendmethod');
 			
@@ -1603,7 +1677,14 @@ class SendPress{
 			// Grab the smtp debugging output
 			$smtp_debug = ob_get_clean();
 
-			if ( ( $result != true || true ) ) {
+			if($sendtest){
+
+				$this->update_option('phpmailer_error', $phpmailer->ErrorInfo);
+				$this->update_option('last_test_debug', $smtp_debug);
+			}
+
+
+			if ( ( $result != true  ) ) {
 				$hostmsg = 'host: '.($phpmailer->Host).'  port: '.($phpmailer->Port).'  secure: '.($phpmailer->SMTPSecure) .'  auth: '.($phpmailer->SMTPAuth).'  user: '.($phpmailer->Username)."  pass: *******\n";
 			    $msg = '';
 				$msg .= 'The result was: '.$result."\n";
@@ -1611,8 +1692,8 @@ class SendPress{
 			    $msg .= $hostmsg;
 			    $msg .= "The SMTP debugging output is shown below:\n";
 			    $msg .= $smtp_debug."\n";
-			    $msg .= 'The full debugging output(exported mailer) is shown below:\n';
-			    $msg .= var_export($phpmailer,true)."\n";
+			    //$msg .= 'The full debugging output(exported mailer) is shown below:\n';
+			    //$msg .= var_export($phpmailer,true)."\n";
 				$this->append_log($msg);								
 			}
 
@@ -1687,7 +1768,7 @@ class SendPress{
 			$emails = $this->wpdbQuery("SELECT * FROM ".$this->queue_table()." WHERE success = 0 AND max_attempts != attempts LIMIT ".$limit,"get_results");
 			$count = 0;
 			if( empty($emails) ){
-				return 'empty';
+				return array('attempted'=> 0,'sent'=>$count);
 			}
 
 			foreach($emails as $email_single ){
@@ -1711,9 +1792,13 @@ class SendPress{
 				} else {
 					$wpdb->update( $this->queue_table() , array('attempts'=>$email_single->attempts+1,'last_attempt'=> date('Y-m-d H:i:s') ) , array('id'=> $email_single->id ));
 					
-				}	
+				}
+				$sending_method  = $this->get_option('sendmethod');	
+				if( $sending_method  == 'gmail' ){
+					sleep(1);
+				}
 			}
-				return $count;
+			return array('attempted'=> count($emails),'sent'=>$count);
 		}
 
 
@@ -1721,8 +1806,13 @@ class SendPress{
 			global $wpdb;
 			$table = $this->queue_table();
 			$messageid = $this->unique_message_id();
-			$q ="INSERT INTO $table (subscriberID, from_name,from_email,to_email, subject, messageID, date_published, emailID, listID) VALUES( '" .$values['subscriberID'] . "','" .$values['from_name'] . "', '" .$values['from_email'] .  "', '" .$values['to_email'] . "', '" .$values['subject'] . "', '" .$messageid . "', '". date('Y-m-d H:i:s') . "', '" .$values['emailID']. "', '" .$values['listID'] ."' )";
-			$result = $this->wpdbQuery($q, 'query');
+			$values["messageID"] = $messageid;
+			$values["date_published"] = date('Y-m-d H:i:s');
+			//$q = $wpdb->prepare("INSERT INTO $table (subscriberID, from_name,from_email,to_email, subject, messageID, date_published, emailID, listID) VALUES( '" .$values['subscriberID'] . "','" .$values['from_name'] . "', '" .$values['from_email'] .  "', '" .$values['to_email'] . "', '" .$values['subject'] . "', '" .$messageid . "', '". date('Y-m-d H:i:s') . "', '" .$values['emailID']. "', '" .$values['listID'] ."' )");
+			//error_log($q);
+			//$result = $this->wpdbQuery($q, 'query');
+
+			$wpdb->insert( $table, $values);
 		}
 
 
