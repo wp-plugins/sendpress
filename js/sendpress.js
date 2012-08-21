@@ -287,7 +287,12 @@ jQuery(document).ready(function($) {
                 // $('#content').html('data fix');
                     
                 //$('#content a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
-                $('#content_ifr' ).contents().find('a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
+                if(window.tinyMCE !== undefined){
+                    $('#content_ifr' ).contents().find('a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
+                } else {
+                    $( $element.attr('link-id') ).css($element.attr('css-id') , $element.val() );
+                }
+
             } else {
                 $( $element.attr('link-id') ).css($element.attr('css-id') , $element.val() );
             }
@@ -299,8 +304,11 @@ jQuery(document).ready(function($) {
             .change(function(){
                 $item = $(this);
                 if( $item.attr('iframe') == 'true' ){
-                     $('#content_ifr' ).contents().find('a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
-                    // $('#content').html('data fix');
+                     if(window.tinyMCE !== undefined){
+                        $('#content_ifr' ).contents().find('a').attr('style','color:' + $element.val() ).attr('data-mce-style','color:' + $element.val() );
+                        } else {
+                        $( $element.attr('link-id') ).css($element.attr('css-id') , $element.val() );
+                        }
                 } else {
                     $( $item.attr('link-id') ).css($item.attr('css-id') , $item.val() );
                 }

@@ -4,7 +4,7 @@ Donate link: http://sendpress.com/donate
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid,
 Requires at least: 3.3
 Tested up to: 3.4.1
-Stable tag: 0.8.5
+Stable tag: 0.8.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,9 @@ Our own sending accounts are currently in beta. If you have interest in testing 
 
 == Changelog ==
 
+= 0.8.5.1 =
+* Patch for broken JS on SendPress settings screens.
+
 = 0.8.5 =
 * Bug Fix: Removed PHP Shortcode Syntax  
 * Bug Fix: Sending through Gmail broken  
@@ -107,6 +110,9 @@ Our own sending accounts are currently in beta. If you have interest in testing 
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.8.5.1 =
+Fixed JS bug causing settings area to become unreponsive.
 
 = 0.8.5 =
 Improved Sending and Multiple bug fixes.

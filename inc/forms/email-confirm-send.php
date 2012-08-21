@@ -64,47 +64,6 @@ $link = $link.$sep.'inline=true';
 ?>
 <iframe src="<?php echo $link; ?>" width="100%" height="600px"></iframe>
 </div>
-
- <?php wp_nonce_field($this->_nonce_value); ?><br><br>
-
-
- <?php
-
- /*
-  $saveid = $post->ID;
-
-                $post = get_post( $saveid );
-                $info = $this->get_option('current_send');
-                $this->log('ADD QUEUE');
-                foreach($info['listIDS'] as $list_id){
-                    $_email = $this->getSubscribers( $list_id );
-                    echo '<pre>';
-                   // print_r($_email);
-                    echo '</pre>';
-                    foreach($_email as $email){
-                    	echo '<pre>';
-                      // print_r($email);
-                         $go = array(
-                            'from_name' => 'Josh',
-                            'from_email' => 'joshlyford@gmail.com',
-                            'to_email' => $email->email,
-                            'to_name' => $email->firstname .' '. $email->lastname,
-                            'subject' => $post->post_title,
-                           'emailID'=>$saveid
-                            );
-                       
-                        $this->add_email_to_queue($go);
-                        echo '</pre>';
-                       
-
-                    }
-
-
-                }
-
-              $this->log('END ADD QUEUE');
-*/
-           
- ?>
+<?php wp_nonce_field($this->_nonce_value); ?><br><br>
 </div>
 </div>

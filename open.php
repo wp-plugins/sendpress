@@ -11,7 +11,3 @@ $sp->register_open($_GET['fxti'], $_GET['report']);
 header('Content-type: image/gif'); 
 include('./im/clear.gif'); 
 
-
-
-
-?>

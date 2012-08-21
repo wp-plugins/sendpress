@@ -26,7 +26,7 @@ jQuery(document).ready(function($) {
               $('#html-header').html('<img src="'+ $(this).val() +'" />');
         });
 
-            if(tinyMCE){
+            if(window.tinyMCE !== undefined){
                 tinyMCE.onAddEditor.add(function(mgr,ed) {
                 // alert(ed);// do things with editor ed
                     ed.onChange.add(function(ed, l) {

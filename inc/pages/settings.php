@@ -1,1 +1,2 @@
-<?php require_once( SENDPRESS_PATH. 'inc/forms/settings.php' ); ?>
+<?php 
+require_once( SENDPRESS_PATH. 'inc/forms/settings.php' ); 

@@ -44,4 +44,4 @@ Left Template
  <p>Sorry, no posts matched your criteria.</p>
 
  <!-- REALLY stop The Loop. -->
- <?php endif; ?>
+ <?php endif; 

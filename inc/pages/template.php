@@ -1,6 +1,3 @@
-
-
-
 <?php $tpls = $this->get_templates();
 
 $this->settings_menu();

@@ -8,6 +8,3 @@ $sp->register_unsubscribe($_GET['fxti'], $_GET['report'] ,$_GET['list']);
 
 }
 
-
-
-?>
