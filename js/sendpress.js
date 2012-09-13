@@ -33,6 +33,99 @@
             this.imagebox = $('#imageaddbox');
             this.textbox = $('#textaddbox');
 
+            $('#myTab a').click(function (e) {
+              e.preventDefault();
+              $(this).tab('show');
+            });
+
+            $('.sp-insert-code').click(function(e){
+                e.preventDefault();
+                spadmin.current_ed.execCommand('mceInsertContent', false, $(this).data('code') );
+            });
+
+            $('input:radio[name=optionsRadios]').change(function(){
+                      if(spadmin.active_post !== undefined){
+                    var t = $('input:radio[name=optionsRadios]:checked').val();
+                    var htype = $('input:radio[name=headerOptions]:checked').val();
+                    var text =  spadmin.active_post.excerpt;
+                    if(t == 'full'){
+                        text =  spadmin.active_post.content;
+                    }
+                     $('#sp-post-preview-insert').data("code", "<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
+                    $('#sp-post-preview').html("<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
+                }
+            });
+
+             $('input:radio[name=headerOptions]').change(function(){
+                    if(spadmin.active_post !== undefined){
+                    var t = $('input:radio[name=optionsRadios]:checked').val();
+                    var htype = $('input:radio[name=headerOptions]:checked').val();
+                    var text =  spadmin.active_post.excerpt;
+                    if(t == 'full'){
+                        text =  spadmin.active_post.content;
+                    }
+                    $('#sp-post-preview-insert').data("code", "<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
+                    $('#sp-post-preview').html("<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
+                    }
+            });
+
+            var a = $('#query').autocomplete({
+                serviceUrl: spvars.ajaxurl,
+                maxHeight:400,
+                width:300,
+                zIndex: 9999,
+                deferRequestBy: 0, //miliseconds
+                params: {
+                        action:'sendpress-findpost',
+                        spnonce: spvars.sendpressnonce,
+                    }, //aditional parameters
+                noCache: true, //default is false, set to true to disable caching
+                // callback function:
+                onSelect: function(value, data){ 
+                    var t = $('input:radio[name=optionsRadios]:checked').val();
+                    var htype = $('input:radio[name=headerOptions]:checked').val();
+                    var text =  data.excerpt;
+                    if(t == 'full'){
+                        text =  data.content;
+                    }
+                    $('#sp-post-preview-insert').data("code", "<"+htype+">"+value+"</"+htype+"><p>"+text+"</p>");
+                    $('#sp-post-preview').html("<"+htype+">"+value+"</"+htype+"><p>"+text+"</p>");
+                    data.title = value;
+                    spadmin.active_post = data;
+                },
+               
+                });
+              /*
+            $('#livesearch').liveSearch({url: spvars.ajaxurl + '?action=sendpress-findpost&spnonce='+spvars.sendpressnonc+'&q='});
+          
+            $('.typeahead').typeahead({
+                source: function (query, process) {
+                    var pdata = {
+                        action:'sendpress-findpost',
+                        spnonce: spvars.sendpressnonce,
+                        query: query 
+                    };
+                    return $.post(spvars.ajaxurl, pdata, function (data) {
+                        response = $.parseJSON(data);
+                        spadmin.log(data);
+                        return process(response);
+                    });
+                }
+                
+                source: function (typeahead, query) {
+                    spadmin.log(typeahead);
+                    
+                    
+                    return $.post('/typeahead', pdata, function (data) {
+                        return typeahead.process(data);
+                    });
+
+                }
+               
+            });
+             */
+
+
             //Header Buttons
             $('#addimage').click(function(e){
                 e.preventDefault();
@@ -443,7 +536,13 @@ jQuery(document).ready(function($) {
     });
 
 
-
+    $('.sendpress_checkbox').live('click',function(){
+        if( $(this).is(':checked') ){
+            $(this).val(1);
+        }else{
+            $(this).val(0);
+        }
+    });
 
      
 });

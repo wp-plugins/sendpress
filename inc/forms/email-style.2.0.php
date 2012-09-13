@@ -298,6 +298,31 @@ if(strlen($active_header['value']) > 0){
 					</div>
 				</div>
 				<div  class="html-view-outer-text">
+					<div>
+						<?php
+						if( isset($emailID) ){
+							$social = '';
+							if($twit = $this->get_option('twitter') ){
+								$social .= "<a href='$twit' style='color: $body_link;'>Twitter</a>";
+							}
+
+							if($fb = $this->get_option('facebook') ){
+								if($social != ''){
+									$social .= " | ";
+								}
+								$social .= "<a href='$fb'  style='color: $body_link;'>Facebook</a>";
+							}
+							if($ld = $this->get_option('linkedin') ){
+								if($social != ''){
+									$social .= " | ";
+								}
+								$social .= "<a href='$ld'  style='color: $body_link;'>LinkedIn</a>";
+							}
+							echo $social;
+						} else {
+						?>
+						<a href="#" >Twitter</a> | <a href="#" >Facebook</a> | <a href="#" >LinkedIn</a></div>
+						<?php } ?>
 					 <div id="can-spam-template">
 					 	<?php
 					 	if ( false !== $this->get_option('canspam') ){
@@ -317,4 +342,111 @@ if(strlen($active_header['value']) > 0){
 	<br class='clear'>
 </div>
 </div>
+
+<div class="modal hide fade" id="sendpress-helper">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal">×</button>
+		<ul class="nav nav-tabs" id="myTab">
+			<li class="active tabs-first"><a href="#posts">Single Post</a></li>
+		  	<li ><a href="#merge">Personalize</a></li>
+		 
+		  	<!--
+		  <li><a href="#messages">Messages</a></li>
+		  <li><a href="#settings">Settings</a></li>
+			-->
+		</ul>
+	</div>
+	<div class="modal-body">
+
+ 
+<div class="tab-content">
+	 <div class="tab-pane active" id="posts">
+
+  	<div id="search-header">Search Posts: <input type="text" name="q" id="query"></div>
+  	<div  id="sp-post-preview" class="well">
+  		No Post Selected
+  	</div>
+
+  	<p>Header HTML:&nbsp;
+	  	<label class="radio">
+		  <input type="radio" name="headerOptions" id="optionsRadios1" value="h1" >
+		  H1
+		</label>
+		<label class="radio">
+		  <input type="radio" name="headerOptions" id="optionsRadios2" value="h2">
+		  H2
+		</label>
+		<label class="radio">
+		  <input type="radio" name="headerOptions" id="optionsRadios2" value="h3" checked>
+		  H3
+		</label>
+		<label class="radio">
+		  <input type="radio" name="headerOptions" id="optionsRadios2" value="h4">
+		  H4
+		</label>
+		<label class="radio">
+		  <input type="radio" name="headerOptions" id="optionsRadios2" value="h5">
+		  H5
+		</label>
+		<label class="radio">
+		  <input type="radio" name="headerOptions" id="optionsRadios2" value="h6">
+		  H6
+		</label>
+	</p>
+  	<p>Post Content:&nbsp;
+	  	<label class="radio">
+		  <input type="radio" name="optionsRadios" id="optionsRadios1" value="excerpt" checked>
+		  Excerpt
+		</label>
+		<label class="radio">
+		  <input type="radio" name="optionsRadios" id="optionsRadios2" value="full">
+		  Full Post
+		</label>
+	</p>
+  	<button class="btn btn-mini btn-success sp-insert-code" id="sp-post-preview-insert" data-code="">Insert</button>
+  </div>
+ 	<div class="tab-pane " id="merge">
+ 		<div>Add Subscriber specific content</div>
+  		<table class="table table-striped">
+  			
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Code</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+    	<td>First Name</td>
+      	<td>*|FNAME|*</td>
+      	<td class="text-right"><button class="btn btn-mini btn-success sp-insert-code" data-code="*|FNAME|*">Insert</button></td>
+    </tr>
+    <tr>
+    	<td>Last Name</td>
+      	<td>*|LNAME|*</td>
+      	<td class="text-right"><button class="btn btn-mini btn-success sp-insert-code" data-code="*|LNAME|*">Insert</button></td>
+    </tr>
+    <tr>
+    	<td>Email</td>
+      	<td>*|EMAIL|*</td>
+      	<td class="text-right"><button class="btn btn-mini btn-success sp-insert-code"  data-code="*|EMAIL|*">Insert</button></td>
+    </tr>
+  </tbody>
+</table>
+
+  </div>
+ 
+  <div class="tab-pane" id="messages">...</div>
+  <div class="tab-pane" id="settings">...</div>
+</div>
+		
+	</div>
+	<div class="modal-footer">
+	 	<a href="#" class="btn btn-primary" data-dismiss="modal">Close</a>
+	</div>
+</div>
+
+
+
 <?php wp_nonce_field($this->_nonce_value); 

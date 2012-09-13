@@ -3,7 +3,7 @@ class SendPressSugnupShortcode{
 
 	function load_form( $attr, $content = null ) {
 
-		global $load_signup_js;
+		global $load_signup_js, $sendpress_show_thanks, $sendpress_signup_error;
 		$load_signup_js = true;
 
 	    ob_start();
@@ -34,14 +34,21 @@ class SendPressSugnupShortcode{
 
 		$label = filter_var($label_display, FILTER_VALIDATE_BOOLEAN);
 
+		$widget_options = $s->get_option('widget_options');
 	    ?>
 	    
 	    <div class="sendpress-signup-form">
-			<form id="sendpress_signup" action="" method="POST" class="sendpress-signup">
+			<form id="sendpress_signup" method="POST" <?php if( !$widget_options['load_ajax'] ){ ?>class="sendpress-signup"<?php } ?>>
+				<?php 
+					if( $widget_options['load_ajax'] ){
+						echo '<input type="hidden" name="action" value="signup-user" />';
+						echo '<input type="hidden" name="redirect" value="'.get_permalink().'" />';
+					}
+				?>
 				<input type="hidden" name="list" id="list" value="<?php echo $listids; ?>" />
-				<div id="error"></div>
-				<div id="thanks"><?php echo $thank_you; ?></div>
-				<div id="form-wrap">
+				<div id="error"><?php echo $sendpress_signup_error; ?></div>
+				<div id="thanks" <?php if( $sendpress_show_thanks ){ echo 'style="display:block;"'; }else{ echo 'style="display:none;"'; } ?>><?php echo $thank_you; ?></div>
+				<div id="form-wrap" <?php if( $sendpress_show_thanks ){ echo 'style="display:none;"'; } ?>>
 					<p><?php echo $desc; ?></p>
 					<?php if( filter_var($display_firstname, FILTER_VALIDATE_BOOLEAN)  ): ?>
 						<fieldset name="firstname">

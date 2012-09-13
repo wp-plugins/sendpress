@@ -103,6 +103,33 @@ global $post;
 				text-align:left;
 			}
 
+ h5, .h5{
+                color:#202020;
+                display:block;
+                font-family:Arial;
+                font-size:18px;
+                font-weight:bold;
+                line-height:100%;
+                margin-top:0;
+                margin-right:0;
+                margin-bottom:10px;
+                margin-left:0;
+                text-align:left;
+            }
+
+ h6, .h6{
+                color:#202020;
+                display:block;
+                font-family:Arial;
+                font-size:16px;
+                font-weight:bold;
+                line-height:100%;
+                margin-top:0;
+                margin-right:0;
+                margin-bottom:10px;
+                margin-left:0;
+                text-align:left;
+            }
 		h1 a:active, h2 a:active,  h3 a:active, h4 a:active, h5 a:active, h6 a:active {
 		color: red !important; /* Preferably not the same color as the normal header link color.  There is limited support for psuedo classes in email clients, this was added just for good measure. */
 		}

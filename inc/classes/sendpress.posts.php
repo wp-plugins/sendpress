@@ -83,8 +83,11 @@ class SendPress_Posts{
 		register_post_type( $name , array(	
 				'show_in_menu' => false,
 				'public' => true,
-				'_edit_link' => 'sendpress.php',
+				'publicly_queryable' =>true,
+				'show_ui' => false,
+				'query_var' => true,
 				'exclude_from_search'=>true,
+				'_edit_link' => 'sendpress.php',
 				'show_ui' => false,'capability_type' => 'post','hierarchical' => false,'rewrite' => array('slug' => 'emails','with_front'=>false),'supports' => array('title','editor'),'labels' => array (
 				'name' => 'emails',
 				'singular_name' => 'email',
@@ -108,10 +111,18 @@ class SendPress_Posts{
 		register_post_type( $name , array(	
 			'show_in_menu' => false,
 			'public' => true,
-			'show_ui' => false,'capability_type' => 'post','hierarchical' => false,'rewrite' => array('slug' => 'send','with_front'=>false),'supports' => array('title','editor'),'labels' => array (
+			'publicly_queryable' =>true,
+			'show_ui' => false,
+			'query_var' => true,
+			'exclude_from_search'=>true,
+			'capability_type' => 'post',
+			'hierarchical' => false,
+			'rewrite' => array('slug' => 'send','with_front'=>false),
+			'supports' => array('title','editor'),
+			'labels' => array (
 			'name' => 'Newsletters',
 			'singular_name' => 'Newsletter',
-			'exclude_from_search'=>true,
+			'exclude_from_search' => 'false',
 			'menu_name' => 'Newsletters',
 			'add_new' => 'Add Newsletter',
 			'add_new_item' => 'Add New Newsletter',
@@ -143,7 +154,7 @@ class SendPress_Posts{
 			'query_var' => false,
 			'can_export' => true,
 			'show_in_nav_menus' => false,
-			'exclude_from_search'=>true,
+			'exclude_from_search'=>'true',
 		) );
 
 	}
@@ -168,7 +179,7 @@ class SendPress_Posts{
             'show_in_nav_menus'=>false,
             'can_export'=>false,
             'publicly_queryable'=>true,
-            'exclude_from_search'=>true,
+            'exclude_from_search'=>'true',
             )
         );
 

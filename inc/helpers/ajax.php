@@ -16,7 +16,6 @@ class SendPressAjaxProcessor{
 	}
 
 	function add_hooks(){
-		error_log('What');
 		// register the ajax process function with wordpress
 		add_action("wp_ajax_sendpress_save_list", array(&$this,'save_list') );
 		add_action("wp_ajax_nopriv_sendpress_save_list", array(&$this,'save_list') );
@@ -28,6 +27,7 @@ class SendPressAjaxProcessor{
 		add_action('wp_ajax_sendpress-stopcron', array(&$this, 'cron_stop'));
 		add_action('wp_ajax_sendpress-sendcount', array(&$this, 'sendcount'));
 		add_action('sendpress_admin_scripts',array(&$this,'admin_scripts'));
+		add_action('wp_ajax_sendpress-findpost', array(&$this, 'find_post'));
 	}
 
 	function admin_scripts(){
@@ -43,10 +43,44 @@ class SendPressAjaxProcessor{
 	}
 
 	function verify_ajax_call(){
-		$nonce = $_POST['spnonce'];
+		$nonce = isset($_POST['spnonce']) ? $_POST['spnonce'] :  $_GET['spnonce'] ;
     	if ( ! wp_verify_nonce( $nonce, $this->ajax_nonce ) ){
         	die ( 'Busted!');
        	}
+	}
+
+	function find_post(){
+		$this->verify_ajax_call();
+		$q = $_GET['query'];
+
+		$the_query = new WP_Query( 's='. $q );
+		//$response = array('empty','test');
+		$d = new stdClass();
+		
+		$d->query = $q;
+		$d->suggestions = array();
+		$d->data = array();
+		// The Loop
+		global $post;
+		while ( $the_query->have_posts() ) : $the_query->the_post();
+			
+			$d->suggestions[]= get_the_title();
+			$d->data[] = array("content"=>get_the_content() ,"excerpt"=>get_the_excerpt() );
+			
+		endwhile;
+
+		// Reset Post Data
+		wp_reset_postdata();
+
+		
+		
+		
+
+
+
+		// Serialize the response back as JSON
+		echo json_encode($d);
+		die();
 	}
 
 	function save_list(){
@@ -103,16 +137,7 @@ class SendPressAjaxProcessor{
 			$email = isset($_POST['email']) ? $_POST['email'] : '';
 			$listid = isset($_POST['listid']) ? $_POST['listid'] : '';
 
-			$subscriberID = $s->addSubscriber(array('firstname' => $first,'lastname' => $last,'email' => $email));
-
-			$listids = explode(',', $listid);
-
-			$lists = $s->getData($s->lists_table());
-			foreach($lists as $list){
-				if( $list->public == 1 && in_array($list->listID, $listids) ){
-					$success = $s->linkListSubscriber($list->listID, $subscriberID, 2);
-				}
-			}
+			$success = $s->subscribe_user($listid,$email,$first,$last);
 
 			if( false !== $success ){
 				$response['success'] = true;

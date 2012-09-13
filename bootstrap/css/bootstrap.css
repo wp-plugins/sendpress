@@ -2997,8 +2997,9 @@ button.close {
 .invisible {
   visibility: hidden;
 }
+
 .fade {
-  opacity: 0;
+  /*opacity: 0;*/
   -webkit-transition: opacity 0.15s linear;
   -moz-transition: opacity 0.15s linear;
   -ms-transition: opacity 0.15s linear;

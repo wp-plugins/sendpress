@@ -153,7 +153,7 @@ if(!empty($error)){
   }
   if(!$port587){
   	echo '<div class="alert alert-error">';
-  	echo 'Port 25 seems to be blocked.  Gmail may have trouble';
+  	echo 'Port 587 seems to be blocked.';
 	echo '</div>';
 
   }
@@ -198,11 +198,11 @@ $post =  get_post( $default_styles_id );
 <br class="clear">
 <div class="boxer form-box">
 <div style="float: right; width: 45%;">
-	<p><label>Twitter:</label>
+	<p><label>Twitter URL:</label>
 	<input name="twitter" type="text" id="twitter" value="<?php echo $this->get_option('twitter'); ?>" class="regular-text"></p>
-<p><label>Facebook:</label>
+<p><label>Facebook URL:</label>
 <input name="facebook" type="text" id="facebook" value="<?php echo $this->get_option('facebook'); ?>" class="regular-text"></p>
-<p><label>LinkedIn:</label>
+<p><label>LinkedIn URL:</label>
 <input name="linkedin" type="text" id="linkedin" value="<?php echo $this->get_option('linkedin'); ?>" class="regular-text"></p>
 </div>	
 <div style="width: 45%; margin-right: 10%">
@@ -212,14 +212,19 @@ $post =  get_post( $default_styles_id );
 <input name="fromemail" type="text" id="fromemail" value="<?php echo $this->get_option('fromemail'); ?>" class="regular-text"></p>
 <p><label>CAN-SPAM:</label>
 <textarea cols="20" rows="10" class="large-text code" name="can-spam"><?php echo $this->get_option('canspam'); ?></textarea>
-<p>All users (and email marketers for that matter) are required under US law to display a physical business address
- (no PO Box either) inside their outgoing emails.</p> This is dictated under the <a href="http://business.ftc.gov/documents/bus61-can-spam-act-compliance-guide-business" target="_blank">Federal CAN-SPAM Act of 2003</a>.
+<p><b>Tell recipients where you’re located.</b> Your message must include your valid physical postal address. This can be your current street address, a post office box you’ve registered with the U.S. Postal Service, or a private mailbox you’ve registered with a commercial mail receiving agency established under Postal Service regulations.
+</p> This is dictated under the <a href="http://business.ftc.gov/documents/bus61-can-spam-act-compliance-guide-business" target="_blank">Federal CAN-SPAM Act of 2003</a>.
 					</p>
 </div></div>
 <?php wp_nonce_field($this->_nonce_value); ?>
 </form>
 <?php
 break;
+
+case 'widget':
+	require_once( SENDPRESS_PATH. 'inc/pages/widget-settings.php' ); 
+break;
+
 default:
 ?>
 <form method="post" id="post">

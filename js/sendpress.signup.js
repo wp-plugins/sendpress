@@ -1,6 +1,16 @@
 jQuery(document).ready(function($) {
-	
-	$('.sendpress-signup').submit(function(e){
+	var $signups = $('.sendpress-signup');
+    
+    $signups.each(function(){
+        $form = $(this),
+        $error = $form.find('#error'),
+        $thanks = $form.find('#thanks');
+
+        $error.hide();
+        $thanks.hide();
+    });
+
+	$signups.submit(function(e){
         e.preventDefault();
 
         var signup = {},

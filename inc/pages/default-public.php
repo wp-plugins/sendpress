@@ -2,6 +2,7 @@
 switch($action){
 case 'link':
 $link = get_query_var('spurl');
+
 if( get_query_var('fxti') &&  get_query_var('spreport') ){
 
 
@@ -29,15 +30,15 @@ include(SENDPRESS_PATH. '/im/clear.gif');
 
 break;
 case 'manage':
-
+$a = get_query_var('a');
 $this->simple_page_start();
 $name = get_bloginfo('name');
 echo '<h1>'. $name .'</h1>';
 echo '<h2>Manage Subscription</h2>';
 
 if( get_query_var('fxti') ){
-	if( get_query_var('splist') && get_query_var('spreport')   ){
-		//$this->register_unsubscribe(get_query_var('fxti'), get_query_var('spreport'),get_query_var('splist'));
+	if( $a =="u" && get_query_var('splist') && get_query_var('spreport')   ){
+		$this->register_unsubscribe(get_query_var('fxti'), get_query_var('spreport'),get_query_var('splist'));
 	}
 	$subscriber = $this->getSubscriberbyKey( get_query_var('fxti') );
 	echo '<h4>Subscriber Info</h4>';
@@ -47,7 +48,7 @@ if( get_query_var('fxti') ){
 	echo '</div>';
 	
 
-
+	$c = ' hide ';
 	$lists = $this->getDetail($this->lists_table(),'public',1);
 	if ( !empty($_POST) && check_admin_referer($this->_nonce_value) ){
 		$lists_susbscriber = $this->getSubscriberLists( $subscriber[0]->subscriberID  );
@@ -67,18 +68,28 @@ if( get_query_var('fxti') ){
 				}
 			} 
 			
-		}?>
-		<div class="alert alert-info fade in">
+		}
+		$c = '';
+	}
+
+	
+	if($a=="u"){
+		$c = '';
+	}
+
+	?>
+
+	<div class="alert alert-info <?php echo $c; ?> fade in">
   <a class="close" data-dismiss="alert" href="#">×</a>
   <h4 class="alert-heading">Saved!</h4>
  Your subscriptions have been updated. Thanks.
 </div>
 
-		<?php
-	}
+	<?php
 	echo '<p>You are subscribed to the following lists:</p>';
 	//echo $subscriber[0]->subscriberID;
 	?>
+	
 <form action="?sendpress=manage&fxti=<?php echo get_query_var('fxti'); ?>" method="post">
 <?php wp_nonce_field($this->_nonce_value); ?>
 <input type="hidden" name="fxti" value="<?php echo get_query_var('fxti'); ?>" />

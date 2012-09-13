@@ -1,8 +1,9 @@
 <?php
+global $wpdb;
 
-$sp_install = NEW SendPress();
+
 // Create Stats Table
-$subscriber_open_table =  $sp_install->subscriber_open_table();
+$subscriber_open_table =  SendPress_Table_Manager::subscriber_open_table();
 
 
 
@@ -27,7 +28,7 @@ if($wpdb->get_var("show tables like '$subscriber_open_table'") != $subscriber_op
 
 }
 
-$subscriber_click_table =  $sp_install->subscriber_click_table();
+$subscriber_click_table =  SendPress_Table_Manager::subscriber_click_table();
 
 
 
@@ -50,10 +51,7 @@ if($wpdb->get_var("show tables like '$subscriber_click_table'") != $subscriber_c
 	dbDelta($sqltable); 	
 
 }
-$report_url_table =  $sp_install->report_url_table();
-
-
-
+$report_url_table =  SendPress_Table_Manager::report_url_table();
 
 
 if($wpdb->get_var("show tables like '$report_url_table'") != $report_url_table) {

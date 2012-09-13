@@ -17,6 +17,23 @@ jQuery(document).ready(function($) {
                 jQuery('#upload_image').val(imgurl);
                 tb_remove();
             } else {
+                spadmin.log(html);
+                imgurl = jQuery('img',html).attr('src');
+                //cl =jQuery('img',html).parent().attr('class');
+                find = html.search('alignleft');
+                if(find > 0 ){
+                    html = "<img style='margin-right: 10px;' src='"+imgurl+"' align='left'/>";
+                }
+                find = html.search('alignright');
+                if(find > 0 ){
+                    html = "<img style='margin-left: 10px;' src='"+imgurl+"' align='right'/>";
+                }
+                find = html.search('aligncenter');
+                if(find > 0 ){
+                    html = '<table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td align="center"><img style="margin-left: 10px; margin-right: 10px;" src="'+imgurl+'" align="center"/></td></tr></table>';
+                }
+
+
                 spadmin.send_to_editor(html);
             }
 

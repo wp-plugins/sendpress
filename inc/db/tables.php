@@ -1,17 +1,8 @@
 <?php
-
-$sendpress_db_version = "1.0";
- 
 global $wpdb;
-global $sendpress_db_version;
 
-$table = 'sendpress_';
-
-$sp_install = NEW SendPress();
 // Create Stats Table
-$subscriber_table =  $sp_install->subscriber_table();
-
-
+$subscriber_table = SendPress_Table_Manager::subscriber_table();
 
 require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
@@ -36,7 +27,7 @@ if($wpdb->get_var("show tables like '$subscriber_table'") != $subscriber_table) 
 	dbDelta($sql2); 	
 }
 
-$subscriber_list_subscribers = $sp_install->list_subcribers_table();
+$subscriber_list_subscribers = SendPress_Table_Manager::list_subcribers_table();
 
 if($wpdb->get_var("show tables like '$subscriber_list_subscribers'") != $subscriber_list_subscribers) {
 
@@ -58,7 +49,7 @@ if($wpdb->get_var("show tables like '$subscriber_list_subscribers'") != $subscri
 }
 
 
-$subscriber_lists = $sp_install->lists_table();
+$subscriber_lists = SendPress_Table_Manager::lists_table();
 
 if($wpdb->get_var("show tables like '$subscriber_lists'") != $subscriber_lists) {
 
@@ -80,7 +71,7 @@ if($wpdb->get_var("show tables like '$subscriber_lists'") != $subscriber_lists) 
 }
 
 
-$subscriber_queue = $sp_install->queue_table();
+$subscriber_queue = SendPress_Table_Manager::queue_table();
 
 if($wpdb->get_var("show tables like '$subscriber_queue'") != $subscriber_queue) {
 
@@ -113,12 +104,4 @@ if($wpdb->get_var("show tables like '$subscriber_queue'") != $subscriber_queue) 
 
 }
 
-
-
-
-
-
-
-
-
-add_option("sendpress_db_version", $sendpress_db_version);
+add_option("sendpress_db_version", SendPress_Table_Manager::$db_version);

@@ -21,7 +21,7 @@ SendPress is designed to be lightweight and user friendly newsletter and email s
 * Get stats for each newsletter: opens, clicks, unsubscribes
 * Add a subscription form as a sidebar widget or in your pages
 * Your newsletters will look great on the iPhone, in Gmail, Android, Yahoo, Hotmail, etc.
-* Send with your web host, Gmail or SendPress Account( coming soon )
+* Send with your web host or Gmail
 
 Find out more at [SendPress.com](http://sendpress.com/ "Email Marketing and Newsletters for WordPress") 
 
@@ -70,15 +70,34 @@ Our own sending accounts are currently in beta. If you have interest in testing 
 
 == Screenshots ==
 
-1. Email editor and styler.
-2. Template settings.
-3. Default styles setup.
-4. List Management.
-5. Subscriber Management.
-6. Reports.
+1. Post Insert.
+2. Email editor and styler.
+3. Template settings.
+4. Default styles setup.
+5. List Management.
+6. Subscriber Management.
+7. Reports.
 
 
 == Changelog ==
+
+= 0.8.6 =
+Enhancements:
+* SP button added to editor 
+* - Added Ability to insert post into email
+* - Added Ability to insert subscriber info into email
+* Social Media added to template
+* Ability to use Custom CSS 
+* Shortcode Documentation added to settings page
+* New SP logo added
+
+Bug Fixes:
+* Removed special characters from test email title
+* Active Subscriber count off on lists screen
+* scripts using wp_footer now optional uses wp_head by default
+* link styles wrong in some mail clients
+* plugin activation updated to streamline table creation
+* uninstall updated to remove all tables and options 
 
 = 0.8.5.1 =
 * Patch for broken JS on SendPress settings screens.
@@ -110,6 +129,9 @@ Our own sending accounts are currently in beta. If you have interest in testing 
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.8.6 =
+New Insert Post into email + multiple bug fixes
 
 = 0.8.5.1 =
 Fixed JS bug causing settings area to become unreponsive.
