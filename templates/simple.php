@@ -75,17 +75,17 @@ global $post;
 
 			
 			h3, .h3{
-				 color:#202020;
+				color:#202020;
 				display:block;
 				font-family:Arial;
-				 font-size:26px;
-				 font-weight:bold;
-			line-height:100%;
+				font-size:26px;
+				font-weight:bold;
+				line-height:100%;
 				margin-top:0;
 				margin-right:0;
 				margin-bottom:10px;
 				margin-left:0;
-				 text-align:left;
+				text-align:left;
 			}
 
 			
