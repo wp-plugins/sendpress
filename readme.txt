@@ -122,7 +122,7 @@ Bug Fixes:
 = 0.8.3 =
 * removed use of str_getcsv
 * added unofficial support of WP 3.2+
-* added opt-in feedback option
+* added opt-in feedback option test
 
 
 = 0.8.2 =
