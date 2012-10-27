@@ -1,4 +1,4 @@
-=== SendPress ===
+=== SendPress: Email Marketing and Newsletters ===
 Plugin URI: http://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid,
