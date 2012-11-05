@@ -1,10 +1,10 @@
-=== SendPress ===
+=== SendPress: Email Marketing and Newsletters ===
 Plugin URI: http://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid,
 Requires at least: 3.3
 Tested up to: 3.4.1
-Stable tag: 0.8.7
+Stable tag: 0.8.7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,6 +90,11 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 
 == Changelog ==
 
+= 0.8.7.1 =
+* Stopped plugin from creating multiple cron calls
+* Fixed link for setup notice
+* Removed CAN-SPAM as requried
+
 = 0.8.7 =
 * Added Permisions settings for WordPress Roles
 * Implimented SendPress View class
@@ -106,8 +111,8 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 
 = 0.8.6 =
 * SP button added to editor 
-* - Added Ability to insert post into email
-* - Added Ability to insert subscriber info into email
+* -Added Ability to insert post into email
+* -Added Ability to insert subscriber info into email
 * Social Media added to template
 * Ability to use Custom CSS 
 * Shortcode Documentation added to settings page
@@ -149,6 +154,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.8.7.1 =
+Stopped SendPress from creating multiple crons.
 
 = 0.8.7 =
 Link tracking security update and multiple bug fixes.

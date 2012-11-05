@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.8.7
+Version: 0.8.7.1
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Markteing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -11,7 +11,7 @@ Author URI: http://sendpress.com/
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.8.7' );
+define( 'SENDPRESS_VERSION', '0.8.7.1' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -57,6 +57,8 @@ class SendPress{
 
 	var $_debugMode = false;
 
+	private static $instance;
+
 	function log($args) {
 		return SP_Helper::log($args);
 	}
@@ -69,47 +71,63 @@ class SendPress{
 		return 'sendpress-is-awesome';
 	}
 	
-	function &init() {
-		static $instance = array();
-		if ( !$instance ) {
+	
+	function __construct() {
+		add_action( 'init', array( $this, 'init' ) );
+		do_action( 'sendpress_loaded' );
+	}
+
+
+	static function get_instance() {
+		if ( ! isset( self::$instance ) ) {
+			$class_name = __CLASS__;
+			self::$instance = new $class_name;
+		}
+		return self::$instance;
+	}
+
+
+	function init() {
+		
 			load_plugin_textdomain( 'sendpress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-			 
-			$instance[0] =& new SendPress;
-			$instance[0]->add_custom_post();
-			$instance[0]->maybe_upgrade();
-			$instance[0]->ready_for_sending();
-			$instance[0]->_init();
-			add_filter( 'query_vars', array( &$instance[0], 'add_vars' ) );
-			//add_filter( 'cron_schedules', array(&$instance[0],'cron_schedule' ));
-			add_action( 'admin_menu', array( &$instance[0], 'admin_menu' ) );
-			add_action( 'admin_init', array( &$instance[0], 'admin_init' ) );
-			add_action( 'admin_head', array( &$instance[0], 'admin_head' ) );
-			add_action( 'admin_notices', array( &$instance[0],'admin_notice') );
-			add_action( 'sendpress_notices', array( &$instance[0],'sendpress_notices') );
-			add_filter( 'template_include', array( &$instance[0], 'template_include' ) );
-			//add_action( 'sendpress_cron_action', array( &$instance[0],'sendpress_cron_action_run') );
-			wp_schedule_event( time(), 'hourly', 'sendpress_cron_action_run' );
+			$this->add_custom_post();
+			$this->maybe_upgrade();
+			$this->ready_for_sending();
+			add_action( 'admin_print_scripts', array($this,'editor_insidepopup') );
+			add_filter( 'gettext', array($this, 'change_button_text'), null, 2 );
+
+			if(SendPress_Option::get('permalink_rebuild')){
+				 flush_rewrite_rules( false );
+				 SendPress_Option::set('permalink_rebuild',false);
+			}
+
+			add_filter( 'query_vars', array( $this, 'add_vars' ) );
+			//add_filter( 'cron_schedules', array($this,'cron_schedule' ));
+			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+			add_action( 'admin_init', array( $this, 'admin_init' ) );
+			add_action( 'admin_head', array( $this, 'admin_head' ) );
+			add_action( 'admin_notices', array( $this,'admin_notice') );
+			add_action( 'sendpress_notices', array( $this,'sendpress_notices') );
+			add_filter( 'template_include', array( $this, 'template_include' ) );
+			add_action( 'sendpress_cron_action', array( $this,'sendpress_cron_action_run') );
+			if ( !wp_next_scheduled( 'sendpress_cron_action' ) ) {
+				wp_schedule_event( time(), 'hourly', 'sendpress_cron_action' );
+				//wp_schedule_event( time(), 'hourly', 'my_hourly_event');
+			}
+			
 			//using this for now, might find a different way to include things later
 			// global $load_signup_js;
 			// $load_signup_js = false;
 			
-			add_action( 'get_header', array( &$instance[0], 'add_front_end_scripts' ) );
-			add_action( 'wp_enqueue_scripts', array( &$instance[0], 'add_front_end_styles' ) );
+			add_action( 'get_header', array( $this, 'add_front_end_scripts' ) );
+			add_action( 'wp_enqueue_scripts', array( $this, 'add_front_end_styles' ) );
 
-			add_action( 'wp_head', array( &$instance[0], 'handle_front_end_posts' ) );
-		}
-		return $instance[0];
-	}
-
-	function _init(){
+			add_action( 'wp_head', array( $this, 'handle_front_end_posts' ) );
 		
-		add_action( 'admin_print_scripts', array($this,'editor_insidepopup') );
-		add_filter( 'gettext', array($this, 'change_button_text'), null, 2 );
-		if(SendPress_Option::get('permalink_rebuild')){
-			 flush_rewrite_rules( false );
-			 SendPress_Option::set('permalink_rebuild',false);
-		}
+		
 	}
+
+	
 
 	function admin_notice(){
 		//This is the WordPress one shows above menu area.
@@ -119,7 +137,7 @@ class SendPress{
 	function sendpress_notices(){
 		if( in_array('settings', $this->_messages) ){
 		echo '<div class="alert alert-error">';
-			printf(__('<b>Warning!</b> Before sending any emails please setup your <a href="%1s">information</a>.','sendpress'), admin_url("admin.php?page=sp-templates&view=information") );
+			printf(__('<b>Warning!</b> Before sending any emails please setup your <a href="%1s">information</a>.','sendpress'), SendPress_View_Settings::link() );
 	    echo '</div>';
 		}
 	}
@@ -148,11 +166,13 @@ class SendPress{
 			$this->show_message('settings');
 		}
 
+		/*
 		$canspam = SendPress_Option::get('canspam');
 		if($canspam == false || $canspam == ''){
 			$ready = false;	
 			$this->show_message('settings');
 		}
+		*/
 
 		$this->ready = $ready;
 	}
@@ -344,7 +364,7 @@ class SendPress{
 		        /* Check that the user hasn't already clicked to ignore the message */
 		    if ( ! SendPress_Option::get('sendpress_ignore_087') ) {
 		        echo '<div class="updated"><p>';
-		        printf(__('<b>SendPress</b>: We have upgraded your lists to a new format. Please check your <a href="%1$s">widget settings</a> to re-enable your list(s). | <a href="%2$s">Hide Notice</a>'), admin_url('widgets.php'),'?sendpress_ignore_087=0');
+		        printf(__('<b>SendPress</b>: We have upgraded your lists to a new format. Please check your <a href="%1$s">widget settings</a> to re-enable your list(s). | <a href="%2$s">Hide Notice</a>'), admin_url('widgets.php'), admin_url('widgets.php?sendpress_ignore_087=0') );
 		        echo "</p></div>";
 		    }
 		}
@@ -380,7 +400,7 @@ class SendPress{
 		}
 		*/
 		
-		wp_clear_scheduled_hook( 'sendpress_cron_action' );
+		//wp_clear_scheduled_hook( 'sendpress_cron_action' );
 		
 		/*
 		add_meta_box( 'email-status', __( 'Email Status', 'sendpress' ), array( $this, 'email_meta_box' ), $this->_email_post_type, 'side', 'low' );
@@ -796,6 +816,7 @@ class SendPress{
 
 		if(version_compare( $current_version, '0.8.6.7', '<' )){
 			require_once(SENDPRESS_PATH . 'inc/db/alter-tracking.php');
+			SendPress_Option::set('sendpress_ignore_087', 'false');
 		}
 
 		if(version_compare( $current_version, '0.8.8', '<' )){
@@ -1344,7 +1365,7 @@ If you do not want to confirm, simply ignore this message.";
 	    	wp_die( sprintf( __('SendPress requires WordPress version %s or later.', 'sendpress'), SENDPRESS_MINIMUM_WP_VERSION) );
 		} else {
 		    if( SendPress_Option::get('version','0') == '0' ){
-
+		    	SendPress_Option::set('sendpress_ignore_087', 'true');
 		    	require_once(SENDPRESS_PATH .'inc/db/tables.php');
 		    	require_once(SENDPRESS_PATH .'inc/db/status.table.php');
 		    	require_once(SENDPRESS_PATH .'inc/db/open.click.table.php');
@@ -1352,7 +1373,8 @@ If you do not want to confirm, simply ignore this message.";
 
 			}	
 		}
-
+		//Make sure we stop the old action from running
+		wp_clear_scheduled_hook('sendpress_cron_action_run');
 		SendPress_Option::set( 'permalink_rebuild' , true );
 		SendPress_Option::set( 'install_date' , time() );
 	}
@@ -1627,7 +1649,7 @@ If you do not want to confirm, simply ignore this message.";
 		$from_email = SendPress_Option::get('fromemail');
 		$phpmailer->From = $from_email;
 		$phpmailer->FromName = SendPress_Option::get('fromname');
-		
+		$phpmailer->Sender = SendPress_Option::get('fromname');
 		$sending_method  = SendPress_Option::get('sendmethod');
 			
 		$phpmailer = apply_filters('sendpress_sending_method_'. $sending_method, $phpmailer );
@@ -2071,6 +2093,7 @@ If you do not want to confirm, simply ignore this message.";
 register_activation_hook( __FILE__, array( 'SendPress', 'plugin_activation' ) );
 register_deactivation_hook( __FILE__, array( 'SendPress', 'plugin_deactivation' ) );
 
-add_action( 'init', array( 'SendPress', 'init' ) );
+// Initialize!
+SendPress::get_instance();
 
 
