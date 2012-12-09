@@ -3,7 +3,7 @@ Plugin URI: http://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid,
 Requires at least: 3.3
-Tested up to: 3.5
+Tested up to: 3.4.2
 Stable tag: 0.8.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
