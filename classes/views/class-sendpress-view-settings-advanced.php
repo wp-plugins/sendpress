@@ -1,0 +1,77 @@
+<?php
+
+// Prevent loading this file directly
+defined( 'ABSPATH' ) || exit;
+
+class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
+	
+	function save($post, $sp){
+
+	if(isset( $post['allow_tracking'] )){
+		SendPress_Option::set('allow_tracking', 'yes' );
+		SendPress_Option::set('feedback', 'yes' );
+	} else {
+		SendPress_Option::set('allow_tracking', 'no' );
+		SendPress_Option::set('feedback', 'no' );
+	}
+
+	$widget_options =  array();
+
+        $widget_options['widget_options']['load_css'] = 0;
+        $widget_options['widget_options']['load_ajax'] = 0;
+        $widget_options['widget_options']['load_scripts_in_footer'] = 0;
+        if(isset($_POST['load_css'])){
+            $widget_options['widget_options']['load_css'] = $_POST['load_css'];
+        }
+        if(isset($_POST['load_ajax'])){
+            $widget_options['widget_options']['load_ajax'] = $_POST['load_ajax'];
+        }
+        if(isset($_POST['load_scripts_in_footer'])){
+            $widget_options['widget_options']['load_scripts_in_footer'] = $_POST['load_scripts_in_footer'];
+        }
+
+        SendPress_Option::set($widget_options); 
+
+        self::redirect();
+	}
+
+	function html($sp) {
+		?><form method="post" id="post">
+<div style="float:right;" >
+	<a href="<?php echo self::link(); ?>" class="btn btn-large" ><i class="icon-remove"></i> <?php _e('Cancel','sendpress'); ?></a> <a href="#" id="save-update" class="btn btn-primary btn-large"><i class="icon-white icon-ok"></i> <?php _e('Save','sendpress'); ?></a>
+</div>
+<br class="clear">
+		<br class="clear">
+<div class="boxer form-box">
+	<div style="float: right; width: 45%;">
+		<h2>Javascript & CSS</h2>
+		<?php 
+				$widget_options = SendPress_Option::get('widget_options');
+				//print_r($widget_options);
+			?>
+			<input class="turnoff-css-checkbox sendpress_checkbox" value="<?php echo $widget_options['load_css']; ?>" type="checkbox" <?php if( $widget_options['load_css'] == 1 ){ echo 'checked'; } ?> id="load_css" name="load_css"/>  <?php _e('Disable front end CSS','sendpress'); ?><br>
+			
+			<input class="turnoff-ajax-checkbox sendpress_checkbox" value="<?php echo $widget_options['load_ajax']; ?>" type="checkbox" <?php if( $widget_options['load_ajax'] == 1 ){ echo 'checked'; } ?> id="load_ajax" name="load_ajax"/>  <?php  _e('Disable signup form ajax','sendpress'); ?><br>
+
+			
+			<input class="footer-scripts-checkbox sendpress_checkbox" value="<?php echo $widget_options['load_scripts_in_footer']; ?>" type="checkbox" <?php if( $widget_options['load_scripts_in_footer'] == 1 ){ echo 'checked'; } ?> id="load_scripts_in_footer" name="load_scripts_in_footer"/>  <?php _e('Load Javascript in Footer','sendpress'); ?> 
+		
+
+	<br class="clear">
+	</div>	
+	<div style="width: 45%; margin-right: 10%">
+		<h2>Tracking</h2>
+		<?php $ctype = SendPress_Option::get('allow_tracking'); ?>
+	<input type="checkbox" name="allow_tracking" value="yes" <?php if($ctype=='yes'){echo "checked='checked'"; } ?> /> Allow tracking of this WordPress installs anonymous data.
+		<p>	
+	To maintain a plugin as big as SendPress, we need to know what we're dealing: what kinds of other plugins our users are using, what themes, etc. Please allow us to track that data from your install. It will not track any user details, so your security and privacy are safe with us.</p>
+	<br class="clear">
+	</div>
+
+</div>
+<?php wp_nonce_field($sp->_nonce_value); ?>
+</form>
+<?php
+	}
+
+}
