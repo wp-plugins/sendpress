@@ -1,7 +1,10 @@
 <?php
 
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
 
 /**
 * SendPress_View_Queue
@@ -13,7 +16,7 @@ class SendPress_View_Queue extends SendPress_View {
 	
 	function empty_queue( $get, $sp ){
 		SendPress_Data::delete_queue_emails();
-		self::redirect();
+		SendPress_View_Queue::redirect();
 	}
 
 	function html($sp) {

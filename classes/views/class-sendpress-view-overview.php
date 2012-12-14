@@ -1,13 +1,17 @@
 <?php
 
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
+
 if( !class_exists('SendPress_View_Overview') ){
 class SendPress_View_Overview extends SendPress_View{
 
 	function tracking( $get, $sp ){
 		SendPress_Option::set('allow_tracking', $get['allow_tracking']);
-		self::redirect();
+		SendPress_View_Overview::redirect();
 	}
 
 	
@@ -44,8 +48,9 @@ list( $display_version ) = explode( '-', $wp_version );
 <div class="sp-badge"><?php printf( __( 'Version %s' ), SENDPRESS_VERSION ); ?></div>
 
 <div class="welcome-panel-content">
+	
 <h3><?php _e( 'Welcome to SendPress! ','sendpress' ); ?></h3>
-<p class="about-description"><?php _e('Thanks for trying out SendPress. Their is a little bit of setup to do before you can start sending emails out. If you follow the steps below you will be up and running in no time','sendpress'); ?>.</p>
+<p class="about-description"><?php _e('Thanks for trying out SendPress. There is a little bit of setup to do before you can start sending emails out. If you follow the steps below you will be up and running in no time.','sendpress'); ?>.</p>
 <!--
 <p class="about-description"><?php _e( 'If you need help getting started, check out our documentation on <a href="http://docs.sendpress.com/">First Steps with SendPress</a>. If you&#8217;d rather dive right in, here are a few things most people do first set up SendPress. If you need help, use the Help tab in the upper right corner to get information on how to use your current screen and where to go for more assistance.' ); ?></p>
 -->
@@ -61,7 +66,7 @@ list( $display_version ) = explode( '-', $wp_version );
 </div>
 <div class="welcome-panel-column">
 	<h4><span class="icon16 icon-page"></span> <?php _e( 'Add Real Content' ); ?></h4>
-	<p><?php _e( 'Check out eac setion to see how it all works, then add some content and start sending emails!' ); ?></p>
+	<p><?php _e( 'Check out each section to see how it all works, then add some content and start sending emails!' ); ?></p>
 	<ul>
 	<li><?php echo sprintf( __( '<a href="%s">Create your subscription list</a>', 'sendpress' ), SendPress_View_Subscribers::link() ); ?></li>
 	<li><?php echo sprintf( __( '<a href="%s">Create your first email</a>', 'sendpress' ), SendPress_View_Emails::link() ); ?></li>

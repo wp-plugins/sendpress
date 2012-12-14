@@ -1,5 +1,9 @@
 <?php
-// SendPress Required Class: SendPress_Data
+// Prevent loading this file directly
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
 
 class SendPress_Data extends SendPress_DB_Tables {
 
@@ -71,6 +75,14 @@ class SendPress_Data extends SendPress_DB_Tables {
 	/********************* END REPORTS FUNCTIONS **************************/
 
 	/********************* SUBSCRIBER FUNCTIONS **************************/
+
+	function remove_all_subscribers( $list_id = false ){
+		if($list_id !== false && is_numeric( $list_id )){
+			global $wpdb;
+			$table = self::list_subcribers_table();
+			$wpdb->query( $wpdb->prepare("DELETE FROM $table WHERE listID = %d", $list_id) );
+		}
+	}
 
 
 	function get_subscriber($subscriberID, $listID = false){

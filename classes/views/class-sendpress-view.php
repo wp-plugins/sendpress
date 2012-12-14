@@ -1,7 +1,11 @@
 <?php
-// SendPress Required Class: SendPress_View
+
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
+
 // Plugin paths, for including files
 if ( ! defined( 'SENDPRESS_CLASSES' ) )
 	define( 'SENDPRESS_CLASSES', plugin_dir_path( __FILE__ ) );
@@ -40,11 +44,13 @@ class SendPress_View {
      * @return mixed Value.
      */
 	static function redirect( $params = array() ){
-		$url = self::link( $params );
+		$classname = get_called_class();
+		$url = self::link( $params, $classname );
 		if (headers_sent()) {
-		echo "<script>document.location.href='".$url."';</script>"; }
+			echo "<script>document.location.href='".$url."';</script>"; 
+		}
 		else {
-		wp_redirect(  $url ); 
+			wp_redirect(  $url ); 
 		}
 		exit;
 	}
@@ -59,9 +65,11 @@ class SendPress_View {
      *
      * @return mixed Url to view.
      */
-	static function link( $params = array() ){
-		$x = get_called_class();
-		$parts = explode("_", $x);
+	static function link( $params = array() , $classname= false){
+		if($classname == false){
+			$classname = get_called_class();
+		}
+		$parts = explode("_", $classname);
 		$l = "?page=sp-".$parts[2];
 		if(isset( $parts[3])){
 			$l .= "&view=".$parts[3];
@@ -73,13 +81,12 @@ class SendPress_View {
 		if(!empty($params) && (is_array($params) || is_object($params)) ){
 			$params = http_build_query($params, '', '&');
 			if(strlen($params) > 0 ){
-				$params .='&'. $params;
+				$params = '&'. $params;
 			}
 		} else {
 			$params = '';
 		}
 		
-
 		return  admin_url( 'admin.php'. $l . $params );
 
 		//return ;

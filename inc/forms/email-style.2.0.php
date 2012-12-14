@@ -1,4 +1,9 @@
 <?php 
+// Prevent loading this file directly
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
 
 $default_styles_id = SendPress_Data::get_template_id_by_slug('user-style');
 
@@ -255,9 +260,15 @@ if(strlen($active_header['value']) > 0){
 		</div>
 
 		<div id="html-view" class="html-view">
-
+			<?php 
+			$display_correct = __("Is this email not displaying correctly?","sendpress");
+			$view = __("View it in your browser","sendpress");
+			$start_text = __("Not interested anymore?","sendpress");
+			$unsubscribe = __("Unsubscribe","sendpress");
+			$instantly = __("Instantly","sendpress");
+			?>
 			<div class="html-view-holder">
-				<div class="html-view-outer-text">Is this email not displaying correctly? <a href="#">View it in your browser</a>.
+				<div class="html-view-outer-text"><?php echo $display_correct; ?> <a href="#"><?php echo $view; ?></a>.
 				</div>
 				<div class="html-wrapper" class="html-wrapper">
 					<div id='html-header' class='header-holder empty'>
@@ -336,7 +347,7 @@ if(strlen($active_header['value']) > 0){
                                 Anywhere, USA 01234<br>
                                <?php } ?>
                             </div><br>
-                                Not interested anymore? <a href="#" >Unsubscribe</a> Instantly.
+                                <?php echo $start_text ?> <a href="#" ><?php echo $unsubscribe ?></a> <?php echo $instantly ?>.
 				</div>
 		  </div>
 

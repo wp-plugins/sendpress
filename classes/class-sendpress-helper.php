@@ -1,8 +1,12 @@
 <?php
-// SendPress Required Class: SP_Helper
+// SendPress Required Class: SendPress_Helper
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
-class SP_Helper {
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
+
+class SendPress_Helper {
 
 	function log($args) {
 

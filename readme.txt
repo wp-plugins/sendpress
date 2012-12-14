@@ -3,7 +3,7 @@ Plugin URI: http://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid,
 Requires at least: 3.3
-Tested up to: 3.4.2
+Tested up to: 3.5
 Stable tag: 0.8.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -91,6 +91,15 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 
 == Changelog ==
 
+= 0.8.8.1 =
+* uninstall file error fixed.
+* Security check added to all files
+* DB Error on unistall and reinstall
+* Active Subscribers bug in 3.5 fixed
+* Spanish Translation Started
+* Remove all subscribers from list added
+* PHP 5.2 bug fixed
+
 = 0.8.8 =
 * Double Optin added
 * Code optimized for memory usage and loading
@@ -165,6 +174,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.8.8.1 =
+Unistall Error fix and bug fixes.
 
 = 0.8.8 =
 Double optin and performence updates.

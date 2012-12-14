@@ -1,7 +1,10 @@
 <?php
 
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+    header('HTTP/1.0 403 Forbidden');
+    die;
+}
 
 class SendPress_View_Settings_Styles extends SendPress_View_Settings {
 
@@ -98,7 +101,7 @@ class SendPress_View_Settings_Styles extends SendPress_View_Settings {
         SendPress_Option::set('fromname', $fromname );
 
 
-        self::redirect();
+        SendPress_View_Settings_Styles::redirect();
 	}
 	
 	function html($sp) {
@@ -120,7 +123,7 @@ $fn = __('From Name','sendpress');
 		<form method="post" id="post">
 	<br class="clear">
 <div style="float:right;" >
-	<a href="<?php echo self::link(); ?>" class="btn btn-large" ><i class="icon-remove"></i> <?php _e('Cancel','sendpress'); ?></a> <a href="#" id="save-update" class="btn btn-primary btn-large"><i class="icon-white icon-ok"></i> <?php _e('Save','sendpress'); ?></a>
+	<a href="<?php echo SendPress_View_Settings_Styles::link(); ?>" class="btn btn-large" ><i class="icon-remove"></i> <?php _e('Cancel','sendpress'); ?></a> <a href="#" id="save-update" class="btn btn-primary btn-large"><i class="icon-white icon-ok"></i> <?php _e('Save','sendpress'); ?></a>
 </div>
 <br class="clear">
 <h3>Requried Settings</h3>
@@ -178,7 +181,7 @@ $fn = __('From Name','sendpress');
 <div style="width: 45%; margin-right: 10%">
 <h4 class="nomargin"><?php _e('CAN-SPAM','sendpress'); ?>: <small><?php _e('required in the US.','sendpress'); ?></small></h4>
 <textarea cols="20" rows="10" class="large-text code" name="can-spam"><?php echo SendPress_Option::get('canspam'); ?></textarea>
-<p><?php _e('<b>Tell recipients where you’re located.</b> Your message must include your valid physical postal address. This can be your current street address, a post office box you’ve registered with the U.S. Postal Service, or a private mailbox you’ve registered with a commercial mail receiving agency established under Postal Service regulations.','sendpress'); ?></p>
+<p><?php _e('Your message must include your valid physical postal address. This can be your current street address, a post office box youve registered with the U.S. Postal Service, or a private mailbox youve registered with a commercial mail receiving agency established under Postal Service regulations.','sendpress'); ?></p>
 <?php _e('This is dictated under the <a href="http://business.ftc.gov/documents/bus61-can-spam-act-compliance-guide-business" target="_blank">Federal CAN-SPAM Act of 2003</a>.','sendpress'); ?>
 					</p>
 </div>

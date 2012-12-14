@@ -1,7 +1,10 @@
 <?php
 
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
 
 if( !class_exists('SendPress_View_Settings_Activation') ){
 
@@ -23,13 +26,8 @@ class SendPress_View_Settings_Activation extends SendPress_View_Settings {
 		
 		wp_update_post($dpost);
 
-		//SendPress_Option::set('optin_body', $_POST['body']);
-		//print_r();
-		//echo self::link();
-		//print_r(get_class( $this ));
-		//self::n();
-		//echo "asdf";
-		self::redirect(arrat);
+		
+		SendPress_View_Settings_Activation::redirect();
 	}
 	
 	function html($sp) {

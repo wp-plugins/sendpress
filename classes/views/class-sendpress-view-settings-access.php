@@ -1,7 +1,10 @@
 <?php
 
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
 
 if( !class_exists('SendPress_View_Settings_Access') ){
 
@@ -79,12 +82,8 @@ class SendPress_View_Settings_Access extends SendPress_View_Settings {
 			
 		}	
 
-		//print_r();
-		//echo self::link();
-		//print_r(get_class( $this ));
-		//self::n();
-		//echo "asdf";
-		self::redirect();
+		
+		SendPress_View_Settings_Access::redirect();
 	}
 	
 	function html($sp) {

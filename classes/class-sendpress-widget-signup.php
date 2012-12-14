@@ -2,7 +2,10 @@
 // SendPress Required Class: SendPress_Widget_Signup
 
 // Prevent loading this file directly
-defined( 'ABSPATH' ) || exit;
+if ( !defined('SENDPRESS_VERSION') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
 
 /**
  * SendPress Signup Widget class.
@@ -138,7 +141,7 @@ class SendPress_Widget_Signup extends WP_Widget {
 			'first_label' => __('First Name', 'sendpress'), 
 			'last_label' => __('Last Name', 'sendpress'), 
 			'email_label' => __('E-Mail', 'sendpress'), 
-			'desc' => __('', 'sendpress'), 
+			'desc' => '',
 			'button_text' => __('Submit', 'sendpress'),
 			'thank_you' => __('Check your inbox now to confirm your subscription.', 'sendpress')
 		);

@@ -1,17 +1,22 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.8.8
+Version: 0.8.8.1
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Markteing and Newsletter plugin for WordPress. 
 Author: SendPress
 Author URI: http://sendpress.com/
 */
 
+if ( !defined('DB_NAME') ) {
+	header('HTTP/1.0 403 Forbidden');
+	die;
+}
+
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.8.8' );
+define( 'SENDPRESS_VERSION', '0.8.8.1' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -66,11 +71,11 @@ class SendPress{
 	private static $instance;
 
 	function log($args) {
-		return SP_Helper::log($args);
+		return SendPress_Helper::log($args);
 	}
 
 	function append_log($msg, $queueid = -1) {
-		return SP_Helper::append_log($msg, $queueid);
+		return SendPress_Helper::append_log($msg, $queueid);
 	}
 	
 	function nonce_value(){
@@ -81,6 +86,8 @@ class SendPress{
 	function __construct() {
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'widgets_init', array( $this,'load_widgets') );
+		add_action('plugins_loaded',array( $this, 'load_plugin_language'));
+			
 		do_action( 'sendpress_loaded' );
 	}
 
@@ -99,19 +106,41 @@ class SendPress{
 	    }
 
 	    if( strpos($className, 'Public_View') != false ){
+	    	if( defined('SENDPRESS_PRO_PATH') ) {
+	    		$pro_file = SENDPRESS_PRO_PATH."classes/public-views/class-".$cls.".php";
+	    		if( file_exists( $pro_file ) ){
+	    			include SENDPRESS_PRO_PATH."classes/public-views/class-".$cls.".php";
+	    			return;
+	    		}
+	    	}
 	    	include SENDPRESS_PATH."classes/public-views/class-".$cls.".php";
 	  		return;
 	  	} 
 
 	    if( strpos($className, 'View') != false ){
+	    	if( defined('SENDPRESS_PRO_PATH') ) {
+	    		$pro_file = SENDPRESS_PRO_PATH."classes/views/class-".$cls.".php";
+	    		if( file_exists( $pro_file ) ){
+	    			include SENDPRESS_PRO_PATH."classes/views/class-".$cls.".php";
+	    			return;
+	    		}
+	    	}
 	    	include SENDPRESS_PATH."classes/views/class-".$cls.".php";
 	  		return;
-	  	} 
+	  	}
+
 	  	if( strpos($className, 'Module') != false ){
 	    	include SENDPRESS_PATH."classes/modules/class-".$cls.".php";
 	  		return;
 	  	} 
-	    
+
+	    if( defined('SENDPRESS_PRO_PATH') ) {
+    		$pro_file = SENDPRESS_PRO_PATH."classes/class-".$cls.".php";
+    		if( file_exists( $pro_file ) ){
+    			include SENDPRESS_PRO_PATH."classes/class-".$cls.".php";
+    			return;
+    		}
+    	}
 	    include SENDPRESS_PATH."classes/class-".$cls.".php";
     
   }
@@ -130,7 +159,6 @@ class SendPress{
 			SendPress_Signup_Shortcode::init();
 			SendPress_Sender::init();
 		
-			load_plugin_textdomain( 'sendpress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 			$this->add_custom_post();
 			
 			if(SendPress_Option::get('permalink_rebuild')){
@@ -154,7 +182,6 @@ class SendPress{
 				add_action( 'sendpress_notices', array( $this,'sendpress_notices') );
 			}
 
-			
 			add_filter( 'template_include', array( $this, 'template_include' ) );
 			add_action( 'sendpress_cron_action', array( $this,'sendpress_cron_action_run') );
 			if ( !wp_next_scheduled( 'sendpress_cron_action' ) ) {
@@ -172,6 +199,10 @@ class SendPress{
 			add_action( 'wp_head', array( $this, 'handle_front_end_posts' ) );
 			
 		
+	}
+
+	function load_plugin_language(){
+		load_plugin_textdomain( 'sendpress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 	}
 
 		/**
@@ -193,7 +224,10 @@ class SendPress{
 	function sendpress_notices(){
 		if( in_array('settings', $this->_messages) ){
 		echo '<div class="alert alert-error">';
-			printf(__('<b>Warning!</b> Before sending any emails please setup your <a href="%1s">information</a>.','sendpress'), SendPress_View_Settings::link() );
+			echo "<b>";
+			_e('Warning','sendpress');
+			echo "</b>&nbsp;";
+			printf(__('Before sending any emails please setup your <a href="%1s">information</a>.','sendpress'), SendPress_View_Settings::link() );
 	    echo '</div>';
 		}
 	}
@@ -1143,14 +1177,15 @@ class SendPress{
 
 	// COUNT DATA
 	function countSubscribers($listID, $status = 2) {
+		global $wpdb;
 		$table = $this->list_subcribers_table();
 
 		$query = "SELECT COUNT(*) FROM " .  $this->subscriber_table() ." as t1,". $this->list_subcribers_table()." as t2,". $this->subscriber_status_table()." as t3";
 
         
-            $query .= " WHERE (t1.subscriberID = t2.subscriberID) AND (t2.status = t3.statusid ) AND(t2.status = ".$status.") AND (t2.listID =  ". $listID .")";
+            $query .= " WHERE (t1.subscriberID = t2.subscriberID) AND (t2.status = t3.statusid ) AND(t2.status = %d) AND (t2.listID =  %d)";
           //  "SELECT COUNT(*) FROM $table WHERE listID = $listID AND status = $status"
-		$count = $this->wpdbQuery($this->wpdbQuery($query, 'prepare'), 'get_var');
+		$count = $this->wpdbQuery( $wpdb->prepare( $query, $status, $listID) , 'get_var');
 		return $count;
 	}
 
@@ -1788,9 +1823,11 @@ class SendPress{
 		}
 
 
+
 		// Send!
 		$result = true; // start with true, meaning no error
 		$result = @$phpmailer->Send();
+
 		//$phpmailer->SMTPClose();
 		if($istest == true){
 			// Grab the smtp debugging output
@@ -1798,10 +1835,10 @@ class SendPress{
 			SendPress_Option::set('phpmailer_error', $phpmailer->ErrorInfo);
 			SendPress_Option::set('last_test_debug', $smtp_debug);
 			$this->last_send_smtp_debug = $smtp_debug;
-			error_log($smtp_debug);
+		
 		}
 
-		if ( ( $result != true  ) ) {
+		if (  $result != true && $istest == true  ) {
 			$hostmsg = 'host: '.($phpmailer->Host).'  port: '.($phpmailer->Port).'  secure: '.($phpmailer->SMTPSecure) .'  auth: '.($phpmailer->SMTPAuth).'  user: '.($phpmailer->Username)."  pass: *******\n";
 		    $msg = '';
 			$msg .= __('The result was: ','sendpress').$result."\n";
@@ -2250,6 +2287,7 @@ class SendPress{
 // AutoLoad Classes
 spl_autoload_register(array('SendPress', 'autoload'));
 
+	
 register_activation_hook( __FILE__, array( 'SendPress', 'plugin_activation' ) );
 register_deactivation_hook( __FILE__, array( 'SendPress', 'plugin_deactivation' ) );
 

@@ -15,7 +15,8 @@ sitemap.xml
 sitemap.xml.gz
 readme.html
 license.txt
-
+sendpress.po
+sendpress.mo
 
 #################
 ## Eclipse
@@ -173,7 +174,7 @@ pip-log.txt
 .tox
 
 #Translations
-*.mo
+#*.mo
 
 #Mr Developer
 .mr.developer.cfg
