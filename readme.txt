@@ -14,6 +14,10 @@ Easily create, send, manage and track your newsletters and emails right from Wor
 
 Sending great emails and newsletters is something that should be easy and not require a third party system. This plugin aims to fix that and allow you to manage newsletters and emails with easy within WordPress. Instead of focusing on providing every single feature under the sun, SendPress tries to provide only the ones that you really need. It aims to make email marketing through WordPress easy, complete and extensible.
 
+= Check out our 2 minute run through video =
+
+http://vimeo.com/56978344
+
 **Follow this plugin on [Git Hub](https://github.com/brewlabs/sendpress)**
 
 Features of the plugin include:
