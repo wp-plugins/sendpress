@@ -3,7 +3,7 @@ Plugin URI: http://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid,
 Requires at least: 3.3
-Tested up to: 3.5
+Tested up to: 3.5.1
 Stable tag: 0.8.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -94,6 +94,20 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 
 
 == Changelog ==
+
+= 0.9 - 2011.1.31 =
+* New Qeueue manager for emails per day and per hour
+* Ability to use theme template for SendPress Pages
+* New forms page for each list 
+* Updated Widget to support multiple lists
+* Screen options for table views
+* Added Queue info to reports screen
+* Auto create text version of emails
+* Improved Cron and sending overall
+* HTML Support in Widget description
+* Insert Post with title links back to post
+* Multilple other bug fixes and code updates
+
 
 = 0.8.8.1 =
 * uninstall file error fixed.

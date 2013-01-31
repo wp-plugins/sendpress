@@ -1,5 +1,5 @@
 /*
-    SendPress Admin Code v0.5
+    SendPress Admin Code v0.5.1
 */
 ;(function ( $, window, document, undefined ) {
     this.$ = $;
@@ -45,29 +45,21 @@
             });
 
             $('input:radio[name=optionsRadios]').change(function(){
-                      if(spadmin.active_post !== undefined){
-                    var t = $('input:radio[name=optionsRadios]:checked').val();
-                    var htype = $('input:radio[name=headerOptions]:checked').val();
-                    var text =  spadmin.active_post.excerpt;
-                    if(t == 'full'){
-                        text =  spadmin.active_post.content;
-                    }
-                     $('#sp-post-preview-insert').data("code", "<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
-                    $('#sp-post-preview').html("<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
+                if(spadmin.active_post !== undefined){
+                    spadmin.update_post_html();
                 }
             });
 
              $('input:radio[name=headerOptions]').change(function(){
-                    if(spadmin.active_post !== undefined){
-                    var t = $('input:radio[name=optionsRadios]:checked').val();
-                    var htype = $('input:radio[name=headerOptions]:checked').val();
-                    var text =  spadmin.active_post.excerpt;
-                    if(t == 'full'){
-                        text =  spadmin.active_post.content;
-                    }
-                    $('#sp-post-preview-insert').data("code", "<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
-                    $('#sp-post-preview').html("<"+htype+">"+spadmin.active_post.title+"</"+htype+"><p>"+text+"</p>");
-                    }
+                if(spadmin.active_post !== undefined){
+                    spadmin.update_post_html();
+                }
+            });
+
+              $('input:radio[name=headerlinkOptions]').change(function(){
+                if(spadmin.active_post !== undefined){
+                    spadmin.update_post_html();
+                }
             });
 
             var a = $('#sp-single-query').autocomplete({
@@ -82,17 +74,10 @@
                 }, //aditional parameters
                 noCache: true, //default is false, set to true to disable caching
                 // callback function:
-                onSelect: function(value, data){ 
-                    var t = $('input:radio[name=optionsRadios]:checked').val();
-                    var htype = $('input:radio[name=headerOptions]:checked').val();
-                    var text =  data.excerpt;
-                    if(t == 'full'){
-                        text =  data.content;
-                    }
-                    $('#sp-post-preview-insert').data("code", "<"+htype+">"+value+"</"+htype+"><p>"+text+"</p>");
-                    $('#sp-post-preview').html("<"+htype+">"+value+"</"+htype+"><p>"+text+"</p>");
+                onSelect: function(value, data){
                     data.title = value;
                     spadmin.active_post = data;
+                    spadmin.update_post_html();
                 },
                
                 });
@@ -106,6 +91,28 @@
             return false;
         });
         
+		spadmin.update_post_html = function() {
+			var t = $('input:radio[name=optionsRadios]:checked').val();
+			var htype = $('input:radio[name=headerOptions]:checked').val();
+            var link = $('input:radio[name=headerlinkOptions]:checked').val();
+
+			var text =  spadmin.active_post.excerpt;
+			if(t == 'full'){
+				text =  spadmin.active_post.content;
+			}
+            var header = "";
+            if(link == 'nolink'){
+              header = "<"+htype+">"+spadmin.active_post.title+"</"+htype+">";
+            } else {
+              header = "<"+htype+"><a href=\""+spadmin.active_post.url+"\">"+spadmin.active_post.title+"</a></"+htype+">";
+            }
+
+
+			var htmtToInsert = header + "<p>"+text+"</p>";
+			$('#sp-post-preview-insert').data("code", htmtToInsert);
+			$('#sp-post-preview').html(htmtToInsert);
+		}
+       
         spadmin.send_to_editor = window.send_to_editor;
 
         window.send_to_editor = function(html) {

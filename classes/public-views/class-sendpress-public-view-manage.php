@@ -8,7 +8,7 @@ if ( !defined('SENDPRESS_VERSION') ) {
 
 class SendPress_Public_View_Manage extends SendPress_Public_View {
 	
-	function prerender($sp){
+	function prerender(){
 		add_action('sendpress_public_view_scripts', array(&$this,'scripts'));		
 	}
 
@@ -45,8 +45,14 @@ class SendPress_Public_View_Manage extends SendPress_Public_View {
 	}
 		
 
-	function html($sp) {
+	function html() {
 		$info = $this->data();
+
+		if(!isset($info->id)){
+			$info = NEW stdClass();
+			$info->id = 0;
+		}
+
 		/*
 		$link = array(
 				"id"=>$email->subscriberID,
@@ -57,29 +63,44 @@ class SendPress_Public_View_Manage extends SendPress_Public_View {
 				"action"=>"unsubscribe"
 			);
 		*/
-		echo "<div class='span12'>";
-		echo "<div class='area'>";
+		?>
+		<?php
+
+
+		
+		$try_theme = SendPress_Option::use_theme_style();
 		$name = get_bloginfo('name'); 
-		echo '<h1>'. $name .'</h1>';
-		echo '<h2>';
+		echo "<div class='entry-header'>";
+		if(!$try_theme){
+			
+			echo '<h1>'. $name .'</h1>';
+		}
+		echo '<h2 class="entry-title">';
 		_e('Manage Subscription','sendpress');
 		echo '</h2>';
-
-	
+		echo "</div>";
+		
 	if ( isset($info->action) && $info->action == 'unsubscribe' ) {
 		//$sid, $rid, $lid
-		$sp->unsubscribe_from_list( $info->id , $info->report, $info->listID  );
+		SendPress_Data::unsubscribe_from_list( $info->id , $info->report, $info->listID  );
 	}
 
-	$subscriber = $sp->getSubscriber( $info->id );
+	$subscriber = SendPress_Data::get_subscriber( $info->id );
+
+	if($subscriber == false){
+		$subscriber = NEW stdClass();
+		$subscriber->email = 'example@sendpress.com';
+		$subscriber->join_date = date("F j, Y, g:i a");
+
+	}
 	
 	echo '<h4>';
 	_e('Subscriber Info','sendpress');
 	echo '</h4>';
-	echo '<div class="well">';
-	$emailtext = _e('Email','sendpress');
+	echo '<div class="subscriber-info">';
+	$emailtext = __('Email','sendpress');
 	echo '<b>' .$emailtext. ':</b> '. $subscriber->email.'<br>';
-	$date = _e('Signup Date','sendpress');
+	$date = __('Signup Date','sendpress');
 	echo '<b>'.$date.':</b> '.$subscriber->join_date.'';
 	echo '</div>';
 	$c = ' hide ';
@@ -90,13 +111,10 @@ $args=array(
   'post_type' => 'sendpress_list',
   'post_status' => 'publish',
   'posts_per_page' => -1,
-  'caller_get_posts'=> 1
+  'ignore_sticky_posts'=> 1
 );
-$my_query = null;
 $my_query = new WP_Query($args);
 if( $my_query->have_posts() ) {
-  //echo 'List of Posts';
-  $lists_susbscriber = $sp->getSubscriberLists( $info->id  );
 
   while ($my_query->have_posts()) : $my_query->the_post(); 	
 
@@ -105,19 +123,11 @@ if( $my_query->have_posts() ) {
 	$list_id = $my_query->post->ID;
 
 	if(isset($_POST['subscribe_'.$list_id ])){
-				$list_status = $sp->getSubscriberListsStatus( $list_id , $info->id );
+				$list_status = SendPress_Data::get_subscriber_list_status( $list_id , $info->id );
 				if(isset($list_status->status)){
-					$sp->updateStatus( $list_id , $info->id , $_POST[ 'subscribe_'.$list_id ] );
-					//echo $info->status;
-					/*
-					if( listID && $_POST['subscribe_'.$list_id ] == '3' && $list_status->status != '3'  ){
-						//echo 'why';
-						//$sp->register_unsubscribed( $info->id , $ );
-					}
-					*/
-
+					SendPress_Data::update_subscriber_status( $list_id , $info->id , $_POST[ 'subscribe_'.$list_id ] );
 				} elseif( $_POST['subscribe_'. $list_id ] == '2' ){
-					$sp->linkListSubscriber( $list_id , $info->id, $_POST[ 'subscribe_'.$list_id ] );
+					SendPress_Data::update_subscriber_status( $list_id , $info->id, $_POST[ 'subscribe_'.$list_id ] );
 				}
 			} 
 
@@ -159,10 +169,10 @@ wp_reset_query();
 	?>
 	
 <form action="?sendpress=<?php echo $key; ?>" method="post">
-<?php wp_nonce_field($sp->_nonce_value); ?>
+<?php wp_nonce_field( SendPress_Data::nonce() ); ?>
 <input type="hidden" name="subscriberid" id="subscriberid" value="<?php echo $info->id; ?>" />
 
-<table cellpadding="0" cellspacing="0" class="table table-condensed table-striped">
+<table cellpadding="0" cellspacing="0" class="table table-condensed table-striped table-bordered">
 	<tr>
 		<th  ><?php _e('Subscribed','sendpress'); ?></th>
 		<th  ><?php _e('Unsubscribed','sendpress'); ?></th>
@@ -176,14 +186,13 @@ wp_reset_query();
   'post_type' => 'sendpress_list',
   'post_status' => 'publish',
   'posts_per_page' => -1,
-  'caller_get_posts'=> 1
+  'ignore_sticky_posts'=> 1
 );
-$my_query = null;
 $my_query = new WP_Query($args);
 if( $my_query->have_posts() ) {
  
   while ($my_query->have_posts()) : $my_query->the_post(); 
-  $subscriber = $sp->getSubscriberListsStatus($my_query->post->ID, $info->id);
+  $subscriber = SendPress_Data::get_subscriber_list_status($my_query->post->ID, $info->id);
   ?>
   	<tr>
   	<?php
@@ -232,9 +241,9 @@ wp_reset_query();
 <br>
 <input type="submit" class="btn btn-primary" value="<?php _e('Save My Settings','sendpress'); ?>"/>
 </form>
+	<br>
 	<a  href="<?php echo site_url(); ?>"><i class="icon-hand-left"></i> <?php _e('Return to','sendpress'); ?> <?php echo $name; ?></a>
-</div>
-</div>
+
 	<?php
 
 

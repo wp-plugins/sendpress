@@ -30,8 +30,18 @@ class SendPress_View {
 			$this->set_visible( false );
 			return;
 		}
+		add_action('in_admin_footer',array('SendPress_View','footer'));
+
 	}
 	
+	function footer(){ ?>
+		<div class="sp-footer">
+			<a href="<?php echo SendPress_View_Help_Whatsnew::link(); ?>">What's New</a> | <a href="http://sendpress.com/support/knowledgebase/" target="_blank">Knowledge Base</a> | <a href="http://sendpress.uservoice.com/" target="_blank">Feedback</a> | SendPress Version: <?php echo SENDPRESS_VERSION; ?> 
+		</div>
+		<?php
+	}
+
+	function admin_init(){}
 
     /**
      * redirect redirects to the view called on.
@@ -106,9 +116,17 @@ class SendPress_View {
 		echo '<div class="spwrap">';
 	}
 
-	function page_end(){
+	function page_end(){ ?>
+		
+		<?php
 		echo '</div>';
-		echo '</div>';
+		?>
+
+
+		<?php
+		echo '</div>'; ?>
+
+		<?php
 		//echo '<div class="clear"></div>';
 	}
 
@@ -253,8 +271,8 @@ class SendPress_View {
 		
 	}
 
-}
 
+}
 do_action('sendpress_view_class_loaded');
 
 

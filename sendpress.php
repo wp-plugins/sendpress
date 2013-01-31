@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.8.8.1
+Version: 0.9 RC1
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Markteing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -16,13 +16,17 @@ if ( !defined('DB_NAME') ) {
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.8.8.1' );
+define( 'SENDPRESS_VERSION', '0.8.8.7' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
 
-
-
+if(!defined('SENDPRESS_STORE_URL') ){
+	define( 'SENDPRESS_STORE_URL', 'http://sendpress.com' );
+}
+if(!defined('SENDPRESS_PRO_NAME') ){
+	define( 'SENDPRESS_PRO_NAME', 'SendPress Pro' );
+}
 
 /*
 *
@@ -33,14 +37,21 @@ if(!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
 
+// AutoLoad Classes
+spl_autoload_register(array('SendPress', 'autoload'));
+
+
 require_once( SENDPRESS_PATH . 'inc/functions.php' );
 /*
 require_once( SENDPRESS_PATH . 'classes/class-file-loader.php' );
 $sp_loader = new File_Loader('SendPress Required Class');
 */
 //require_once( SENDPRESS_PATH . 'classes/selective-loader.php' );
-class SendPress{
+if( !defined('SENDPRESS_TRANSIENT_LENGTH') ){
+	define( 'SENDPRESS_TRANSIENT_LENGTH', WEEK_IN_SECONDS );
+}
 
+class SendPress {
 
 	var $prefix = 'sendpress_';
 	var $ready = false;
@@ -98,8 +109,8 @@ class SendPress{
 	  
 	    $cls = str_replace('_', '-',	strtolower($className) );
 	    if( substr($cls, -1) == '-'){
-	    	$cls = substr($cls, 0, -1);
-	    	$className  = substr($className, 0, -1);
+	    	//AutoLoad seems to get odd clasname sometimes that ends with _
+  			return;
 	    }
 	    if(class_exists($className)){
 	    	return;
@@ -153,11 +164,20 @@ class SendPress{
 		return self::$instance;
 	}
 
-
 	function init() {
 			SendPress_Ajax_Loader::init();
 			SendPress_Signup_Shortcode::init();
 			SendPress_Sender::init();
+			SendPress_Pro_Manager::init();
+			SendPress_Cron::get_instance();
+
+		
+			sendpress_register_sender('SendPress_Sender_Website');
+			sendpress_register_sender('SendPress_Sender_Gmail');
+
+			if(defined('WP_ADMIN') && WP_ADMIN == true){
+				$sendpress_screen_options = new SendPress_Screen_Options();
+			}
 		
 			$this->add_custom_post();
 			
@@ -172,16 +192,16 @@ class SendPress{
 			if( is_admin() ){
 				$this->maybe_upgrade();
 				$this->ready_for_sending();
-			
 				add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 				add_action( 'admin_init', array( $this, 'admin_init' ) );
-				add_action( 'admin_head', array( $this, 'admin_head' ) );
 				add_action( 'admin_notices', array( $this,'admin_notice') );
 				add_action( 'admin_print_scripts', array($this,'editor_insidepopup') );
 				add_filter( 'gettext', array($this, 'change_button_text'), null, 2 );
 				add_action( 'sendpress_notices', array( $this,'sendpress_notices') );
 			}
 
+			
+			add_image_size( 'sendpress-max', 600, 99999 );
 			add_filter( 'template_include', array( $this, 'template_include' ) );
 			add_action( 'sendpress_cron_action', array( $this,'sendpress_cron_action_run') );
 			if ( !wp_next_scheduled( 'sendpress_cron_action' ) ) {
@@ -339,8 +359,31 @@ class SendPress{
 	function template_include( $template ) { 
 	  	global $post; 
 
-	  	if($action = get_query_var( 'sendpress' )){
-		  	$this->load_default_screen($action);
+	  	if( (get_query_var( 'sendpress' )) || isset($_POST['sendpress']) ){
+		  	
+		  	$action = isset($_POST['sendpress']) ? $_POST['sendpress'] : get_query_var( 'sendpress' );
+
+		  	//Look for encrypted data
+	  		$data = SendPress_Data::decrypt( $action );
+			$view = false;
+		 	
+		 	if(is_object($data)){
+		 		$view = isset($data->view) ? $data->view : false;
+		 	} else {
+		 		$view= $action;
+		 	}
+
+		 	$view_class = SendPress_Data::get_public_view_class($view);
+		 	if(class_exists($view_class)){
+		 		$view_class = NEW $view_class;
+		 		$view_class->data($data);
+				if( isset( $_POST['sp'] ) && wp_verify_nonce( $_POST['sp'],'sendpress-form-post') && method_exists($view_class, 'save') ){
+					$view_class->save();
+				} 
+				$view_class->prerender();
+				$view_class->render();
+			}
+		  	//$this->load_default_screen($action);
 			die();
 		}
 
@@ -404,10 +447,6 @@ class SendPress{
 	function SendPress(){
 		//$this->_templates = $this->get_templates();
 	}
-
-	function admin_head(){
-		//wp_editor( false );
-	}
 	
 	function create_color_picker( $value ) { ?>	
 		<input class="cpcontroller" data-id="<?php echo $value['id']; ?>" css-id="<?php echo $value['css']; ?>" link-id="<?php echo $value['link']; ?>" name="<?php echo $value['id']; ?>" id="<?php echo $value['id']; ?>" type="text" value="<?php  echo isset($value['value']) ? $value['value'] : $value['std'] ; ?>" />
@@ -454,27 +493,27 @@ class SendPress{
 
 	/* Display a notice that can be dismissed */
 		
-		function sendpress_ignore_087() {
-		        /* Check that the user hasn't already clicked to ignore the message */
-		    if ( ! SendPress_Option::get('sendpress_ignore_087') ) {
-		        echo '<div class="updated"><p>';
-		        printf(__('<b>SendPress</b>: We have upgraded your lists to a new format. Please check your <a href="%1$s">widget settings</a> to re-enable your list(s). | <a href="%2$s">Hide Notice</a>'), admin_url('widgets.php'), admin_url('widgets.php?sendpress_ignore_087=0') );
-		        echo "</p></div>";
-		    }
-		}
+	function sendpress_ignore_087() {
+	        /* Check that the user hasn't already clicked to ignore the message */
+	    if ( ! SendPress_Option::get('sendpress_ignore_087') ) {
+	        echo '<div class="updated"><p>';
+	        printf(__('<b>SendPress</b>: We have upgraded your lists to a new format. Please check your <a href="%1$s">widget settings</a> to re-enable your list(s). | <a href="%2$s">Hide Notice</a>'), admin_url('widgets.php'), admin_url('widgets.php?sendpress_ignore_087=0') );
+	        echo "</p></div>";
+	    }
+	}
 		
 
-		function myformatTinyMCE($in)
-		{
-			$in['plugins']= str_replace('wpeditimage,', '', $in['plugins']);
-			return $in;
-		}
+	function myformatTinyMCE($in){
+		$in['plugins']= str_replace('wpeditimage,', '', $in['plugins']);
+		return $in;
+	}
 
 
 
-		function admin_init(){
+	function admin_init(){
 		$this->set_template_default();
 		$this->add_caps();
+
 		if ( isset( $_REQUEST['post_id'] ) ){
    			$p = get_post($_REQUEST['post_id']);
    			if(  $p !==null && $p->post_type == 'sp_newsletters'){
@@ -493,6 +532,11 @@ class SendPress{
 		if( SendPress_Option::get('send_optin_email') == false ){
 			SendPress_Option::set('send_optin_email','yes');
 		}
+
+		if( SendPress_Option::get('try-theme') == false ){
+			SendPress_Option::set('try-theme','yes');
+		}
+
 		if( SendPress_Option::get('confirm-page') == false ){
 			SendPress_Option::set('confirm-page','default');
 		}
@@ -500,6 +544,26 @@ class SendPress{
 		if( SendPress_Option::get('cron_send_count') == false ){
 			SendPress_Option::set('cron_send_count','100');
 		}
+
+		if( SendPress_Option::get('emails-per-day') == false ){
+			SendPress_Option::set('emails-per-day','1000');
+			SendPress_Option::set('emails-per-hour','100');
+		}
+
+		$this->create_initial_list();
+		
+
+		if( SendPress_Option::get('emails-today') == false ){
+			$emails_today = array( date("z") => '0' );
+			SendPress_Option::set('emails-today', $emails_today);
+		}
+
+		$emails_today = SendPress_Option::get('emails-today');
+		$emails_today[date("z") + 1 ] = '0';
+
+		SendPress_Option::set('emails-today', $emails_today);
+
+
 		//SendPress_Option::set('allow_tracking', '');
 		//wp_clear_scheduled_hook( 'sendpress_cron_action' );
 		// Schedule an action if it's not already scheduled
@@ -514,7 +578,6 @@ class SendPress{
 		/*
 		add_meta_box( 'email-status', __( 'Email Status', 'sendpress' ), array( $this, 'email_meta_box' ), $this->_email_post_type, 'side', 'low' );
 			
-		add_meta_box( 'sendpress_stuff2', __( 'WordPress SEO by Yoast2', 'wordpress-seo' ), array( $this, 'meta_box' ), $this->_email_post_type, 'side', 'low' );
 		*/
 
 		if( ( isset($_GET['page']) && $_GET['page'] == 'sp-templates' ) || (isset( $_GET['view'] ) && $_GET['view'] == 'style-email' )) {
@@ -524,11 +587,23 @@ class SendPress{
 
 		//MAKE SURE WE ARE ON AN ADMIN PAGE
 		if(isset($_GET['page']) && in_array($_GET['page'], $this->adminpages)){
+
+			if(SendPress_Option::get('whatsnew')){
+				SendPress_Option::set('whatsnew',false);
+				SendPress_View_Help_Whatsnew::redirect();
+			}
+
+
 			$this->_page = $_GET['page'];
 			add_filter('tiny_mce_before_init',  array($this,'myformatTinyMCE') );
 			if( isset($_GET['spv'])){
 				$this->update_option( 'version' , $_GET['spv'] );
 			}
+
+			if( isset($_GET['beta'])){
+				SendPress_Option::set( 'beta' , absint( $_GET['beta'] ) );
+			}
+
 			remove_editor_styles();
 			add_filter( 'mce_css', array($this,'plugin_mce_css') );
 			//Stop Facebook Plugin from posting emails to Facebook.
@@ -541,10 +616,20 @@ class SendPress{
 	   		$this->_current_view = isset( $_GET['view'] ) ? $_GET['view'] : '' ;
 	   		
 	   		
-			wp_enqueue_script(array('jquery', 'editor', 'thickbox', 'media-upload'));
+
+
+			
+
+			wp_enqueue_script(array('jquery', 'editor', 'thickbox', 'media-upload','dashboard'));
 			wp_enqueue_style('thickbox');
 			wp_register_script('spfarb', SENDPRESS_URL .'js/farbtastic.js' ,'', SENDPRESS_VERSION );
 			wp_enqueue_script( 'spfarb' );
+	
+			wp_register_script('sendpress-flot', SENDPRESS_URL .'js/flot/jquery.flot.js' ,'', SENDPRESS_VERSION );
+			wp_register_script('sendpress-flot-selection', SENDPRESS_URL .'js/flot/jquery.flot.selection.js' ,'', SENDPRESS_VERSION );
+			wp_register_script('sendpress-flot-resize', SENDPRESS_URL .'js/flot/jquery.flot.resize.js' ,'', SENDPRESS_VERSION );
+		
+
 			wp_register_script('sendpress-admin-js', SENDPRESS_URL .'js/sendpress.js','', SENDPRESS_VERSION );
 			wp_enqueue_script('sendpress-admin-js');
 			wp_register_script('sendpress_bootstrap', SENDPRESS_URL .'bootstrap/js/bootstrap.min.js' ,'',SENDPRESS_VERSION);
@@ -560,23 +645,31 @@ class SendPress{
     		wp_enqueue_style( 'sendpress_css_base' );
 
 	    	do_action('sendpress_admin_scripts');
-
+	    	$view_class = $this->get_view_class($this->_page, $this->_current_view);
+			$view_class = NEW $view_class;
+			$view_class->admin_init();	
 	    	$view_class = $this->get_view_class($this->_page, $this->_current_view);
 	    		
-	    	if ( !empty($_POST) && check_admin_referer($this->_nonce_value) ){
-
+	    	$this->_current_action = isset( $_GET['action'] ) ? $_GET['action'] : '' ;
+		    $this->_current_action = isset( $_GET['action2'] ) ? $_GET['action2'] : $this->_current_action ;
+		    $this->_current_action = isset( $_POST['action2'] ) ? $_POST['action2'] : $this->_current_action ;
+		    $this->_current_action = isset( $_POST['action'] ) && $_POST['action'] !== '-1' ? $_POST['action'] : $this->_current_action ;
+		    $method = str_replace("-","_", $this->_current_action);
+	    	$method = str_replace(" ","_",$method);
 	    		
-	    		if( method_exists( $view_class , 'save' ) ){
+
+	    	if ( !empty($_POST) &&  (isset($_POST['_wpnonce']) && wp_verify_nonce($_POST['_wpnonce'],$this->_nonce_value) )   ){
+
+	    		if( method_exists( $view_class , $method )  ){
+	    			$save_class = new $view_class;
+	    			$save_class->$method();
+	    		} elseif( method_exists( $view_class , 'save' )  ) {
 	    			//$view_class::save($this);
 	    			$save_class = new $view_class;
 	    			$save_class->save( $_POST, $this );
 	    		} else {
 
-		    	$this->_current_action = isset( $_GET['action'] ) ? $_GET['action'] : '' ;
-		    	$this->_current_action = isset( $_GET['action2'] ) ? $_GET['action2'] : $this->_current_action ;
-		    	$this->_current_action = isset( $_POST['action2'] ) ? $_POST['action2'] : $this->_current_action ;
-		    	$this->_current_action = isset( $_POST['action'] ) && $_POST['action'] !== '-1' ? $_POST['action'] : $this->_current_action ;
-
+		    	
 		    	require_once( SENDPRESS_PATH . 'inc/helpers/sendpress-post-actions.php' );
 		    	
 		    	}
@@ -586,7 +679,7 @@ class SendPress{
 		    	$this->_current_action = $_GET['action'];
 		    	$this->_current_action = ( isset( $_GET['action2'] ) && $_GET['action2'] !== '-1')  ? $_GET['action2'] : $this->_current_action ;
 		    	$method = str_replace("-","_", $this->_current_action);
-	    			$method = str_replace(" ","_",$method);
+	    		$method = str_replace(" ","_",$method);
 	    		if( method_exists( $view_class , $method ) ){
 	    			$save_class = new $view_class;
 
@@ -760,9 +853,8 @@ class SendPress{
 	    add_submenu_page('sp-overview', __('Queue','sendpress'), __('Queue','sendpress'), $role, 'sp-queue', array(&$this,'render_view'));
 	   	add_submenu_page('sp-overview', __('Settings','sendpress'), __('Settings','sendpress'), $role, 'sp-settings', array(&$this,'render_view'));
 	  
-
-	   	if( defined('WP_DEBUG') && WP_DEBUG ){
-	   		add_submenu_page('sp-overview', __('Add-ons','sendpress'), __('Add-ons','sendpress'), $role, 'sp-pro', array(&$this,'render_view'));
+	   	if( SendPress_Option::get('beta') ) {
+	   		add_submenu_page('sp-overview', __('Pro Add-ons','sendpress'), __('Pro Add-ons','sendpress'), $role, 'sp-pro', array(&$this,'render_view'));
 	   	}
 
 	   	add_submenu_page('sp-overview', __('Help','sendpress'), __('Help','sendpress'), $role, 'sp-help', array(&$this,'render_view'));
@@ -773,20 +865,23 @@ class SendPress{
 	}
 
 	function render_view(){
+
 		$view_class = $this->get_view_class($this->_page, $this->_current_view);
 		//echo "About to render: $view_class, $this->_page";
 		$view_class = NEW $view_class;
+
+		$queue = SendPress_Data::emails_in_queue();
 
 		//add tabs
 		$view_class->add_tab( __('Overview','sendpress'), 'sp-overview', ($this->_page === 'sp-overview') );
 		$view_class->add_tab( __('Emails','sendpress'), 'sp-emails', ($this->_page === 'sp-emails') );
 		$view_class->add_tab( __('Reports','sendpress'), 'sp-reports', ($this->_page === 'sp-reports') );
 		$view_class->add_tab( __('Subscribers','sendpress'), 'sp-subscribers', ($this->_page === 'sp-subscribers') );
-		$view_class->add_tab( __('Queue','sendpress'), 'sp-queue', ($this->_page === 'sp-queue') );
+		$view_class->add_tab( __('Queue','sendpress') . ' <small>('. $queue .')</small>', 'sp-queue', ($this->_page === 'sp-queue') );
 		$view_class->add_tab( __('Settings','sendpress'), 'sp-settings', ($this->_page === 'sp-settings') );
 		
-		if( defined('WP_DEBUG') && WP_DEBUG ){
-			$view_class->add_tab( __('Add-ons','sendpress'), 'sp-pro', ($this->_page === 'sp-pro') );
+		if( SendPress_Option::get('beta') ) {
+			$view_class->add_tab( __('Pro Add-ons','sendpress'), 'sp-pro', ($this->_page === 'sp-pro') );
 		}
 		$view_class->add_tab( __('Help','sendpress'), 'sp-help', ($this->_page === 'sp-help') );
 		$view_class->prerender( $this );
@@ -831,27 +926,7 @@ class SendPress{
 		return "SendPress_View";
 	}
 
-	/**
-	 * Get field class name
-	 *
-	 * @param string $type Field type
-	 *
-	 * @return bool|string Field class name OR false on failure
-	 */
-	static function get_public_view_class( $view = false){
-		
-		if($view !== false){
-			$view = str_replace('-',' ',$view);
-			$view  = ucwords( $view );
-			$view = str_replace(' ','_',$view);
-			$class = "SendPress_Public_View_{$view}";
-
-			if ( class_exists( $class ) )
-				return $class;
-		}
-		
-		return "SendPress_Public_View";
-	}
+	
 	
 	function upgrade_lists_to_custom_postype(){
 		$table = $this->lists_table();
@@ -897,6 +972,8 @@ class SendPress{
 
 		if ( version_compare( $current_version, SENDPRESS_VERSION, '==' ) )
 			return;
+
+		SendPress_Option::set('whatsnew',true);
 
 		if(version_compare( $current_version, '0.6.2', '==' )){
 			require_once(SENDPRESS_PATH . 'inc/db/status.table.php');
@@ -995,7 +1072,12 @@ class SendPress{
 
 	function wpdbQuery($query, $type) {
 		global $wpdb;
-		$result = $wpdb->$type( $query );
+		// eliminate warnings with debug mode
+		if($type == 'prepare'){
+			$result = $wpdb->$type( $query, array() );
+		} else {
+			$result = $wpdb->$type( $query );
+		}
 		return $result;
 	}
 
@@ -1023,17 +1105,8 @@ class SendPress{
 		return $result;	
 	}
 
-	function get_url_by_id( $id ) {
-		$table = $this->report_url_table();
-		$result = $this->wpdbQuery("SELECT * FROM $table WHERE urlID = '$id'", 'get_row');
-		return $result;	
-	}
 
-	function get_open_without_id($rid, $sid){
-		$table = $this->subscriber_event_table();
-		$result = $this->wpdbQuery("SELECT * FROM $table WHERE reportID = '$rid' AND subscriberID = '$sid' AND type='open' ", 'query');
-		return $result;
-	}
+	
 	function get_opens_unique_count($rid){
 		$table = $this->subscriber_event_table();
 		$result = $this->wpdbQuery("SELECT COUNT( DISTINCT subscriberID ) FROM $table WHERE reportID = '$rid' AND type = 'open';", 'get_var');
@@ -1158,20 +1231,10 @@ class SendPress{
 		return $result;	
 	}
 
-	// GET DETAIL (RETURN X WHERE Y = Z)
-	function linkListSubscriber($listID, $subscriberID, $status = 0) {
-		$table = $this->list_subcribers_table();
-		$result = $this->wpdbQuery("SELECT id FROM $table WHERE listID = $listID AND subscriberID = $subscriberID ", 'get_var');
-		
-		if($result == false){
-			$result = $this->wpdbQuery("INSERT INTO $table (listID, subscriberID, status, updated) VALUES( '" . $listID . "', '" . $subscriberID . "','".$status."','".date('Y-m-d H:i:s')."')", 'query');
-		}
-		return $result;	
-	}
-
+	
 	// COUNT DATA
 	function countData($table) {
-		$count = $this->wpdbQuery($this->wpdbQuery("SELECT COUNT(*) FROM $table", 'prepare'), 'get_var');
+		$count = $this->wpdbQuery("SELECT COUNT(*) FROM $table", 'get_var');
 		return $count;
 	}
 
@@ -1191,8 +1254,9 @@ class SendPress{
 
 	// COUNT DATA
 	function countQueue() {
+		global $wpdb;
 		$table = $this->queue_table();
-		$count = $this->wpdbQuery($this->wpdbQuery("SELECT COUNT(1) FROM $table WHERE success = 0 AND max_attempts != attempts", 'prepare'), 'get_var');
+		$count = $this->wpdbQuery("SELECT COUNT(1) FROM $table WHERE success = 0 AND max_attempts != attempts", 'get_var');
 		return $count;
 	}
 
@@ -1220,36 +1284,7 @@ class SendPress{
 		return $wpdb->insert_id;
 	}
 
-	function get_subscriber_by_email( $email ){
-		$table = $this->subscriber_table();
-		$result = $this->wpdbQuery("SELECT subscriberID FROM $table WHERE email = '$email' ", 'get_var');
-		return $result;
-	}
-
-	function addSubscriber($values){
-		$table = $this->subscriber_table();
-		$email = $values['email'];
-
-		if(!isset($values['join_date'])){
-			$values['join_date'] =  date('Y-m-d H:i:s');
-		}
-		if(!isset($values['identity_key'])){
-			$values['identity_key'] =  $this->random_code();
-		}
-
-		if( !filter_var($email, FILTER_VALIDATE_EMAIL) ){
-			return false;
-		}
-
-		$result = $this->get_subscriber_by_email($email);
-		
-
-		if(	$result ){ return $result; }
-		global $wpdb;
-		$result = $wpdb->insert($table,$values);
-		//$result = $this->wpdbQuery("SELECT @lastid2 := LAST_INSERT_ID()",'query');
-		return $wpdb->insert_id;
-	}
+	
 
 	function updateSubscriber($subscriberID, $values){
 		$table = $this->subscriber_table();
@@ -1264,24 +1299,7 @@ class SendPress{
 		//return $wpdb->insert_id;
 	}
 
-	function updateStatus($listID,$subscriberID,$status){
-		$table = $this->list_subcribers_table();
-
-		$check = $this->getSubscriberListsStatus($listID, $subscriberID);
-		if($check == false && $status == '2'){
-			$this->linkListSubscriber($listID,$subscriberID,$status);
-
-		}else {
-			global $wpdb;
-			$result = $wpdb->update($table,array('status'=>$status,'updated'=>date('Y-m-d H:i:s')), array('subscriberID'=> $subscriberID,'listID'=>$listID) );
-		}
-		return $this->getSubscriberListsStatus($listID, $subscriberID);
-	}
-
-	function getSubscriber($subscriberID, $listID = false){
-		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Data::get_subscriber($subscriberID, $listID)' );
-		return SendPress_Data::get_subscriber($subscriberID, $listID);
-	}
+	
 
 	function getSubscriberLists( $value ) {
 		$table = $this->list_subcribers_table();
@@ -1290,9 +1308,8 @@ class SendPress{
 	}
 
 	function getSubscriberListsStatus( $listID,$subscriberID ) {
-		$table = $this->list_subcribers_table();
-		$result = $this->wpdbQuery("SELECT status,updated FROM $table WHERE subscriberID = $subscriberID AND listID = $listID", 'get_row');
-		return $result;	
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::get_subscriber_list_status($listID, $subscriberID)' );
+		return SendPress_Data::get_subscriber_list_status($listID, $subscriberID);
 	}
 
 	function getSubscribers($listID = false){
@@ -1335,12 +1352,7 @@ class SendPress{
         return $this->wpdbQuery($query, 'get_results');
 	}
 
-	function is_double_optin(){
-		if( SendPress_Option::get('send_optin_email') == 'yes'){
-			return true;			
-		}
-		return false;
-	}
+	
 
 
 	function the_content( $content ) {
@@ -1349,125 +1361,25 @@ class SendPress{
 		$optin = SendPress_Data::get_template_id_by_slug('double-optin');	
 		if ( $post->post_type == 'sptemplates' && $post->ID == $optin ) {
 			$content .= "";
-
-			
 		}
 		
 		return $content;
 		
 	}
+
+	function create_initial_list(){
+
+		//check if you have lists
+		$lists = wp_count_posts('sendpress_list');		
+
+		if( intval($lists->publish) === 0 ){
+			//add in a fresh list
+			$id = $this->createList( array('name'=> 'My First SendPress Newsletter', 'public'=>1 ) );
+		}
+		
+	}
 	
 
-	function send_optin($subscriberID, $listids, $lists){
-			$s =SendPress_Data::get_subscriber( $subscriberID );
-			$l = '';
-			foreach($lists as $list){
-				if( in_array($list->ID, $listids) ){
-					$l .= $list->post_title ." <br>";
-				}
-			}
-		//	add_filter( 'the_content', array( $this, 'the_content') );	
-			$optin = SendPress_Data::get_template_id_by_slug('double-optin');
-			$user = SendPress_Data::get_template_id_by_slug('user-style');
-			SendPress_Posts::copy_meta_info($optin,$user);
-
-			
-
-			$message = new SendPress_Email();
-			$message->id($optin);
-			$message->remove_links(true);
-			$message->purge(true);
-			$message->subscriber_id($subscriberID);
-			
-			$code = array(
-					"id"=>$subscriberID,
-					"listids"=> implode(',',$listids),
-					"view"=>"confirm"
-				);
-			$code = SendPress_Data::encrypt( $code );
-
-			$href = site_url() ."?sendpress=".$code;
-
-			$html = $message->html();
-			$html = str_replace("*|SP:CONFIRMLINK|*", $href , $html );
-
-			$sub =  $message->subject();
-			//send_email($to, $subject, $html, $text, $istest = false )
-			///SendPress::email_style_default()	
-			//echo $href;
-			$this->send_email( $s->email, $sub , $html, '', false );
-		
-	}
-
-	function subscribe_user($listid, $email, $first, $last){
-
-		$success = false;
-		$subscriberID = $this->addSubscriber(array('firstname' => $first,'lastname' => $last,'email' => $email));
-
-		if( false === $subscriberID ){
-			return false;
-		}
-		$args = array( 'post_type' => 'sendpress_list','numberposts'     => -1,
-	    'offset'          => 0,
-	    'orderby'         => 'post_title',
-	    'order'           => 'DESC', );
-		$lists = get_posts( $args );
-
-		$listids = explode(',', $listid);
-
-
-
-		
-	    //$lists = $s->getData($s->lists_table());
-	    //$listids = array();
-
-		$status = 2;
-		if( $this->is_double_optin() ){
-			$status = 1;
-			$this->send_optin( $subscriberID, $listids, $lists);
-
-		}
-
-
-
-		foreach($lists as $list){
-			if( in_array($list->ID, $listids) ){
-				$success = $this->linkListSubscriber($list->ID, $subscriberID, $status);
-			}
-		}
-
-		return $success;
-	}
-
-	/**
-	 * Returns the requested option.  
- 	 *
-	 * @param string $name    Option name
-	 * @param mixed  $default (optional)
-	 */
-	function get_option( $name, $default = false ) {
-		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Option::get()' );
-		return SendPress_Option::get( $name, $default);
-	}	
-	/**
-	 * Updates the single given option.  
- 	 *
-	 * @param string $name  Option name
-	 * @param mixed  $value Option value
-	 */
-	function update_option( $name, $value ) {
-		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Option::set()' );
-		return SendPress_Option::set( $name, $value  );
-	}
-	/**
-	 * Updates the multiple given options.  
- 	 *
-	 * @param array $array array( option name => option value, ... )
-	 */
-	function update_options( $array ) {
-		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Option::set()' );
-		return  SendPress_Option::set( $array );
-	}
 
     /**
      * plugin_activation
@@ -1494,6 +1406,7 @@ class SendPress{
 		wp_clear_scheduled_hook('sendpress_cron_action_run');
 		SendPress_Option::set( 'permalink_rebuild' , true );
 		SendPress_Option::set( 'install_date' , time() );
+
 	}
 
 	/**
@@ -1506,50 +1419,9 @@ class SendPress{
 		wp_clear_scheduled_hook( 'sendpress_cron_action' );
 	} 
 
-	function subscriber_table(){
-		return SendPress_Data::subscriber_table();
-	}
-
-	function list_subcribers_table(){
-		return SendPress_Data::list_subcribers_table();
-	}
-
-	function lists_table(){
-		return SendPress_Data::lists_table();
-	}
-
-	function subscriber_status_table(){
-		return SendPress_Data::subscriber_status_table();
-	}
-
-	function subscriber_event_table(){
-		return SendPress_Data::subscriber_event_table();
-	}
-
-	function subscriber_click_table(){
-		return SendPress_Data::subscriber_click_table();
-	}
-
-	function subscriber_open_table(){
-		return SendPress_Data::subscriber_open_table();
-	}
 	
-	function report_url_table(){
-		return SendPress_Data::report_url_table();
-	}
-	
-	function queue_table(){
-		return SendPress_Data::queue_table();
-	}
 
-	/**
-	 * Generate Unsubscribe code
-	 **/
-	function random_code() {
-	    $now = time();
-	    $random_code = substr( $now, strlen( $now ) - 3, 3 ) . substr( md5( uniqid( rand(), true ) ), 0, 8 ) . substr( md5( $now . rand() ), 0, 4);
-	    return $random_code;
-	}
+	
 
 	function csv2array($input,$delimiter=',',$enclosure='"',$escape='\\'){ 
     	$fields=explode($enclosure.$delimiter.$enclosure,substr($input,1,-1)); 
@@ -1598,10 +1470,7 @@ class SendPress{
 
 	
 
-	function get_templates(){
-		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Template::get_instance()->info()' );
-		return SendPress_Template::get_instance()->info();
-	}
+	
 
 	/**
 	 * Returns an array of all PHP files in the specified absolute path.
@@ -1662,30 +1531,10 @@ class SendPress{
 		endforeach;
 	}
 
-	/**
-	* Used to add Overwrite send info for testing. 
-	*
-	* @return boolean true if mail sent successfully, false if an error
+	/*
+		Funtion to be removed.	
 	*/
-    function sp_mail_it( $email ) {
-
-		if ( $this->_debugMode ) {
-		    $originalTo = $email->to_email;
-		    $to = $this->_debugAddress;
-		    $email->subject = '('.$originalTo.') '.$email->subject;
-		
-			$this->append_log('-- Overrode TO, instead of '.$originalTo.' used address '.$this->_debugAddress );
-	   	}
-	   	$message = new SendPress_Email();
-	   	$message->id( $email->emailID );
-	   	$message->subscriber_id( $email->subscriberID );
-	   	$message->list_id( $email->listID );
-	   	$body = $message->html();
-	   	$subject = $message->subject();
-	   	$to = $email->to_email;
-
-	   	return  $this->send_email($to, $subject, $body, '', false );
-	}
+   
 
 
 	
@@ -1701,172 +1550,7 @@ class SendPress{
 	    return $result;
 	}
 
-	function get_domain_from_email($email){
-		$domain = substr(strrchr($email, "@"), 1);
-		return $domain;
-	}
-
-	function get_key(){
-		return SendPress_Data::get_key();
-	}
-
-	function encrypt_data( $message ) {
-		return SendPress_Data::encrypt($message);		
-	}
-
-	function decrypt_data($message) {
-		return SendPress_Data::decrypt($message);
-	}
-
-
-	function send_email($to, $subject, $html, $text, $istest = false ){
-		global $phpmailer, $wpdb;
-
-		// (Re)create it, if it's gone missing
-		if ( !is_object( $phpmailer ) || !is_a( $phpmailer, 'PHPMailer' ) ) {
-			require_once ABSPATH . WPINC . '/class-phpmailer.php';
-			require_once ABSPATH . WPINC . '/class-smtp.php';
-			$phpmailer = new PHPMailer();
-		}
-		
-		/*
-		 * Make sure the mailer thingy is clean before we start,  should not
-		 * be necessary, but who knows what others are doing to our mailer
-		 */
-		$phpmailer->ClearAddresses();
-		$phpmailer->ClearAllRecipients();
-		$phpmailer->ClearAttachments();
-		$phpmailer->ClearBCCs();
-		$phpmailer->ClearCCs();
-		$phpmailer->ClearCustomHeaders();
-		$phpmailer->ClearReplyTos();
-		//return $email;
-		$phpmailer->MsgHTML( $html );
-		$phpmailer->AddAddress( trim( $to ) );
-		$phpmailer->AltBody= $text;
-		$phpmailer->Subject = $subject;
-		$content_type = 'text/html';
-		$phpmailer->ContentType = $content_type;
-		// Set whether it's plaintext, depending on $content_type
-		//if ( 'text/html' == $content_type )
-		$phpmailer->IsHTML( true );
-		
-		// If we don't have a charset from the input headers
-		if ( !isset( $charset ) )
-		//$charset = get_bloginfo( 'charset' );
-		// Set the content-type and charset
-		$phpmailer->CharSet = 'UTF-8';
-		$phpmailer->Encoding = 'quoted-printable';
-		/**
-		* We'll let php init mess with the message body and headers.  But then
-		* we stomp all over it.  Sorry, my plug-inis more important than yours :)
-		*/
-		do_action_ref_array( 'phpmailer_init', array( &$phpmailer ) );
-		
-		$from_email = SendPress_Option::get('fromemail');
-		$phpmailer->From = $from_email;
-		$phpmailer->FromName = SendPress_Option::get('fromname');
-		$phpmailer->Sender = SendPress_Option::get('fromemail');
-		$sending_method  = SendPress_Option::get('sendmethod');
-		
-		$phpmailer = apply_filters('sendpress_sending_method_'. $sending_method, $phpmailer );
-
-		
-		/*
-		if($sending_method == 'sendpress'){
-			// Set the mailer type as per config above, this overrides the already called isMail method
-			$phpmailer->Mailer = 'smtp';
-			// We are sending SMTP mail
-			$phpmailer->IsSMTP();
-
-			// Set the other options
-			$phpmailer->Host = 'smtp.sendgrid.net';
-			$phpmailer->Port = 25;
-
-			// If we're using smtp auth, set the username & password
-			$phpmailer->SMTPAuth = TRUE;
-			$phpmailer->Username = SendPress_Option::get('sp_user');
-			$phpmailer->Password = SendPress_Option::get('sp_pass');
 	
-		} elseif ( $sending_method == 'gmail' ){
-
-			// Set the mailer type as per config above, this overrides the already called isMail method
-			$phpmailer->Mailer = 'smtp';
-			// We are sending SMTP mail
-			$phpmailer->IsSMTP();
-
-			// Set the other options
-			$phpmailer->Host = 'smtp.gmail.com';
-			$phpmailer->SMTPAuth = true;  // authentication enabled
-			$phpmailer->SMTPSecure = 'ssl'; // secure transfer enabled REQUIRED for GMail
-
-			$phpmailer->Port = 465;
-			// If we're using smtp auth, set the username & password
-			$phpmailer->SMTPAuth = TRUE;
-			$phpmailer->Username = SendPress_Option::get('gmailuser');
-			$phpmailer->Password = SendPress_Option::get('gmailpass');
-		} 
-		
-		$phpmailer->MessageID = $email->messageID;
-		$phpmailer->AddCustomHeader( sprintf( 'X-SP-MID: %s',$email->messageID ) );
-		*/
-		$hdr = new SendPress_SendGrid_SMTP_API();
-		$hdr->addFilterSetting('dkim', 'domain', $this->get_domain_from_email($from_email) );
-		//$phpmailer->AddCustomHeader( sprintf( 'X-SP-MID: %s',$email->messageID ) );
-		$phpmailer->AddCustomHeader(sprintf( 'X-SMTPAPI: %s', $hdr->asJSON() ) );
-		// Set SMTPDebug to 2 will collect dialogue between us and the mail server
-		if($istest == true){
-			$phpmailer->SMTPDebug = 2;
-		
-			// Start output buffering to grab smtp output
-			ob_start(); 
-		}
-
-
-
-		// Send!
-		$result = true; // start with true, meaning no error
-		$result = @$phpmailer->Send();
-
-		//$phpmailer->SMTPClose();
-		if($istest == true){
-			// Grab the smtp debugging output
-			$smtp_debug = ob_get_clean();
-			SendPress_Option::set('phpmailer_error', $phpmailer->ErrorInfo);
-			SendPress_Option::set('last_test_debug', $smtp_debug);
-			$this->last_send_smtp_debug = $smtp_debug;
-		
-		}
-
-		if (  $result != true && $istest == true  ) {
-			$hostmsg = 'host: '.($phpmailer->Host).'  port: '.($phpmailer->Port).'  secure: '.($phpmailer->SMTPSecure) .'  auth: '.($phpmailer->SMTPAuth).'  user: '.($phpmailer->Username)."  pass: *******\n";
-		    $msg = '';
-			$msg .= __('The result was: ','sendpress').$result."\n";
-		    $msg .= __('The mailer error info: ','sendpress').$phpmailer->ErrorInfo."\n";
-		    $msg .= $hostmsg;
-		    $msg .= __("The SMTP debugging output is shown below:\n","sendpress");
-		    $msg .= $smtp_debug."\n";
-		    //$msg .= 'The full debugging output(exported mailer) is shown below:\n';
-		    //$msg .= var_export($phpmailer,true)."\n";
-			$this->append_log($msg);								
-		}
-
-	
-		
-		return $result;
-
-	}
-
-
-	function send_test(){
-		$text= __('This is text only alternative body.','sendpress');
-		$subject = __('A Test Email from SendPress.','sendpress');
-		$body= __( 'SendPress test email :).','sendpres' );
-		$testemails = explode(',' , SendPress_Option::get('testemail') );
-		foreach ($testemails as $emailadd) {
-			$this->send_email($emailadd, $subject, $body, $text, true );
-		}
-	}
 
 	function cron_stop(){
 		$upload_dir = wp_upload_dir();
@@ -1887,15 +1571,37 @@ class SendPress{
 
 	function fetch_mail_from_queue(){
 		global $wpdb;
-		$count = SendPress_Option::get('cron_send_count');
+		$count = SendPress_Option::get('emails-per-hour');
+		$emails_per_hour = SendPress_Option::get('emails-per-hour');
+		if($emails_per_hour != 0){
+			$rate = 3600 / $emails_per_hour;
+		}
+		if($rate > 8){
+			$rate = 8;
+		}
+		$emails_today =  SendPress_Option::get('emails-today');
+		$emails_per_day = SendPress_Option::get('emails-per-day');
+		$email_count = isset($emails_today[date("z")]) ? $emails_today[date("z")] : 0 ;
+		$attempts = 0;
+		if( SendPress_Manager::send_limit_reached()  ){
+			return;
+		}
+
+
 		for ($i=0; $i < $count ; $i++) { 
 			if($this->cron_stop() == false ){
-				$email = $this->wpdbQuery("SELECT * FROM ".$this->queue_table()." WHERE success = 0 AND max_attempts != attempts AND inprocess = 0 ORDER BY id LIMIT 1","get_row");
+				$email = $this->wpdbQuery("SELECT * FROM ". SendPress_Data::queue_table() ." WHERE success = 0 AND max_attempts != attempts AND inprocess = 0 ORDER BY id LIMIT 1","get_row");
 				if($email != null){
+
+					if( SendPress_Manager::send_limit_reached() ){
+						break;
+					}
+					$attempts++;
 					SendPress_Data::queue_email_process( $email->id );
-					$result = $this->sp_mail_it( $email );
+					$result = SendPress_Manager::send_email_from_queue( $email );
+					$email_count++;
 					if ($result) {
-						$table = $this->queue_table();
+						$table = SendPress_Data::queue_table();
 						$wpdb->query( 
 							$wpdb->prepare( 
 								"DELETE FROM $table WHERE id = %d",
@@ -1908,10 +1614,10 @@ class SendPress{
 							'subscriberID' => $email->subscriberID
 						);
 
-						$wpdb->insert( $this->subscriber_open_table(),  $senddata);
-						
+						//$wpdb->insert( $this->subscriber_open_table(),  $senddata);
+						SendPress_Data::update_report_sent_count( $email->emailID );
 					} else {
-						$wpdb->update( $this->queue_table() , array('attempts'=>$email->attempts+1,'inprocess'=>0,'last_attempt'=> date('Y-m-d H:i:s') ) , array('id'=> $email->id ));
+						$wpdb->update( SendPress_Data::queue_table() , array('attempts'=>$email->attempts+1,'inprocess'=>0,'last_attempt'=> date('Y-m-d H:i:s') ) , array('id'=> $email->id ));
 					}
 				} else{//We ran out of emails to process.
 					break;
@@ -1919,59 +1625,56 @@ class SendPress{
 			} else{ //Stop was set.
 				break;
 			}
-
+			if($emails_per_hour != 0){
+					sleep( $rate );
+				}	
 		}
 
 
+		
+		SendPress_Manager::increase_email_count( $attempts );
 
-
-		/*
-		foreach($emails as $email_single ){
-			//error_log(' Send via cron ');
-			if($this->cron_stop() == false ){
-				//error_log(' really sent ');
-				$result = $this->sp_mail_it( $email_single );
-				if ($result) {
-					$table = $this->queue_table();
-					$wpdb->query( 
-						$wpdb->prepare( 
-							"DELETE FROM $table WHERE id = %d",
-						    $email_single->id  
-					    )
-					);
-					$senddata = array(
-						'sendat' => date('Y-m-d H:i:s'),
-						'reportID' => $email_single->emailID,
-						'subscriberID' => $email_single->subscriberID
-					);
-
-					$wpdb->insert( $this->subscriber_open_table(),  $senddata);
-					
-				} else {
-					$wpdb->update( $this->queue_table() , array('attempts'=>$email_single->attempts+1,'last_attempt'=> date('Y-m-d H:i:s') ) , array('id'=> $email_single->id ));
-				}
-			} else {
-				//error_log('Get out');
-				break;
-			}	
-		}
-		*/
+		
 	}
 
 	function send_single_from_queue(){
 		
 		global $wpdb;
-		$limit =  wp_rand(1, 10);
+		$limit =  1; //wp_rand(1, 10);
+		$emails_per_hour = SendPress_Option::get('emails-per-hour');
+		if($emails_per_hour != 0){
+			$rate = 3600 / $emails_per_hour;
+		}
+		if($rate > 8){
+			$rate = 8;
+		}
+		$emails_today =  SendPress_Option::get('emails-today');
+		$emails_per_day = SendPress_Option::get('emails-per-day');
+		$email_count = isset($emails_today[date("z")]) ? $emails_today[date("z")] : 0 ;
+
 		//$emails = $this->wpdbQuery("SELECT * FROM ".$this->queue_table()." WHERE success = 0 AND max_attempts != attempts LIMIT ".$limit,"get_results");
 		$count = 0;
 		$attempts = 0;
+
+		if( SendPress_Manager::send_limit_reached()  ){
+			return array('attempted'=> $attempts,'sent'=>$count);
+		}
+
 		for ($i=0; $i < $limit ; $i++) { 
 				$email = $this->wpdbQuery("SELECT * FROM ".$this->queue_table()." WHERE (success = 0) AND (max_attempts != attempts) AND (inprocess = 0) ORDER BY id ASC LIMIT 1","get_results");
 				if( !empty($email) ){
 					$email = $email[0];
+					
+
+					if( SendPress_Manager::send_limit_reached() ){
+						return array('attempted'=> $attempts,'sent'=>$count);
+					}
+
 					$attempts++;
 					SendPress_Data::queue_email_process( $email->id );
-					$result = $this->sp_mail_it( $email );
+					$result = SendPress_Manager::send_email_from_queue( $email );
+					$email_count++;
+					
 					if ($result) {
 						$table = $this->queue_table();
 						$wpdb->query( 
@@ -1986,57 +1689,25 @@ class SendPress{
 							'subscriberID' => $email->subscriberID
 						);
 
-						$wpdb->insert( $this->subscriber_open_table(),  $senddata);
+						//$wpdb->insert( $this->subscriber_open_table(),  $senddata);
 						$count++;
+						SendPress_Data::update_report_sent_count( $email->emailID );
 					} else {
 						$wpdb->update( $this->queue_table() , array('attempts'=>$email->attempts+1,'inprocess'=>0,'last_attempt'=> date('Y-m-d H:i:s') ) , array('id'=> $email->id ));
 					}
 				} else{//We ran out of emails to process.
 					break;
 				}
-
+				if($emails_per_hour != 0){
+					sleep( $rate );
+				}	
 		}
 
-
-
-
-
-
-		/*
-
-		foreach($emails as $email_single ){
-			$result = $this->sp_mail_it( $email_single );
-			if ($result) {
-				$table = $this->queue_table();
-				$wpdb->query( 
-					$wpdb->prepare( 
-						"DELETE FROM $table WHERE id = %d",
-					    $email_single->id  
-				    )
-				);
-				$senddata = array(
-					'sendat' => date('Y-m-d H:i:s'),
-					'reportID' => $email_single->emailID,
-					'subscriberID' => $email_single->subscriberID
-				);
-
-				$wpdb->insert( $this->subscriber_open_table(),  $senddata);
-				$count++;
-			} else {
-				$wpdb->update( $this->queue_table() , array('attempts'=>$email_single->attempts+1,'last_attempt'=> date('Y-m-d H:i:s') ) , array('id'=> $email_single->id ));
-				
-			}
-			$sending_method  = SendPress_Option::get('sendmethod');	
-			if( $sending_method  == 'gmail' ){
-				sleep(1);
-			}
-
-
-		
-
-		}*/
+		SendPress_Manager::increase_email_count( $attempts );
 		return array('attempted'=> $attempts,'sent'=>$count);
 	}
+
+
 
 	function add_email_to_queue($values){
 		global $wpdb;
@@ -2202,41 +1873,10 @@ class SendPress{
 		$wpdb->update( $this->list_subcribers_table() , array('status'=> 3) , array('listID'=> $lid,'subscriberID'=>$sid ));
 	}
 
-	function unsubscribe_from_list( $sid, $rid, $lid ) {
-		global $wpdb;
-		$stat = get_post_meta($rid, '_unsubscribe_count', true );
-		$stat++;
-		update_post_meta($rid, '_unsubscribe_count', $stat );
-		$wpdb->update( $this->list_subcribers_table() , array('status'=> 3) , array('listID'=> $lid,'subscriberID'=>$sid ));
-	}
-
-	function track_click( $sid, $rid, $lid, $ip , $device_type, $device ){
-		global $wpdb;
-
-		if(false == $this->get_open_without_id($rid,$sid) ){
-			$this->track_open($sid, $rid, $ip, $device_type, $device );
-		}
-
-		$urlData = array(
-			'eventdate'=>date('Y-m-d H:i:s'),
-			'subscriberID' => $sid,
-			'reportID' => $rid,
-			'urlID'=>$lid,
-			'ip'=>$ip,
-			'devicetype'=> $device_type,
-			'device'=> $device,
-			'type'=>'click'
-		);
-		
-		$wpdb->insert( $this->subscriber_event_table(),  $urlData);
-
-		//print_r($this->get_open_without_id($rid,$sid));
-	}
 	
-	function track_open( $sid, $rid, $ip = null , $device_type=null, $device=null ){
-		global $wpdb;
-		$wpdb->insert( $this->subscriber_event_table() , array('reportID'=> $rid,'subscriberID'=>$sid,'eventdate'=>date('Y-m-d H:i:s'),'type'=>'open' ,'ip'=>$ip,'devicetype'=> $device_type,'device'=> $device));
-	}
+	
+	
+	
 
 	function get_ip_info($ip){
 		if($ip != false && false == get_transient('sp-'.$ip) ){
@@ -2282,10 +1922,158 @@ class SendPress{
 		}
 	}
 
+	/*
+	*
+	*	FUNCTIONS TO BE REMOVED PLEASE DO NOT USE
+	* 
+	*/
+	function get_templates(){
+		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Template::get_instance()->info()' );
+		return SendPress_Template::get_instance()->info();
+	}
+
+	function get_key(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::get_key()' );
+		return SendPress_Data::get_key();
+	}
+
+	function encrypt_data( $message ) {
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::encrypt()' );
+		return SendPress_Data::encrypt($message);		
+	}
+
+	function decrypt_data($message) {
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::decrypt()' );
+		return SendPress_Data::decrypt($message);
+	}
+
+	function sp_mail_it( $queue_row ) {
+    	_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Manager::send_email_from_queue()' );
+		SendPress_Manager::send_email_from_queue($queue_row);
+	}
+
+	function send_email($to, $subject, $html, $text, $istest = false ){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Sender_(type)::send_email()' );
+		return SendPress_Manager::old_send_email($to, $subject, $html, $text, $istest );
+	}
+
+	function subscriber_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::subscriber_table()' );
+		return SendPress_Data::subscriber_table();
+	}
+
+	function list_subcribers_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::list_subcribers_table()' );
+		return SendPress_Data::list_subcribers_table();
+	}
+
+	function lists_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::lists_table()' );
+		return SendPress_Data::lists_table();
+	}
+
+	function subscriber_status_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::subscriber_status_table()' );
+		return SendPress_Data::subscriber_status_table();
+	}
+
+	function subscriber_event_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::subscriber_event_table()' );
+		return SendPress_Data::subscriber_event_table();
+	}
+
+	function subscriber_click_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::subscriber_click_table()' );
+		return SendPress_Data::subscriber_click_table();
+	}
+
+	function subscriber_open_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::subscriber_open_table()' );
+		return SendPress_Data::subscriber_open_table();
+	}
+	
+	function report_url_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::report_url_table()' );
+		return SendPress_Data::report_url_table();
+	}
+	
+	function queue_table(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::queue_table()' );
+		return SendPress_Data::queue_table();
+	}
+
+	function random_code() {
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::random_code()' );
+	    return SendPress_Data::random_code();
+	}
+
+	function send_optin($subscriberID, $listids, $lists){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Manager::send_optin()' );
+		SendPress_Manager::send_optin($subscriberID, $listids, $lists);	
+	}
+
+	function subscribe_user($listid, $email, $first, $last){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::subscribe_user()' );
+		SendPress_Data::subscribe_user($listid, $email, $first, $last);
+	}
+
+	function get_option( $name, $default = false ) {
+		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Option::get()' );
+		return SendPress_Option::get( $name, $default);
+	}	
+	
+	function update_option( $name, $value ) {
+		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Option::set()' );
+		return SendPress_Option::set( $name, $value  );
+	}
+	
+	function update_options( $array ) {
+		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Option::set()' );
+		return  SendPress_Option::set( $array );
+	}
+
+	function is_double_optin(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Option::is_double_optin()' );
+		return SendPress_Option::is_double_optin();
+	}
+
+	function get_subscriber_by_email( $email ){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::get_subscriber_by_email()' );
+		return SendPress_Data::get_subscriber_by_email( $email );
+	}
+
+	function addSubscriber($values){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::add_subscriber()' );
+		return SendPress_Data::add_subscriber( $values );
+	}
+
+	function updateStatus($listID,$subscriberID,$status){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::update_subscriber_status()' );
+		return SendPress_Data::update_subscriber_status($listID, $subscriberID , $status);
+	}
+
+	function getSubscriber($subscriberID, $listID = false){
+		_deprecated_function( __FUNCTION__, '0.8.7', 'SendPress_Data::get_subscriber($subscriberID, $listID)' );
+		return SendPress_Data::get_subscriber($subscriberID, $listID);
+	}
+
+	function linkListSubscriber($listID, $subscriberID, $status = 0) {
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Data::update_subscriber_status()' );
+		return SendPress_Data::update_subscriber_status($listID, $subscriberID, $status );	
+	}
+
+	function send_test(){
+		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Manager::send_test()' );
+		SendPress_Manager::send_test();
+	}
+	/*
+	*
+	*	END FUNCTIONS TO BE REMOVED PLEASE DO NOT USE
+	* 
+	*/
+
 }// End SP CLASS
 
-// AutoLoad Classes
-spl_autoload_register(array('SendPress', 'autoload'));
 
 	
 register_activation_hook( __FILE__, array( 'SendPress', 'plugin_activation' ) );

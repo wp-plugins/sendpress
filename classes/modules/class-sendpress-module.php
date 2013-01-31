@@ -62,21 +62,52 @@ class SendPress_Module {
 	}
 
 	function buttons($plugin_path){
-		if( !$this->is_pro($plugin_path) ){
-			if( $this->is_pro_active() ){
-				$btn = $this->get_button($plugin_path,true);
-			}else{
-				$btn = $this->get_button($plugin_path);
-			}
-		}else{
-			$btn = $this->get_button($plugin_path);
-		}
+			
+		switch( $this->pro_plugin_state() ){
+			case 'installable':
+			case 'not-installed':
+			case 'installed':
+				$button = array(
+					'class' => 'btn disabled btn-activate', 
+					'href' => '#',
+					'target' => '', 'text' => __('Activate','sendpress')
+				);
+				$btn = $this->build_button($button);
+				break;
+			default:
+				$button = array(
+					'class' => 'module-activate-plugin btn-success btn-activate btn', 
+					'href' => '#',
+					'target' => '', 'text' => __('Activate','sendpress')
+				);
+				//pro is active, check the option to see what the deal is
+				$pro_options = SendPress_Option::get('pro_plugins');
 
+				if( !empty($pro_options) ){
+
+					if( !array_key_exists($plugin_path, $pro_options)){
+						$pro_options[$plugin_path] = false;
+						SendPress_Option::set('pro_plugins',$pro_options);
+						$pro_options = SendPress_Option::get('pro_plugins');
+					}
+					if( $pro_options[$plugin_path] ){
+						$button['class'] = 'btn module-deactivate-plugin';
+						$button['text'] = __('Deactivate','sendpress');
+
+					}
+
+				}
+				
+				$btn = $this->build_button($button);
+				break;
+		}
 		echo '<div class="inline-buttons">'.$btn.'</div>';
 	}
 
 	function get_button($path, $from_pro = false){
-		$button = array('class' => 'btn module-deactivate-plugin', 'href' => '#', 'target' => '', 'text' => 'Deactivate');
+		_deprecated_function( __FUNCTION__, '0.9', 'SendPress_Module::buttons()' );
+		
+		$button = array('class' => 'btn module-deactivate-plugin', 'href' => '#', 'target' => '', 'text' => __('Deactivate','sendpress') );
 		if( $from_pro ){
 			$pro_options = SendPress_Option::get('pro_plugins');
 			$reg_plugin = substr($path, 14, strlen($path));
@@ -88,12 +119,16 @@ class SendPress_Module {
 				$pro_options = SendPress_Option::get('pro_plugins');
 			}
 
+			if(!array_key_exists($path, $pro_options)){
+				!$pro_options[$path] = false;
+			}
+
 			if( !$pro_options[$path] ){
 				$button['class'] = 'module-activate-plugin btn-success btn-activate btn';
 				//$button['id'] = 'module-activate-plugin';
 				$button['text'] = 'Activate';
 			}else{
-				$button['text'] = 'Deactivate';
+				$button['text'] = __('Deactivate','sendpress');
 			}
 
 		}else{
@@ -140,6 +175,22 @@ class SendPress_Module {
 			return true;
 		}
 		return false;
+	}
+
+	function pro_plugin_state(){
+		$ret = 'not-installed';
+		if( file_exists(WP_PLUGIN_DIR.'/sendpress-pro/sendpress-pro.php') ){
+			$ret = 'installed';
+			if( is_plugin_active('sendpress-pro/sendpress-pro.php') ){
+				$ret = 'activated';
+			}
+		}
+		
+		if( $ret === 'not-installed' && get_transient( 'sendpress_key_state' ) === 'valid'  ){
+			$ret = 'installable';
+		}
+
+		return $ret;
 	}
 
 	function is_visible() {

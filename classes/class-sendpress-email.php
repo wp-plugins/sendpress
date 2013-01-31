@@ -76,6 +76,36 @@ class SendPress_Email {
 		$this->_list_ids = $list_ids;
 	}
 
+	function text_convert($html,$fullConvert = true){
+
+		if($fullConvert){
+			$html = preg_replace('# +#',' ',$html);
+			$html = str_replace(array("\n","\r","\t"),'',$html);
+		}
+		$removepictureslinks = "#< *a[^>]*> *< *img[^>]*> *< *\/ *a *>#isU";
+		$removeScript = "#< *script(?:(?!< */ *script *>).)*< */ *script *>#isU";
+		$removeStyle = "#< *style(?:(?!< */ *style *>).)*< */ *style *>#isU";
+		$removeStrikeTags =  '#< *strike(?:(?!< */ *strike *>).)*< */ *strike *>#iU';
+		$replaceByTwoReturnChar = '#< *(h1|h2)[^>]*>#Ui';
+		$replaceByStars = '#< *li[^>]*>#Ui';
+		$replaceByReturnChar1 = '#< */ *(li|td|tr|div|p)[^>]*> *< *(li|td|tr|div|p)[^>]*>#Ui';
+		$replaceByReturnChar = '#< */? *(br|p|h1|h2|legend|h3|li|ul|h4|h5|h6|tr|td|div)[^>]*>#Ui';
+		$replaceLinks = '/< *a[^>]*href *= *"([^#][^"]*)"[^>]*>(.*)< *\/ *a *>/Uis';
+		$text = preg_replace(array($removepictureslinks,$removeScript,$removeStyle,$removeStrikeTags,$replaceByTwoReturnChar,$replaceByStars,$replaceByReturnChar1,$replaceByReturnChar,$replaceLinks),array('','','','',"\n\n","\n* ","\n","\n",'${2} ( ${1} )'),$html);
+		$text = str_replace(array(" ","&nbsp;"),' ',strip_tags($text));
+		$text = trim(@html_entity_decode($text,ENT_QUOTES,'UTF-8'));
+		if($fullConvert){
+			$text = preg_replace('# +#',' ',$text);
+			$text = preg_replace('#\n *\n\s+#',"\n\n",$text);
+		}
+		return $text;
+	}
+
+	function text(){
+		return $this->text_convert( $this->html() , true);
+	}
+
+
 	function html(){
 			global $wpdb;
 			//$email =  $this->email();
@@ -87,7 +117,7 @@ class SendPress_Email {
 			    	$this->post_info = get_post( $this->id() );
 				}
 			    $body_html = SendPress_Template::get_instance()->render( $this->post_info->ID, false, false , $this->remove_links() );
-			    set_transient( 'sendpress_report_body_html_'. $this->id(), $body_html );
+			    set_transient( 'sendpress_report_body_html_'. $this->id(), $body_html , 60*60*2 );
 
 			}
 			
@@ -158,10 +188,12 @@ class SendPress_Email {
 			$subscriber = SendPress_Data::get_subscriber($this->subscriber_id());
 			
 			$body_html = str_replace("*|SP:UNSUBSCRIBE|*", $remove_me , $body_html );
-			$body_html = str_replace("*|FNAME|*", $subscriber->firstname , $body_html );
-			$body_html = str_replace("*|LNAME|*", $subscriber->lastname , $body_html );
-			$body_html = str_replace("*|EMAIL|*", $subscriber->email , $body_html );
-			$body_html = str_replace("*|ID|*", $subscriber->subscriberID , $body_html );
+			if (!is_null($subscriber)) {
+				$body_html = str_replace("*|FNAME|*", $subscriber->firstname , $body_html );
+				$body_html = str_replace("*|LNAME|*", $subscriber->lastname , $body_html );
+				$body_html = str_replace("*|EMAIL|*", $subscriber->email , $body_html );
+				$body_html = str_replace("*|ID|*", $subscriber->subscriberID , $body_html );
+			}
 				
 			//echo  $body_html;
 
@@ -179,14 +211,16 @@ class SendPress_Email {
 			    $email_subject =  $this->post_info->post_title;
 				
 			    $email_subject = SendPress_Template::tag_replace($email_subject);
-				set_transient( 'sendpress_report_subject_'. $this->id(), $email_subject );
+				set_transient( 'sendpress_report_subject_'. $this->id(), $email_subject , 60*60*2);
 			    // Get any existing copy of our transient data
 			}
 			$subscriber = SendPress_Data::get_subscriber($this->subscriber_id());
-			$email_subject = str_replace("*|FNAME|*", $subscriber->firstname , $email_subject );
-			$email_subject = str_replace("*|LNAME|*", $subscriber->lastname , $email_subject );
-			$email_subject = str_replace("*|EMAIL|*", $subscriber->email , $email_subject );
-			$email_subject = str_replace("*|ID|*", $subscriber->subscriberID , $email_subject );
+			if (!is_null($subscriber)) {
+				$email_subject = str_replace("*|FNAME|*", $subscriber->firstname , $email_subject );
+				$email_subject = str_replace("*|LNAME|*", $subscriber->lastname , $email_subject );
+				$email_subject = str_replace("*|EMAIL|*", $subscriber->email , $email_subject );
+				$email_subject = str_replace("*|ID|*", $subscriber->subscriberID , $email_subject );
+  			}
 
 			return $email_subject;
 	}

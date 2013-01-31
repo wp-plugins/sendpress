@@ -7,10 +7,58 @@ if ( !defined('SENDPRESS_VERSION') ) {
 }
 
 class SendPress_View_Pro extends SendPress_View{
+
+	function module_save_api_key(){
+        $license = $_POST['api_key'];
+        if( false === SendPress_Pro_Manager::activate_key($license) ){
+            add_action('sendpress_notices', array('SendPress_Pro_Manager', 'activate_key_notice'));
+        }
+    }
+
+    function module_deactivate_api_key(){
+        if( false === SendPress_Pro_Manager::deactivate_key() ){
+            add_action('sendpress_notices', array('SendPress_Pro_Manager', 'deactivate_key_notice'));
+        }
+    }
+
+    function module_activate_sendpress_pro(){
+        $path = $_POST['plugin_path'];
+        $pro_options = SendPress_Option::get('pro_plugins');
+
+        if( !preg_match('/sendpress-pro.php/i',$path) ){
+            if( preg_match('/sendpress-pro/i',$path) ){
+                //make sure the plugin loads from sendpress pro
+                $pro_options[$path] = true;
+                SendPress_Option::set('pro_plugins',$pro_options); 
+            }
+        }else{
+            activate_plugin($path);
+        }
+
+    }
+
+    function module_deactivate_sendpress_pro(){
+        $path = $_POST['plugin_path'];
+        $pro_options = SendPress_Option::get('pro_plugins');
+
+        if( !preg_match('/sendpress-pro.php/i',$path) ){
+            if( preg_match('/sendpress-pro/i',$path) ){
+                //make sure the plugin loads from sendpress pro
+                $pro_options[$path] = false;
+
+                SendPress_Option::set('pro_plugins',$pro_options); 
+                
+            }
+        }else{
+            deactivate_plugins($path);
+        }
+
+    }
+
 	
 	function html($sp){
-		
-		$modules = array('pro','reports', 'empty', 'empty');
+		//SendPress_Option::set('pro_plugins','');
+		$modules = array('pro','reports', 'spam_test', 'empty');
 		echo '<div class="sendpress-addons">';
 		foreach ($modules as $mod) {
 			$mod_class = $this->get_module_class($mod);

@@ -17,11 +17,14 @@ class SendPress_View_Settings_Activation extends SendPress_View_Settings {
 		SendPress_Option::set('optin_subject', $_POST['subject']);
 		SendPress_Option::set('confirm-page', $_POST['confirm-page']);
 		SendPress_Option::set('confirm-page-id',$_POST['confirm-page-id']);
+		SendPress_Option::set('try-theme', $_POST['try-theme']);
+
+
 
 		$optin = SendPress_Data::get_template_id_by_slug('double-optin');
 		$dpost = get_post($optin);
 		$dpost->post_content = $_POST['body'];
-		
+		$dpost->post_title = $_POST['subject'];
 			
 		
 		wp_update_post($dpost);
@@ -42,7 +45,20 @@ class SendPress_View_Settings_Activation extends SendPress_View_Settings {
 		</div>
 		<br class="clear">
 		<br class="clear">
-		
+<div class="boxer form-box">
+	<h2>Public Page Settings</h2>
+	<br><b>Use theme styles:&nbsp;&nbsp;&nbsp;<input type="radio" value="yes" <?php if(SendPress_Option::get('try-theme')=='yes'){ echo "checked='checked'"; } ?> name="try-theme"> Yes&nbsp;&nbsp;&nbsp;<input type="radio" value="no" <?php if(SendPress_Option::get('try-theme')=='no'){ echo "checked='checked'"; } ?> name="try-theme"> No</b>
+	<br>This will attempt to use the WordPress theme functions <code>get_header</code> and <code>get_footer</code> to build the SendPress default public pages.
+	<br><br><b>View the default pages below to see how they look.</b>
+	<ul class="nomargin">
+		<li><a href="<?php echo site_url(); ?>?sendpress=confirm">Confirmation Page</a></li>
+		<li><a href="<?php echo site_url(); ?>?sendpress=manage">Manage Page</a></li>
+		<li><a href="<?php echo site_url(); ?>?sendpress=post">Post Page</a></li>
+	</ul>
+
+
+</div>
+	
 		
 <div class="boxer form-box">
 	<h2>Double Opt-in Email</h2>
@@ -103,9 +119,40 @@ class SendPress_View_Settings_Activation extends SendPress_View_Settings {
 
 	</div>
 </div>
+<!--
+<div class="boxer form-box">
+	<h2>General Form Post Settings</h2>
+	<div style="float: right; width: 45%;"><br>
+		<b>Page Text</b><br>
+		<textarea style="width:100%; padding: 8px;" rows="21" name="post-page-text"></textarea>
 
+	</div>	
+<div style="width: 45%; margin-right: 10%"><br>
+	<div class='well'>
+<?php $ctype = SendPress_Option::get('post-page'); ?>
+<input type="radio" name="post-page" value="default" <?php if($ctype=='default'){echo "checked='checked'"; } ?> /> Use Default SendPress Page<br><br>
+			<input type="radio" name="post-page" value="custom"  <?php if($ctype=='custom'){echo "checked='checked'";} ?>/> Redirect to <select name="post-page-id"> 
+ <option value="">
+ 	<?php $cpageid = SendPress_Option::get('post-page-id');?>
+<?php echo esc_attr( __( 'Select page' ) ); ?></option> 
+ <?php 
+  $pages = get_pages(); 
+  foreach ( $pages as $page ) {
+  	$s ='';
+  	if($cpageid == $page->ID){ $s =  "selected"; }
+  	$option = '<option value="' . $page->ID .'" ' .$s. '>';
+	$option .= $page->post_title;
+	$option .= '</option>';
+	echo $option;
+  }
+ ?>
+</select>
 
-
+</div>
+</div>
+	<br class="clear">
+</div>
+-->
 
 <?php wp_nonce_field($sp->_nonce_value); ?>
 </form>

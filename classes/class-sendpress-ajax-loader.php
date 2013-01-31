@@ -92,7 +92,11 @@ class SendPress_Ajax_Loader{
 			$content = get_the_content();
 			$content = apply_filters('the_content', $content);
 			$content = str_replace(']]>', ']]&gt;', $content);
-			$d->data[] = array("content"=> $content,"excerpt"=>get_the_excerpt() );
+			$d->data[] = array(
+				"content" => $content,
+				"excerpt" => get_the_excerpt(),
+				"url" => get_permalink()
+			);
 			
 		endwhile;
 
@@ -207,12 +211,13 @@ class SendPress_Ajax_Loader{
 	}
 
 	function sendcount(){
-		error_log('asdf');
 		$this->verify_ajax_call();
 		// Create the response array
-		$sp = new SendPress;
+		// 
+		$count = SendPress_Manager::emails_allowed_to_send();
+		//$sp = new SendPress;
 		$response = array(
-			'total' => $sp->countQueue()
+			'total' => $count
 		);
 		echo json_encode($response);
 		exit();

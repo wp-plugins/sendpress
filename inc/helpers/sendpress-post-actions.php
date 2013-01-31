@@ -45,7 +45,7 @@ switch ( $this->_current_action ) {
 
     case 'account-setup':
     
-        
+        /*
         $options =  array();
 
         $options['sendmethod'] = $_POST['sendmethod'];
@@ -62,6 +62,7 @@ switch ( $this->_current_action ) {
 
         
         wp_redirect( admin_url('admin.php?page=sp-settings&view=account') );
+        */
     
     break;
      case 'test-account-setup':
@@ -462,47 +463,7 @@ switch ( $this->_current_action ) {
 
     break;
 
-    case 'module-activate-sendpress-pro':
-        $path = $_POST['plugin_path'];
-        $pro_options = SendPress_Option::get('pro_plugins');
-
-        if( !preg_match('/sendpress-pro.php/i',$path) ){
-            if( preg_match('/sendpress-pro/i',$path) ){
-                //make sure the plugin loads from sendpress pro
-                $pro_options[$path] = true;
-                SendPress_Option::set('pro_plugins',$pro_options); 
-                break;
-            }
-        }
-        
-        activate_plugin($path);
-        
-    break;
-
-    case 'module-deactivate-sendpress-pro':
-        $path = $_POST['plugin_path'];
-        $pro_options = SendPress_Option::get('pro_plugins');
-        
-        //var_dump($pro_options);
-
-        if( !preg_match('/sendpress-pro.php/i',$path) ){
-            if( preg_match('/sendpress-pro/i',$path) ){
-                //make sure the plugin loads from sendpress pro
-                $pro_options[$path] = false;
-
-                SendPress_Option::set('pro_plugins',$pro_options); 
-                break;
-                
-            }
-        }
-
-        deactivate_plugins($path);
-    break;
-
-    case 'module-save-api-key':
-        SendPress_Option::set('api_key',$_POST['api_key']);
-        
-    break;
+   
 
 }
 
