@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9
+Version: 0.9.1
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Markteing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ if ( !defined('DB_NAME') ) {
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.9' );
+define( 'SENDPRESS_VERSION', '0.9.1' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -843,14 +843,14 @@ class SendPress {
 		} else {
 			$role = "manage_options";
 		}
-
+		$queue = SendPress_Data::emails_in_queue();
 		add_menu_page(__('SendPress','sendpress'), __('SendPress','sendpress'), $role,'sp-overview',  array(&$this,'render_view') , SENDPRESS_URL.'img/icon.png');
 	    add_submenu_page('sp-overview', __('Overview','sendpress'), __('Overview','sendpress'), $role, 'sp-overview', array(&$this,'render_view'));
 	    $main = add_submenu_page('sp-overview', __('Emails','sendpress'), __('Emails','sendpress'), $role, 'sp-emails', array(&$this,'render_view'));
 	    
 	    add_submenu_page('sp-overview', __('Reports','sendpress'), __('Reports','sendpress'), $role, 'sp-reports', array(&$this,'render_view'));
 	   	add_submenu_page('sp-overview', __('Subscribers','sendpress'), __('Subscribers','sendpress'), $role, 'sp-subscribers', array(&$this,'render_view'));
-	    add_submenu_page('sp-overview', __('Queue','sendpress'), __('Queue','sendpress'), $role, 'sp-queue', array(&$this,'render_view'));
+	    add_submenu_page('sp-overview', __('Queue','sendpress') ." (". $queue.")", __('Queue','sendpress')." (". $queue.")", $role, 'sp-queue', array(&$this,'render_view'));
 	   	add_submenu_page('sp-overview', __('Settings','sendpress'), __('Settings','sendpress'), $role, 'sp-settings', array(&$this,'render_view'));
 	  
 	   	if( SendPress_Option::get('beta') ) {
@@ -1570,6 +1570,7 @@ class SendPress {
 	}
 
 	function fetch_mail_from_queue(){
+		@ini_set('max_execution_time',0);
 		global $wpdb;
 		$count = SendPress_Option::get('emails-per-hour');
 		$emails_per_hour = SendPress_Option::get('emails-per-hour');
@@ -1596,6 +1597,7 @@ class SendPress {
 					if( SendPress_Manager::send_limit_reached() ){
 						break;
 					}
+					SendPress_Manager::increase_email_count( 1 );
 					$attempts++;
 					SendPress_Data::queue_email_process( $email->id );
 					$result = SendPress_Manager::send_email_from_queue( $email );
@@ -1625,14 +1627,12 @@ class SendPress {
 			} else{ //Stop was set.
 				break;
 			}
-			if($emails_per_hour != 0){
-					sleep( $rate );
-				}	
+			
 		}
 
 
 		
-		SendPress_Manager::increase_email_count( $attempts );
+		
 
 		
 	}
@@ -1698,9 +1698,7 @@ class SendPress {
 				} else{//We ran out of emails to process.
 					break;
 				}
-				if($emails_per_hour != 0){
-					sleep( $rate );
-				}	
+				
 		}
 
 		SendPress_Manager::increase_email_count( $attempts );

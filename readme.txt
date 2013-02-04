@@ -95,6 +95,10 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 
 == Changelog ==
 
+= 0.9.1 - 2011.2.3 =
+* Fix for cron not sending on some hosts
+
+
 = 0.9 - 2011.1.31 =
 * New Qeueue manager for emails per day and per hour
 * Ability to use theme template for SendPress Pages
@@ -192,6 +196,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.9.1 =
+Fix for Automated sending on some hosts
 
 = 0.9 =
 New Queue Manager, Theme Support and Forms
