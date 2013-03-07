@@ -145,29 +145,32 @@ class SendPress_Email {
 			foreach ($aTags as $aElement) {
 				$href = $aElement->getAttribute('href');
 				//ADD TO DB?
-
-				$urlinDB = SendPress_Data::get_url_by_report_url( $this->id(), $href );
-				if(!isset($urlinDB[0])){
 				
-					$urlData = array(
-						'url' => trim($href),
-						'reportID' => $this->id(),
+				if(strrpos( $href, "*|" ) === false ) {
+
+					$urlinDB = SendPress_Data::get_url_by_report_url( $this->id(), $href );
+					if(!isset($urlinDB[0])){
+					
+						$urlData = array(
+							'url' => trim($href),
+							'reportID' => $this->id(),
+						);
+						$urlID = SendPress_Data::insert_report_url( $urlData );
+					
+					} else {
+						$urlID  = $urlinDB[0]->urlID;
+					}
+					$link = array(
+						"id"=>$this->subscriber_id(),
+						"report"=> $this->id(),
+						"urlID"=> $urlID,
+						"view"=>"link"
 					);
-					$urlID = SendPress_Data::insert_report_url( $urlData );
-				
-				} else {
-					$urlID  = $urlinDB[0]->urlID;
-				}
-				$link = array(
-					"id"=>$this->subscriber_id(),
-					"report"=> $this->id(),
-					"urlID"=> $urlID,
-					"view"=>"link"
-				);
-				$x = SendPress_Data::encrypt( $link );
+					$x = SendPress_Data::encrypt( $link );
 
-				$href = site_url() ."?sendpress=".$x;
-				$aElement->setAttribute('href', $href);
+					$href = site_url() ."?sendpress=".$x;
+					$aElement->setAttribute('href', $href);
+				}
 			}
 			$body_html = $dom->saveHtml();
 
@@ -194,7 +197,8 @@ class SendPress_Email {
 				$body_html = str_replace("*|EMAIL|*", $subscriber->email , $body_html );
 				$body_html = str_replace("*|ID|*", $subscriber->subscriberID , $body_html );
 			}
-				
+			
+            $body_html = apply_filters('sendpress_post_render_email', $body_html);
 			//echo  $body_html;
 
 			//print_r($email);
@@ -223,6 +227,35 @@ class SendPress_Email {
   			}
 
 			return $email_subject;
+	}
+
+
+	function set_default_style( $id ){
+		if( false == get_post_meta( $id , 'body_bg', true) ) {
+
+			$default_styles_id = SendPress_Data::get_template_id_by_slug( 'user-style' );
+
+			if(false == get_post_meta( $default_styles_id , 'body_bg', true) ){
+				$default_styles_id = SendPress_Data::get_template_id_by_slug('default-style');
+			}
+
+			$default_post = get_post( $default_styles_id );
+
+			update_post_meta( $id , 'body_bg',  get_post_meta( $default_post->ID , 'body_bg', true) );
+			update_post_meta( $id , 'body_text',  get_post_meta( $default_post->ID , 'body_text', true) );
+			update_post_meta( $id , 'body_link',  get_post_meta( $default_post->ID , 'body_link', true) );
+			
+			update_post_meta( $id , 'header_bg',  get_post_meta( $default_post->ID , 'header_bg', true) );
+			update_post_meta( $id , 'header_text_color',  get_post_meta( $default_post->ID , 'header_text_color', true) );
+			//update_post_meta( $id , 'header_text',  get_post_meta( $default_post->ID , 'header_text', true) );
+
+			update_post_meta( $id, 'content_bg',  get_post_meta( $default_post->ID , 'content_bg', true) );
+			update_post_meta( $id , 'content_text',  get_post_meta( $default_post->ID , 'content_text', true) );
+			update_post_meta( $id , 'sp_content_link_color',  get_post_meta( $default_post->ID , 'sp_content_link_color', true) );
+			update_post_meta( $id , 'content_border',  get_post_meta( $default_post->ID , 'content_border', true) );
+			update_post_meta( $id , 'upload_image',  get_post_meta( $default_post->ID , 'upload_image', true) );
+
+		} 
 	}
 
 
