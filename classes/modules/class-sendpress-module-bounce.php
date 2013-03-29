@@ -6,21 +6,22 @@ if ( !defined('SENDPRESS_VERSION') ) {
 	die;
 }
 
-class SendPress_Module_Reports extends SendPress_Module{
+class SendPress_Module_Bounce extends SendPress_Module{
 	
 	function html($sp){
 		$hide = false;
-		$plugin_path = 'sendpress-advanced-reports/sendpress-advanced-reports.php';
+		$plugin_path = '';
 		if( $this->is_pro_active() ){
-			$plugin_path = 'sendpress-pro/extensions/class-sendpress-advanced-reports.php';
+			$plugin_path = 'sendpress-pro/extensions/sendpress-bounce-handler.php';
 		}
 	?>
-		<h4><?php _e('Advanced Reports','sendpress');?></h4>
+		<h4>Bounce Handling</h4>
 		<form method="post" id="post">
 			<div class="description">
-				<?php _e('Add more details to your reports. See who clicked what and when. What device they used and where they were.','sendpress');?>
+				SendPress will automatically mark bounced emails and remove them from your lists.
 			</div>
-			<?php $this->buttons($plugin_path);?>
+			<div class="inline-buttons"><a class="btn disabled btn-activate" href="#">Coming Soon</a></div>
+			<?php //$this->buttons($plugin_path);?>
 			<input type="hidden" name="plugin_path" value="<?php echo $plugin_path; ?>" />
 			<input class="action" type="hidden" name="action" value="module-activate-sendpress-pro" />
 			<?php wp_nonce_field($sp->_nonce_value); ?>

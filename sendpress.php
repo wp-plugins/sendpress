@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.2
+Version: 0.9.3
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Markteing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ if ( !defined('DB_NAME') ) {
 defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 define( 'SENDPRESS_API_VERSION', 1 );
 define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-define( 'SENDPRESS_VERSION', '0.9.2' );
+define( 'SENDPRESS_VERSION', '0.9.3' );
 define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -173,12 +173,13 @@ class SendPress {
 	}
 
 	function init() {
+		$this->maybe_upgrade();
 		SendPress_Ajax_Loader::init();
 		SendPress_Signup_Shortcode::init();
 		SendPress_Sender::init();
 		SendPress_Pro_Manager::init();
 		SendPress_Cron::get_instance();
-
+		SendPress_Notifications_Manager::init();
 	
 		sendpress_register_sender('SendPress_Sender_Website');
 		sendpress_register_sender('SendPress_Sender_Gmail');
@@ -198,7 +199,10 @@ class SendPress {
 		//add_filter( 'cron_schedules', array($this,'cron_schedule' ));
 		
 		if( is_admin() ){
-			$this->maybe_upgrade();
+			if( isset($_GET['spv'])){
+				SendPress_Option::set( 'version' , $_GET['spv'] );
+			}
+			
 			$this->ready_for_sending();
 			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 			add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -206,7 +210,7 @@ class SendPress {
 			add_action( 'admin_print_scripts', array($this,'editor_insidepopup') );
 			add_filter( 'gettext', array($this, 'change_button_text'), null, 2 );
 			add_action( 'sendpress_notices', array( $this,'sendpress_notices') );
-
+			add_filter('user_has_cap',array( $this,'user_has_cap') , 10 , 3);
 		}
 
 		
@@ -228,6 +232,28 @@ class SendPress {
 		add_action( 'wp_head', array( $this, 'handle_front_end_posts' ) );
 		
 	}
+
+	function user_has_cap($all, $caps, $args){
+
+		if(isset($args[2])){
+			$post = get_post( $args[2] );
+			if($post !== null && $post->post_type == 'sp_newsletters'){
+				if( current_user_can('sendpress_email') ){
+					foreach($caps as $cap){
+						$all[$cap] = 1;
+					}
+					
+
+				}
+
+
+			}
+
+		}
+		return $all;
+
+	}
+
 
 	function load_plugin_language(){
 		load_plugin_textdomain( 'sendpress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
@@ -255,7 +281,7 @@ class SendPress {
 			echo "<b>";
 			_e('Warning','sendpress');
 			echo "</b>&nbsp;";
-			printf(__('Before sending any emails please setup your <a href="%1s">information</a>.','sendpress'), SendPress_View_Settings::link() );
+			printf(__('Before sending any emails please setup your <a href="%1s">information</a>.','sendpress'), SendPress_Admin::link('Settings') );
 	    echo '</div>';
 		}
 	}
@@ -522,6 +548,9 @@ class SendPress {
 		$this->set_template_default();
 		$this->add_caps();
 
+
+
+
 		if ( isset( $_REQUEST['post_id'] ) ){
    			$p = get_post($_REQUEST['post_id']);
    			if(  $p !==null && $p->post_type == 'sp_newsletters'){
@@ -599,15 +628,13 @@ class SendPress {
 
 			if(SendPress_Option::get('whatsnew')){
 				SendPress_Option::set('whatsnew',false);
-				SendPress_View_Help_Whatsnew::redirect();
+				SendPress_Admin::redirect('Help_Whatsnew');
 			}
 
 
 			$this->_page = $_GET['page'];
 			add_filter('tiny_mce_before_init',  array($this,'myformatTinyMCE') );
-			if( isset($_GET['spv'])){
-				$this->update_option( 'version' , $_GET['spv'] );
-			}
+			
 
 			if( isset($_GET['beta'])){
 				SendPress_Option::set( 'beta' , absint( $_GET['beta'] ) );
@@ -618,16 +645,9 @@ class SendPress {
 			//Stop Facebook Plugin from posting emails to Facebook.
 			remove_action( 'transition_post_status', 'fb_publish_later', 10, 3);
 
-
-
 			wp_enqueue_style( 'farbtastic' );
 			$tiny = new SendPress_TinyMCE();
 	   		$this->_current_view = isset( $_GET['view'] ) ? $_GET['view'] : '' ;
-	   		
-	   		
-
-
-			
 
 			wp_enqueue_script(array('jquery', 'editor', 'thickbox', 'media-upload','dashboard'));
 			wp_enqueue_style('thickbox');
@@ -649,6 +669,11 @@ class SendPress {
     		wp_register_script('sendpress_ls', SENDPRESS_URL .'js/jquery.autocomplete.js' ,'', SENDPRESS_VERSION );
 			wp_enqueue_script('sendpress_ls');
 			//wp_localize_script( 'sendpress_js', 'sendpress', array( 'ajaxurl' => admin_url( 'admin-ajax.php', 'http' ) ) );
+
+			wp_register_style( 'sendpress_jquery_ibutton_css', SENDPRESS_URL . 'css/jquery.ibutton.css', false, SENDPRESS_VERSION );
+    		wp_enqueue_style( 'sendpress_jquery_ibutton_css' );
+    		wp_register_script('sendpress_jquery_ibutton_js', SENDPRESS_URL .'js/jquery.ibutton.min.js' ,'',SENDPRESS_VERSION);
+			wp_enqueue_script('sendpress_jquery_ibutton_js');
 
 			wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', false, SENDPRESS_VERSION );
     		wp_enqueue_style( 'sendpress_css_base' );
@@ -772,7 +797,7 @@ class SendPress {
 				<?php } ?>
 				<?php if($this->_current_view == 'style'){ ?>
 				<a href="#" id="save-update" class="btn btn-primary btn-large "><i class="icon-white icon-ok"></i> <?php echo __('Update','sendpress'); ?></a>
-				<?php if( SendPress_View_Emails_Send::access() ) { ?>
+				<?php if( SendPress_Admin::access('Emails_Send') ) { ?>
 				<a href="#" id="save-send-email" class="btn btn-primary btn-large "><i class="icon-envelope icon-white"></i> <?php echo __('Send','sendpress'); ?></a>
 				<?php } ?>	
 				<?php } ?>
@@ -977,7 +1002,7 @@ class SendPress {
 	function maybe_upgrade() {
 
 		$current_version = SendPress_Option::get('version', '0' );
-		//$current_version = '0.9.2';
+		//$current_version = '0.9.3';
 		//echo $current_version;
 		//error_log($current_version);
 
@@ -1041,22 +1066,34 @@ class SendPress {
 			SendPress_Option::set($pro_plugins);
 		}
 
+		if(version_compare( $current_version, '0.9.3', '<' )){
 
-
-		if(version_compare( $current_version, '0.9.2', '<' )){
+			SendPress_Data::update_tables_093();
+			
 			$options = SendPress_Option::get('notification_options');
 
-			if($options === false){
-				$options = array();
-			}
+			$new_options = array(
+		        	'email' => '',
+		        	'name' => '',
+		        	'notifications-enable' => false,
+		        	'notifications-subscribed-instant' => false,
+		        	'notifications-subscribed-daily' => false,
+		        	'notifications-subscribed-weekly' => false,
+		        	'notifications-subscribed-monthly' => false,
+		        	'notifications-unsubscribed-instant' => false,
+		        	'notifications-unsubscribed-daily' => false,
+		        	'notifications-unsubscribed-weekly' => false,
+		        	'notifications-unsubscribed-monthly' => false
+		        );
 
-			if( !array_key_exists('user_subscribe', $options) ){
-				$options['user_subscribe'] = 'none';
+			if($options === false || $options === ''){
+				
+		        SendPress_Option::set('notification_options', $new_options );
+			} else if( is_array($options) ){
+				$result = array_merge($options, $new_options);
+				SendPress_Option::set('notification_options', $result );
 			}
-			if( !array_key_exists('user_unsubscribe', $options) ){
-				$options['user_unsubscribe'] = 'none';
-			}
-			SendPress_Option::set('notification_options', $options );
+			
 		}
 
 
