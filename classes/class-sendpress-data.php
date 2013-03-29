@@ -208,7 +208,36 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$wpdb->insert( SendPress_Data::subscriber_event_table() , array('reportID'=> $rid,'subscriberID'=>$sid,'eventdate'=>date('Y-m-d H:i:s'),'type'=>'open' ,'ip'=>$ip,'devicetype'=> $device_type,'device'=> $device));
 	}
 
+	function get_subscriber_event_count_month($date, $type){
+		global $wpdb;
+		$table = SendPress_Data::subscriber_event_table();//SELECT * FROM table_name WHERE MONTH(date_column) = 4;
+		$result = $wpdb->get_results("SELECT COUNT(eventdate) as count FROM $table WHERE type = '$type' AND MONTH(eventdate) = $date");
+		return $result;
+	}
+	//date_column between "2001-01-05" and "2001-01-10"
+	function get_subscriber_event_count_week($date1, $date2, $type){
+		global $wpdb;
+		$table = SendPress_Data::subscriber_event_table();
+		$result = $wpdb->get_results("SELECT COUNT(eventdate) as count FROM $table WHERE type = '$type' AND date(eventdate) BETWEEN '$date1' AND '$date2'");
+		return $result;
+	}
+
+	function get_subscriber_event_count_day($date, $type){
+		global $wpdb;
+		$table = SendPress_Data::subscriber_event_table();//SELECT * FROM table_name WHERE MONTH(date_column) = 4;
+		$result = $wpdb->get_results("SELECT COUNT(eventdate) as count FROM $table WHERE type = '$type' AND date(eventdate) = '$date'");
+		return $result;
+	}
+
 	/********************* END REPORTS FUNCTIONS **************************/
+
+	/************************* LIST FUNCTIONS ****************************/
+
+	function get_list_details($id){
+		return get_post( $id  );
+	}
+
+	/********************* END LIST FUNCTIONS ****************************/
 
 	/********************* SUBSCRIBER FUNCTIONS **************************/
 
@@ -255,6 +284,10 @@ class SendPress_Data extends SendPress_DB_Tables {
 			global $wpdb;
 			$result = $wpdb->update($table,array('status'=>$status,'updated'=>date('Y-m-d H:i:s')), array('subscriberID'=> $subscriberID,'listID'=>$listID) );
 		}
+
+		//add event for notification tracking
+		SendPress_Data::add_subscribe_event($subscriberID, $listID, $status);
+
 		return SendPress_Data::get_subscriber_list_status($listID, $subscriberID);
 	}
 
@@ -280,8 +313,31 @@ class SendPress_Data extends SendPress_DB_Tables {
 		);
 		
 		$wpdb->insert( SendPress_Data::subscriber_event_table(),  $event_data);
+	}
 
-		//print_r($this->get_open_without_id($rid,$sid));
+	function add_subscribe_event( $sid, $lid, $type ){
+		global $wpdb;
+
+		$event_type = 'unknown_event_type';
+		if( is_numeric($type) ){
+			if($type == 2){
+				$event_type = 'subscribed';
+			}elseif($type == 3){
+				$event_type = 'unsubscribed';
+			}
+		}
+
+		$event_data = array(
+			'eventdate'=>date('Y-m-d H:i:s'),
+			'subscriberID' => $sid,
+			'urlID'=>$lid,
+			'type'=>$event_type
+		);
+		
+		$wpdb->insert( SendPress_Data::subscriber_event_table(),  $event_data);
+
+		//if instant, check if we need a notification and send one
+		SendPress_Notifications_Manager::send_instant_notification($event_data);
 	}
 
 	function unsubscribe_from_list( $sid, $rid, $lid ) {
@@ -329,11 +385,11 @@ class SendPress_Data extends SendPress_DB_Tables {
 		
 		$success = false;
 		$subscriberID = SendPress_Data::add_subscriber(array('firstname' => $first,'lastname' => $last,'email' => $email));
-			
 		
 		if( false === $subscriberID ){
 			return false;
 		}
+		
 		$args = array( 'post_type' => 'sendpress_list','numberposts'  => -1,
 	    'offset'          => 0,
 	    'orderby'         => 'post_title',
@@ -341,8 +397,6 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$lists = get_posts( $args );
 
 		$listids = explode(',', $listid);
-		
-		//error_log($listids);
 		
 	    //$lists = $s->getData($s->lists_table());
 	    //$listids = array();
@@ -357,7 +411,7 @@ class SendPress_Data extends SendPress_DB_Tables {
 		foreach($lists as $list){
 			if( in_array($list->ID, $listids) ){
 				$current_status = SendPress_Data::get_subscriber_list_status( $list->ID, $subscriberID );
-				if(isset($current_status->status) && $current_status->status < 2 ){
+				if( empty($current_status) || ( isset($current_status->status) && $current_status->status < 2 ) ){
 					$success = SendPress_Data::update_subscriber_status($list->ID, $subscriberID, $status);
 				} else {
 
@@ -382,6 +436,20 @@ class SendPress_Data extends SendPress_DB_Tables {
 	function get_statuses( ) {
 		global $wpdb;
 		return $wpdb->get_results("SELECT * FROM " . SendPress_Data::subscriber_status_table() );
+	}
+
+	// COUNT DATA
+	function get_count_subscribers($listID, $status = 2) {
+		global $wpdb;
+		$table = SendPress_Data::list_subcribers_table();
+
+		$query = "SELECT COUNT(*) FROM " .  SendPress_Data::subscriber_table() ." as t1,". SendPress_Data::list_subcribers_table()." as t2,". SendPress_Data::subscriber_status_table()." as t3";
+
+        
+            $query .= " WHERE (t1.subscriberID = t2.subscriberID) AND (t2.status = t3.statusid ) AND(t2.status = %d) AND (t2.listID =  %d)";
+          //  "SELECT COUNT(*) FROM $table WHERE listID = $listID AND status = $status"
+		$count = $wpdb->get_var( $wpdb->prepare( $query, $status, $listID));
+		return $count;
 	}
 
 

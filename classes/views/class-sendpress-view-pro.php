@@ -78,17 +78,21 @@ class SendPress_View_Pro extends SendPress_View{
                 <?php
 
 
-		$modules = apply_filters('sendpress_pro_modules', array('pro','reports', 'spam_test', 'empty') );
+		$modules = apply_filters('sendpress_pro_modules', array('pro','reports', 'spam_test', 'sendgrid', 'mailjet','customsmtp','amazonses','bounce','autoresponders','empty') );
 		echo '<div class="sendpress-addons">';
+        $i = 0;
 		foreach ($modules as $mod) {
 			$mod_class = $this->get_module_class($mod);
 			if($mod_class){
 				$mod_class = NEW $mod_class;
+                $mod_class->index($i);
 				$mod_class->render( $this );
+                $i++;
 			}
 			
 		}
-		echo '</div>';
+
+		echo '<br class="clear"><br></div>';
 
 	}
 
@@ -106,4 +110,4 @@ class SendPress_View_Pro extends SendPress_View{
 	}
 
 }
-SendPress_View_Pro::cap('sendpress_addons');
+SendPress_Admin::add_cap('Pro','sendpress_addons');
