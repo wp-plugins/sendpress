@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.3.4
+Version: 0.9.4
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Markteing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -17,7 +17,7 @@ Push
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-	define( 'SENDPRESS_VERSION', '0.9.3.4' );
+	define( 'SENDPRESS_VERSION', '0.9.4' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -198,7 +198,10 @@ Push
 	
 			SendPress_Admin::add_cap('Emails_Send','sendpress_email_send');
 	
-			
+			    add_rewrite_rule(  
+        "sendpress/([^/]+)/?",  
+        'index.php?sendpress=$matches[1]',  
+        "top"); 
 			
 			if(defined('WP_ADMIN') && WP_ADMIN == true){
 				$sendpress_screen_options = new SendPress_Screen_Options();
@@ -224,7 +227,7 @@ Push
 			}
 	
 			
-			add_image_size( 'sendpress-max', 600, 99999 );
+			add_image_size( 'sendpress-max', 600, 600 );
 			add_filter( 'template_include', array( $this, 'template_include' ) );
 			add_action( 'sendpress_cron_action', array( $this,'sendpress_cron_action_run') );
 			if ( !wp_next_scheduled( 'sendpress_cron_action' ) ) {
@@ -406,11 +409,9 @@ Push
 		  	if( (get_query_var( 'sendpress' )) || isset($_POST['sendpress']) ){
 			  	
 			  	$action = isset($_POST['sendpress']) ? $_POST['sendpress'] : get_query_var( 'sendpress' );
-	
-			  	//Look for encrypted data
-		  		$data = SendPress_Data::decrypt( $action );
+				//Look for encrypted data
+		  		$data = SendPress_Data::decrypt( urldecode($action) );
 				$view = false;
-			 	
 			 	if(is_object($data)){
 			 		$view = isset($data->view) ? $data->view : false;
 			 	} else {
@@ -470,7 +471,7 @@ Push
 			$public_query_vars[] = 'splist';
 			$public_query_vars[] = 'spreport';
 			$public_query_vars[] = 'spurl';
-			$public_query_vars[] = 'a';
+			$public_query_vars[] = 'spemail';
 			return $public_query_vars;
 		}
 	

@@ -8,6 +8,8 @@ if ( !defined('SENDPRESS_VERSION') ) {
 
 class SendPress_Module_Amazonses extends SendPress_Module{
 	
+	var $_pro_version = 0.7;
+
 	function html($sp){
 		$hide = false;
 		$plugin_path = '';
@@ -20,8 +22,8 @@ class SendPress_Module_Amazonses extends SendPress_Module{
 			<div class="description">
 				Connects to Amazon SES to send your SendPress emails. A Amazon SES account is required to use this option.
 			</div>
-			<div class="inline-buttons"><a class="btn disabled btn-activate" href="#">Coming Soon</a></div>
-			<?php //$this->buttons($plugin_path);?>
+			<!--<div class="inline-buttons"><a class="btn disabled btn-activate" href="#">Coming Soon</a></div>-->
+			<?php $this->buttons($plugin_path);?>
 			<input type="hidden" name="plugin_path" value="<?php echo $plugin_path; ?>" />
 			<input class="action" type="hidden" name="action" value="module-activate-sendpress-pro" />
 			<?php wp_nonce_field($sp->_nonce_value); ?>
