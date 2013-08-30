@@ -89,7 +89,7 @@ class SendPress_Sender_Website extends SendPress_Sender {
 		//$charset = get_bloginfo( 'charset' );
 		// Set the content-type and charset
 		$phpmailer->CharSet = 'UTF-8';
-		$phpmailer->Encoding = 'quoted-printable';
+		$phpmailer->Encoding = '8bit';
 		/**
 		* We'll let php init mess with the message body and headers.  But then
 		* we stomp all over it.  Sorry, my plug-inis more important than yours :)
@@ -99,7 +99,7 @@ class SendPress_Sender_Website extends SendPress_Sender {
 		$from_email = SendPress_Option::get('fromemail');
 		$phpmailer->From = $from_email;
 		$phpmailer->FromName = SendPress_Option::get('fromname');
-		$phpmailer->Sender = SendPress_Option::get('fromemail');
+		$phpmailer->Sender = 'bounce@sendpress.com';//SendPress_Option::get('fromemail');
 		
 		$hdr = new SendPress_SendGrid_SMTP_API();
 		$hdr->addFilterSetting('dkim', 'domain', SendPress_Manager::get_domain_from_email($from_email) );
