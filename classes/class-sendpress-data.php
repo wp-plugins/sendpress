@@ -80,10 +80,35 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$table = self::queue_table();
 		if($id == false){
 			$query = "SELECT COUNT(*) FROM $table where success = 0";
+
+	        if(isset($_GET["listid"]) &&  $_GET["listid"]> 0 ){
+	            $query .= ' AND listID = '. $_GET["listid"];
+	        }
+
+	        if(isset($_GET["qs"] )){
+	            $query .= ' AND to_email LIKE "%'. $_GET["qs"] .'%"';
+
+	        }
+
 		} else {
 			$query = $wpdb->prepare("SELECT COUNT(*) FROM $table where emailID = %d and success = 0", $id );
 		}	
 		return $wpdb->get_var( $query );
+	}
+
+
+	static function get_lists_in_queue(){
+		global $wpdb;
+		$table = self::queue_table();
+		$query = "SELECT listID FROM wp_sendpress_queue where success = 0 group by listID";
+		$id=$wpdb->get_results( $query );
+		$listdata = array();
+		foreach ($id as $list) {
+			$listdata[] = array('id'=>$list->listID,'title'=>get_the_title($list->listID));
+		}
+
+	
+		return $listdata;
 	}
 
 
@@ -356,6 +381,15 @@ class SendPress_Data extends SendPress_DB_Tables {
 		return get_post( $id  );
 	}
 
+	static function get_lists(){
+		 $args = array(
+            'post_type' => 'sendpress_list',
+            'post_status' => array('publish','draft')
+            );
+            $query = new WP_Query( $args );
+            return $query;
+	}
+
 	/********************* END LIST static functionS ****************************/
 
 	/********************* SUBSCRIBER static functionS **************************/
@@ -366,6 +400,35 @@ class SendPress_Data extends SendPress_DB_Tables {
 			$table = self::list_subcribers_table();
 			$wpdb->query( $wpdb->prepare("DELETE FROM $table WHERE listID = %d", $list_id) );
 		}
+	}
+
+	static function delete_subscriber($subscriberID = false){
+		if($subscriberID != false){
+			global $wpdb;
+			$wpdb->query( 
+				$wpdb->prepare(
+					"DELETE FROM " .  SendPress_Data::subscriber_table() ." WHERE subscriberID = %d",
+					$subscriberID ) 
+				);
+			$wpdb->query( 
+				$wpdb->prepare(
+					"DELETE FROM " .  SendPress_Data::list_subcribers_table() ." WHERE subscriberID = %d",
+					$subscriberID ) 
+				);
+			$wpdb->query( 
+				$wpdb->prepare(
+					"DELETE FROM " .  SendPress_Data::subscriber_event_table() ." WHERE subscriberID = %d",
+					$subscriberID ) 
+				);
+		}
+
+	}
+
+	static function update_subscriber($subscriberID, $values){
+		$table = SendPress_Data::subscriber_table();
+		global $wpdb;
+		
+		$result = $wpdb->update($table,$values, array('subscriberID'=> $subscriberID) );
 	}
 
 
@@ -447,10 +510,41 @@ class SendPress_Data extends SendPress_DB_Tables {
 		return SendPress_Data::get_subscriber_list_status($listID, $subscriberID);
 	}
 
+	static function remove_subscriber_status( $list_id = false , $subscriberID = false){
+		if($list_id !== false && is_numeric( $list_id ) && $subscriberID !== false){
+			global $wpdb;
+			$table = self::list_subcribers_table();
+			$wpdb->query( $wpdb->prepare("DELETE FROM $table WHERE listID = %d AND subscriberID = %d ", $list_id, $subscriberID) );
+		}
+	}
+
+
 	static function get_subscriber_list_status( $listID,$subscriberID ) {
 		$table = SendPress_Data::list_subcribers_table();
-		$result = SendPress_Data::wpdbQuery("SELECT status,updated FROM $table WHERE subscriberID = $subscriberID AND listID = $listID", 'get_row');
+		$result = SendPress_Data::wpdbQuery("SELECT t3.status,t2.updated,t3.statusid FROM ". SendPress_Data::list_subcribers_table()." as t2,". SendPress_Data::subscriber_status_table()." as t3 WHERE t2.subscriberID = $subscriberID AND t2.listID = $listID AND t2.status = t3.statusid ", 'get_row');
 		return $result;	
+	}
+
+	static function get_subscriber_events($sid){
+		global $wpdb;
+			$table  =SendPress_Data::subscriber_event_table();
+			return $wpdb->get_results( $wpdb->prepare("SELECT * FROM $table WHERE subscriberID = %d order by eventID DESC", $sid) );
+
+	}
+
+
+	static function register_event( $event='unknown_event_type' , $sid = null , $rid = null  ){
+		global $wpdb;
+
+		$event_data = array(
+			'eventdate'=>date('Y-m-d H:i:s'),
+			'subscriberID' => $sid,
+			'reportID' => $rid,
+			'type'=> $event
+		);
+		//error_log($event_data);
+		$wpdb->insert( SendPress_Data::subscriber_event_table(),  $event_data);
+
 	}
 
 
