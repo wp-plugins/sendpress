@@ -47,7 +47,39 @@ class SendPress_Reports_Table extends WP_List_Table {
         
     }
     
-    
+    /**
+     * Generates content for a single row of the table
+     *
+     * @since 3.1.0
+     * @access protected
+     *
+     * @param object $item The current item
+     */
+    function single_row( $item ) {
+        static $row_class = '';
+$canceled = get_post_meta($item->ID, '_canceled', true);
+                    
+        $info = get_post_meta($item->ID, '_send_time', true);
+        $cl ='';
+        if($info != false && $info != '0000-00-00 00:00:00' && date_i18n('Y-m-d H:i:s', strtotime( $info )) > date_i18n('Y-m-d H:i:s') && $canceled == false){
+            $cl = 'scheduled';
+        }
+                  
+
+        $row_class = ( $row_class == '' ? ' class="alternate "' : '' );
+        if( $row_class == ''){
+            $row_class_mod =" class='".$cl."'";
+
+        } else {
+             $row_class_mod =" class='alternate ".$cl."'";
+        }
+
+        echo '<tr' . $row_class_mod . '>';
+        $this->single_row_columns( $item );
+        echo '</tr>';
+    } 
+
+
     /** ************************************************************************
      * Recommended. This method is called when the parent class can't find a method
      * specifically build for a given column. Generally, it's recommended to include
@@ -156,7 +188,16 @@ class SendPress_Reports_Table extends WP_List_Table {
                 }
                 return '';
             case 'created':
-                 return date_i18n(get_option('date_format') , strtotime( $item->post_date ) );
+                    $canceled = get_post_meta($item->ID, '_canceled', true);
+                    if($canceled == true){
+                        return "CANCELED";
+                    }
+                    $info = get_post_meta($item->ID, '_send_time', true);
+                    if($info == false || $info == '0000-00-00 00:00:00' || date_i18n('Y-m-d H:i:s', strtotime( $info )) < date_i18n('Y-m-d H:i:s') ){
+                        return date_i18n(get_option('date_format') , strtotime( $item->post_date ) );
+                    }
+                    return "Scheduled for ".date_i18n('Y/m/d @ h:i A' , strtotime( $info ) ) . "<br><a href='".SendPress_Admin::link('Emails_Send_Cancel',array('emailID'=>$item->ID ))."'>Cancel Send</a>";
+
             
             case 'actions':
                 return '<div class="inline-buttons"><a class="spbutton left" href="'. get_permalink( $item->ID  ). '">View</a><a class="spbutton right" href="?page='.$_REQUEST['page'].'&view=edit-email&emailID='. $item->ID .'">Edit</a><a class="spbutton bluebtn" href="?page='.$_REQUEST['page'].'&view=send-email&emailID='. $item->ID .'">Send</a></div>';

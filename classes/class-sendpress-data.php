@@ -63,6 +63,22 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 	/********************* QUEUE static functionS **************************/
 
+	static function get_single_email_from_queue(){
+		global $wpdb;
+		$date = date_i18n('Y-m-d H:i:s');
+		$info =  $wpdb->get_row($wpdb->prepare("SELECT * FROM ". SendPress_Data::queue_table() ." WHERE success = 0 AND max_attempts != attempts AND inprocess = 0 and ( date_sent = '0000-00-00 00:00:00' or date_sent < %s ) ORDER BY id LIMIT 1", $date));
+
+		error_log(print_r( $info,true) );
+		return $info;
+
+	}
+
+	static function remove_from_queue($id){
+		global $wpdb;
+		$table = self::queue_table();
+		$wpdb->query( $wpdb->prepare("DELETE FROM $table WHERE emailID = %d", $id ) );
+	}
+
 	static function delete_queue_emails(){
 		$table = self::queue_table();
 		self::wpdbQuery("DELETE FROM $table WHERE success = 0", 'query');
@@ -80,7 +96,8 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$table = self::queue_table();
 		if($id == false){
 			$query = "SELECT COUNT(*) FROM $table where success = 0";
-
+			 $query.=" AND ( date_sent = '0000-00-00 00:00:00' or date_sent < '".date_i18n('Y-m-d H:i:s')."') ";
+       
 	        if(isset($_GET["listid"]) &&  $_GET["listid"]> 0 ){
 	            $query .= ' AND listID = '. $_GET["listid"];
 	        }
@@ -406,17 +423,64 @@ class SendPress_Data extends SendPress_DB_Tables {
 	static function get_list_details($id){
 		return get_post( $id  );
 	}
+	static function create_list($values){
+		// Create post object
+		  $my_post = array(
+		     'post_title' => $values['name'],
+		     'post_content' => '',
+		     'post_status' => 'publish',
+		     'post_type'=>'sendpress_list'
+		  );
 
-	static function get_lists(){
-		 $args = array(
-            'post_type' => 'sendpress_list',
-            'post_status' => array('publish','draft')
-            );
-            $query = new WP_Query( $args );
-            return $query;
+		// Insert the post into the database
+  		$new_id = wp_insert_post( $my_post );
+  		update_post_meta($new_id,'public',$values['public']);
+		//add_post_meta($new_id,'last_send_date',$newlist->last_send_date);
+		//add_post_meta($new_id,'legacy_id',$newlist->listID);
+		//$this->upgrade_lists_new_id( $newlist->listID, $new_id);
+		//	$table = $this->lists_table();
+
+		
+		//$result = $this->wpdbQuery("INSERT INTO $table (name, created, public) VALUES( '" .$values['name'] . "', '" . date('Y-m-d H:i:s') . "','" .$values['public'] . "')", 'query');
+
+		return $new_id;	
+	}
+	
+	static function update_list($listID, $values){
+		global $wpdb;
+
+		//$table = $this->lists_table();
+
+		//$result = $wpdb->update($table,$values, array('listID'=> $listID) );
+		
+		$my_post = array(
+		    'post_title' => $values['name'],
+		    'ID'=> $listID,     
+		);
+
+		// Insert the post into the database
+  		$new_id = wp_update_post( $my_post );
+  		update_post_meta($new_id,'public',$values['public']);
+
+		return $new_id;
 	}
 
-	/********************* END LIST static functionS ****************************/
+	function get_lists($args = array(), $use_wpquery = true){
+
+		$args = apply_filters('sendpress_get_lists',array_merge($args, array(
+			'numberposts'     => -1,
+	    	'offset'          => 0,
+	    	'orderby'         => 'post_title',
+	    	'order'           => 'DESC'
+	    )));
+		//set the post type after filter so our function name always makes sense ;)
+	    $args['post_type'] = 'sendpress_list';
+
+		return ( $use_wpquery ) ? new WP_Query( $args ) : get_posts( $args );
+	}
+
+	/********************* END LIST FUNCTIONS ****************************/
+
 
 	/********************* SUBSCRIBER static functionS **************************/
 
@@ -450,11 +514,48 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 	}
 
+	static function sync_emails_to_list($listid, $emails){
+		global $wpdb;
+
+
+		$query_get = "SELECT subscriberID FROM ". SendPress_Data::subscriber_table(). " WHERE email in ('".implode("','", $emails)."')";
+		$data = $wpdb->get_results($query_get);
+	
+		$query_update_status ="INSERT IGNORE INTO ". SendPress_Data::list_subcribers_table(). "(subscriberID,listID,status,updated ) VALUES ";
+		$total = count($data);
+		$x = 0;
+		if($total > 0){
+			$good_ids =array();
+			foreach ($data as $value) {
+				$x++;
+				$good_ids[] = $value->subscriberID;
+				$query_update_status .= "( ".$value->subscriberID . "," . $listid . ",2,'" .date('Y-m-d H:i:s') . "') ";
+				if($total > $x ){ $query_update_status .=",";}
+			}
+			$query_update_status .=";";
+			$wpdb->query($query_update_status);
+			
+			$clean_list_query =  "DELETE FROM "	.SendPress_Data::list_subcribers_table(). " WHERE listID = ".$listid." AND subscriberID not in ('".implode("','", $good_ids)."')";
+			$wpdb->query($clean_list_query);	
+
+		}
+	}
+
 	static function update_subscriber($subscriberID, $values){
 		$table = SendPress_Data::subscriber_table();
 		global $wpdb;
 		
 		$result = $wpdb->update($table,$values, array('subscriberID'=> $subscriberID) );
+	}
+	static function update_subscriber_by_email($email, $values){
+		$table = SendPress_Data::subscriber_table();
+		global $wpdb;
+		$key = SendPress_Data::random_code();
+		$id = SendPress_Data::get_subscriber_by_email($email);
+		$q = "INSERT INTO $table (email,wp_user_id,identity_key,join_date) VALUES (%s,%d,%s,%s) ON DUPLICATE KEY UPDATE wp_user_id=%d";
+		$q = $wpdb->prepare($q,$email,$values['wp_user_id'],$key,date('Y-m-d H:i:s'),$values['wp_user_id']);
+		$result = $wpdb->query($q);
+		//$result = $wpdb->update($table, $values, array('email'=> $email) );
 	}
 
 
@@ -623,7 +724,7 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$event_data = array(
 			'eventdate'=>date('Y-m-d H:i:s'),
 			'subscriberID' => $sid,
-			'listID'=>$lid,
+			//'listID'=>$lid,
 			'type'=>$event_type
 		);
 		
@@ -843,6 +944,38 @@ class SendPress_Data extends SendPress_DB_Tables {
         return $data;
     }
 
+
+	/*
+	*
+	*	Creates an array from a posted textarea
+	*	
+	*	expects 3 fields or less: @sendpress.me, fname, lname
+	*
+	*/
+	static function subscriber_csv_post_to_array($csv, $delimiter = ',', $enclosure = '"', $escape = '\\', $terminator = "\n") { 
+	    $r = array(); 
+	    $rows = explode($terminator,trim($csv)); 
+	    $names = array_shift($rows); 
+	    $names = explode(',', $names);
+		$nc = count($names);
+ 
+	    foreach ($rows as $row) { 
+	        if (trim($row)) { 
+	        	$needle = substr_count($row, ',');
+	        	if($needle == false){
+	        		$row .=',,';
+	        	} 
+	        	if($needle == 1){
+	        		$row .=',';
+	        	} 
+
+	            $values = explode(',' , $row);
+	            if (!$values) $values = array_fill(0,$nc,null); 
+	            $r[] = array_combine($names,$values); 
+	        } 
+	    } 
+	    return $r; 
+	} 
 
     static function break_csv_apart($csv_line , $delimiter , $enclose , $preserve=false){
         $response = array();

@@ -76,7 +76,13 @@ class SendPress_Lists_Table extends WP_List_Table {
             case 'director':
                 return $item[$column_name];
             case 'count_subscribers':
-                return  $this->_sendpress->countSubscribers($item->ID) ;
+                $role = get_post_meta($item->ID,'sync_role',true);
+                $add = '';
+                if($role != 'none' && $role != false){
+                    $add = " - <a href='". SendPress_Admin::link('Subscribers_Sync') . "&listID=".$item->ID."'>Sync</a>";
+                }
+
+                return  $this->_sendpress->countSubscribers($item->ID) . $add ;
             case 'count_unsubscribes':
                 return  $this->_sendpress->countSubscribers($item->ID, 3);
             case 'count_bounced':
@@ -84,15 +90,31 @@ class SendPress_Lists_Table extends WP_List_Table {
             case 'last_send_date':
                 return date('Y-m-d');        
             case 'actions':
-                return '<div class="inline-buttons">
-                    <a class="btn btn-info" href="?page='.$_REQUEST['page'].'&view=subscribers&listID='.$item->ID.'"><i class="icon-user icon-white "></i> View/Edit</a>
-                    <a class="btn" href="?page='.$_REQUEST['page'].'&view=csvimport&listID='. $item->ID .'"><i class="icon-user"></i> Import</a> 
-                    <a class="btn" href="?page='.$_REQUEST['page'].'&view=add&listID='. $item->ID .'"><i class="icon-user"></i> Add</a>
-                    <a class="btn" href="?page='.$_REQUEST['page'].'&action=export-list&listID='. $item->ID .'"><i class="icon-download"></i> Export</a>
+                $role = get_post_meta($item->ID,'sync_role',true);
+                $add = '';
+                if($role != 'none' && $role != false){
+                    $add = " - <a href='". SendPress_Admin::link('Subscribers_Sync') . "&listID=".$item->ID."'>Sync</a>";
+                }
+
+
+                $str = '<div class="inline-buttons">
+                    <a class="btn btn-info" href="?page='.$_REQUEST['page'].'&view=subscribers&listID='.$item->ID.'"><i class="icon-user icon-white "></i> View/Edit</a> ';
+                $role = get_post_meta($item->ID,'sync_role',true);
+                $add = '';
+                if($role != 'none' && $role != false){
+                    $str .= "<a class='btn' href='". SendPress_Admin::link('Subscribers_Sync') . "&listID=".$item->ID."'><i class='icon-refresh'></i> Sync</a> ";
+                } else {
+                    $str .=  '<a class="btn" href="?page='.$_REQUEST['page'].'&view=csvimport&listID='. $item->ID .'"><i class="icon-user"></i> Import</a> ';
+                    $str .= '<a class="btn" href="?page='.$_REQUEST['page'].'&view=add&listID='. $item->ID .'"><i class="icon-user"></i> Add</a> ';
+                     $str .='<a class="btn" href="?page='.$_REQUEST['page'].'&action=export-list&listID='. $item->ID .'"><i class="icon-download"></i> Export</a> ';
                     
-                    <a class="btn " href="'. SendPress_Admin::link('Subscribers_Listform', array('listID' => $item->ID)) .'"><i class="icon-list"></i> Form</a>
-                    <a class="btn " href="?page='.$_REQUEST['page'].'&view=listedit&listID='. $item->ID .'"><i class="icon-cog"></i></a>
+                $str .=    '<a class="btn " href="'. SendPress_Admin::link('Subscribers_Listform', array('listID' => $item->ID)) .'"><i class="icon-list"></i> Form</a> ';
+                }
+
+               
+                 $str .=   '<a class="btn " href="?page='.$_REQUEST['page'].'&view=listedit&listID='. $item->ID .'"><i class="icon-cog"></i></a>
                     </div>';
+                return $str;
             default:
                 return print_r($item,true); //Show the whole array for troubleshooting purposes
         }
@@ -123,30 +145,39 @@ class SendPress_Lists_Table extends WP_List_Table {
                 /*$1%s*/ 'sp-subscribers',
                 /*$2%s*/ 'listedit', 
                 /*$3%s*/ $item->ID
-            ),
-            // 'quick-edit' => sprintf('<a href="%s" class="edit-list" listid="%s" name="%s" public="%s">Quick Edit</a>', 
-            //     /*$1%s*/ SENDPRESS_URL.'inc/helpers/edit-list.php',
-            //     /*$2%s*/ $item->listID, 
-            //     /*$3%s*/ $item->name,
-            //     /*$4%s*/ $item->public
-            // ),
-            //'delete'    => sprintf('<a href="?page=%s&action=%s&listID=%s">Delete</a>',$_REQUEST['page'],'delete-list',$item->listID),
+            )
         );
+
         if(get_post_meta($item->ID,'public',true))  {
             $p = 'public';
         } else {
             $p = 'private';
         }
 
-     
+         $role = get_post_meta($item->ID,'sync_role',true);
+        // $add = '';
+        global $wp_roles;
+        $names = $wp_roles->get_names();
+         if($role != 'none' && $role != false && isset($names[$role]) ){
+            $role_info=get_role($role);
+            $p = translate_user_role( $names[$role] );
+         }
+
+        $title = apply_filters('sendpress_list_table_title_actions',array(
+            'title' =>$item->post_title,
+            'id' => ' <span style="color:silver">( id:'.$item->ID .' - ' .$p .' )</span>',
+            'actions' => $this->row_actions($actions)
+        ));
         
+        return implode($title);
+
         //Return the title contents
-        return sprintf('%1$s <span style="color:silver">( id:%2$s )</span>%3$s',
-             $item->post_title,
-             $item->ID .' - ' .$p,
+        // return sprintf('%1$s <span style="color:silver">( id:%2$s )</span>%3$s',
+        //      $item->post_title,
+        //      $item->ID .' - ' .$p,
     
-             $this->row_actions($actions)
-        );
+             
+        // );
         
     }
     
@@ -237,9 +268,11 @@ class SendPress_Lists_Table extends WP_List_Table {
      * @return array An associative array containing all the bulk actions: 'slugs'=>'Visible Titles'
      **************************************************************************/
     function get_bulk_actions() {
-        $actions = array(
+        $actions = apply_filters('sendpress_list_table_bulk_actions',array(
             'delete-lists-bulk'    => 'Delete'
-        );
+        ));
+
+
         return $actions;
     }
     
@@ -293,11 +326,15 @@ class SendPress_Lists_Table extends WP_List_Table {
              $sortable = $this->get_sortable_columns();
              $this->_column_headers = array($columns, $hidden, $sortable);
         /* -- Fetch the items -- */
-            $args = array(
-            'post_type' => 'sendpress_list',
-            'post_status' => array('publish','draft')
-            );
-            $query = new WP_Query( $args );
+            // $args = array(
+            // 'post_type' => 'sendpress_list',
+            // 'post_status' => array('publish','draft')
+            // );
+
+            //$args = apply_filters('sendpress_list_table_query',array('post_type' => 'sendpress_list','post_status' => array('publish','draft')));
+
+            $query = SendPress_Data::get_lists(array('post_status' => array('publish','draft')));
+            //$query = new WP_Query( $args );
             /*
             echo '<pre>';
             print_r($query);
@@ -370,8 +407,11 @@ class SendPress_Lists_Table extends WP_List_Table {
 
             }
             
+            //$args = apply_filters('sendpress_list_table_query',$args);
 
-            $query2 = new WP_Query( $args );
+            $query2 = SendPress_Data::get_lists($args);
+
+            // $query2 = new WP_Query( $args );
 
             $this->items = $query2->posts;
         }

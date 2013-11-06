@@ -23,9 +23,6 @@ class SendPress_Ajax_Loader{
 		return $instance;
 	}
 
-	
-
-
 	function add_hooks(){
 		// register the ajax process function with wordpress
 		add_action("wp_ajax_sendpress_save_list", array(&$this,'save_list') );
@@ -171,6 +168,8 @@ class SendPress_Ajax_Loader{
 			$email = isset($_POST['email']) ? $_POST['email'] : '';
 			$listid = isset($_POST['listid']) ? $_POST['listid'] : '';
 
+			SendPress_Data::subscribe_user($listid, $email, $first, $last);
+
 			$success = $s->subscribe_user($listid,$email,$first,$last);
 
 			if( false !== $success ){
@@ -249,7 +248,7 @@ class SendPress_Ajax_Loader{
 		$this->verify_ajax_call();
 		$reportid = isset($_POST['reportid']) ? $_POST['reportid'] : 0;
 		$lists = get_post_meta($reportid, '_send_lists', true);
-	
+		$time = get_post_meta($reportid, '_send_time', true);
 		$list = explode(",",$lists );
 		$last = get_post_meta($reportid, '_send_last', true);
 		$count_last = get_post_meta($reportid, '_send_last_count', true);
@@ -258,37 +257,24 @@ class SendPress_Ajax_Loader{
 			$count_last = 0;
 		}
 
-
-
 		$x  = SendPress_Data::get_active_subscribers_lists_with_id( $list ,$last );
-
-
-
 
 		foreach($x as $email){
                    
-                     $go = array(
-                        'from_name' => 'queue',
-                        'from_email' => 'queue',
-                        'to_email' => $email->email,
-                        'emailID'=> $reportid,
-                        'subscriberID'=> $email->subscriberID,
-                        //'to_name' => $email->fistname .' '. $email->lastname,
-                        'subject' => '',
-                        'listID'=> $email->listid
-                        );
-                   
-                    SendPress_Data::add_email_to_queue($go);
-             
-                }
-
-
-
-
-
-
-
-
+             $go = array(
+                'from_name' => 'queue',
+                'from_email' => 'queue',
+                'to_email' => $email->email,
+                'emailID'=> $reportid,
+                'subscriberID'=> $email->subscriberID,
+                //'to_name' => $email->fistname .' '. $email->lastname,
+                'subject' => '',
+                'date_sent' => $time,
+                'listID'=> $email->listid
+                );
+           
+            SendPress_Data::add_email_to_queue($go);
+        }
 
 		$count_last += count( $x );  
 		 update_post_meta($reportid,'_send_last_count',$count_last );

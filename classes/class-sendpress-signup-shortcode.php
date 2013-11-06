@@ -13,30 +13,22 @@ class SendPress_Signup_Shortcode{
 		add_shortcode('sendpress-signup', array('SendPress_Signup_Shortcode','load_form'));
 	}
 
-	function load_form( $attr, $content = null ) {
+	static function load_form( $attr, $content = null ) {
 
 		global $load_signup_js, $sendpress_show_thanks, $sendpress_signup_error;
 		$load_signup_js = true;
 
 	    ob_start();
 
-	   $args = array( 
-	   		'post_type' 	=> 'sendpress_list',
-	   		'numberposts'   => -1,
-    		'offset'        => 0,
-    		'orderby'       => 'post_title',
-    		'order'         => 'DESC'
-    	);
-
-		$lists = get_posts( $args );
-	    //$lists = $s->getData($s->lists_table());
-	    $listids = array();
-
-		foreach($lists as $list){
-			if( get_post_meta($list->ID,'public',true) == 1 ){
-				$default_list_id = $list->ID;
-			}
-		}
+	   $lists = SendPress_Data::get_lists(
+			array('meta_query' => array(
+				array(
+					'key' => 'public',
+					'value' => true
+				)
+			)),
+			false
+		);
 
 	    extract(shortcode_atts(array(
 			'firstname_label' => 'First Name',
@@ -122,6 +114,9 @@ class SendPress_Signup_Shortcode{
 							<label for="email"><?php echo $email_label; ?>:</label>
 						<?php endif; ?>
 						<input type="text" class="sp_email" orig="<?php echo $email_label; ?>" value="<?php if($label){ echo $email_label; } ?>" name="sp_email" />
+					</p>
+					<p name="extra_fields" class="signup-fields-bottom">
+						<?php do_action('sendpress_signup_form'); ?>
 					</p>
 
 					<p class="submit">

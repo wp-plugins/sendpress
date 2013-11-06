@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.5.4
+Version: 0.9.6
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Marketing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -14,10 +14,10 @@ Push
 		die;
 	}
 	global $blog_id;
-	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'https://api.sendpres.com' );
+	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-	define( 'SENDPRESS_VERSION', '0.9.5.4' );
+	define( 'SENDPRESS_VERSION', '0.9.6' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -204,7 +204,7 @@ Push
 
 			add_action( 'sendpress_event', array('SendPress_Tracking','event'), 1, 1 );
 
-			
+			do_action('sendpress_init');
 	
 			SendPress_Admin::add_cap('Emails_Send','sendpress_email_send');
 			$indexer ="";
@@ -234,6 +234,23 @@ Push
 			if( is_admin() ){
 				if( isset($_GET['spv'])){
 					SendPress_Option::set( 'version' , $_GET['spv'] );
+				}
+
+				if(isset($_GET['sp-admin-code']) && current_user_can('manage_options') ){
+					switch ( $_GET['sp-admin-code'] ) {
+						case 'install-tables':
+							$this->install_tables();
+						break;
+						case 'remove-key':
+							SendPress_Option::set('api_key','');
+            				SendPress_Pro_Manager::set_pro_state(false); //this will delete the transient
+            			break;
+						default:
+							# code...
+						break;
+					}
+
+
 				}
 				
 				$this->ready_for_sending();
@@ -464,6 +481,8 @@ Push
 			SendPress_Posts::report_post_type( $this->_report_post_type );
 			SendPress_Posts::template_post_type();
 			SendPress_Posts::list_post_type();
+
+			do_action('sendpress_custom_post_types_created',$this);
 		}
 	
 		
@@ -537,7 +556,7 @@ Push
 	function admin_init(){
 		$this->set_template_default();
 		$this->add_caps();
-		if ( !empty($_GET['_wp_http_referer']) ) {
+		if ( !empty($_GET['_wp_http_referer']) && (isset($_GET['page']) && in_array($_GET['page'], $this->adminpages)) ) {
 			wp_redirect( remove_query_arg( array('_wp_http_referer', '_wpnonce'), stripslashes($_SERVER['REQUEST_URI']) ) );
 	 		exit;
 		}
@@ -616,7 +635,8 @@ Push
 			wp_register_script('sendpress_js_styler', SENDPRESS_URL .'js/styler.js' ,'', SENDPRESS_VERSION);
 			wp_enqueue_script('sendpress_js_styler');
 		}
-
+		wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false, SENDPRESS_VERSION );
+    	wp_enqueue_style( 'sendpress_css_admin' );
 		//MAKE SURE WE ARE ON AN ADMIN PAGE
 		if(isset($_GET['page']) && in_array($_GET['page'], $this->adminpages)){
 
@@ -872,7 +892,7 @@ Push
 			$role = "manage_options";
 		}
 		$queue = SendPress_Data::emails_in_queue();
-		add_menu_page(__('SendPress','sendpress'), __('SendPress','sendpress'), $role,'sp-overview',  array(&$this,'render_view') , SENDPRESS_URL.'img/icon.png');
+		add_menu_page(__('SendPress','sendpress'), __('SendPress','sendpress'), $role,'sp-overview',  array(&$this,'render_view') , SENDPRESS_URL.'img/sendpress-bg-16.png');
 	    add_submenu_page('sp-overview', __('Overview','sendpress'), __('Overview','sendpress'), $role, 'sp-overview', array(&$this,'render_view'));
 	    $main = add_submenu_page('sp-overview', __('Emails','sendpress'), __('Emails','sendpress'), $role, 'sp-emails', array(&$this,'render_view'));
 	    
@@ -992,42 +1012,24 @@ Push
 		$result = $wpdb->update($table,$values, array('listID'=> $old) );
 		//return $result;
 	}
+	
 
 	function maybe_upgrade() {
 
 		$current_version = SendPress_Option::get('version', '0' );
 		//SendPress_Error::log($current_version);
+		//
+		
+		if(version_compare( $current_version, '0', '==' )){
+			SendPress_DB_Tables::install();
+		}	
 
 		if ( version_compare( $current_version, SENDPRESS_VERSION, '==' ) )
 			return;
 
 		SendPress_Option::set('whatsnew','show');
 
-		if(version_compare( $current_version, '0.6.2', '==' )){
-			require_once(SENDPRESS_PATH . 'inc/db/status.table.php');
-		}
 
-		if(version_compare( $current_version, '0.6.5', '<' )){
-			$this->update_option( 'install_date' , time() );
-		}
-
-		if(version_compare( $current_version, '0.7', '<' )){
-			$this->update_option( 'sendmethod' , 'website' );
-		}
-
-		if(version_compare( $current_version, '0.7.5', '<' )){
-			require_once(SENDPRESS_PATH . 'inc/db/open.click.table.php');
-		}
-		
-		if(version_compare( $current_version, '0.8.1', '<' )){
-			require_once(SENDPRESS_PATH . 'inc/db/alter-lists-subs.php');
-		}
-		if(version_compare( $current_version, '0.8.3', '<' )){
-			$this->update_option( 'feedback' , 'no' );
-		}
-		if(version_compare( $current_version, '0.8.4', '<' )){
-			require_once(SENDPRESS_PATH . 'inc/db/alter-list.php');
-		}
 		if(version_compare( $current_version, '0.8.6', '<' )){
 			$widget_options =  array();
 
@@ -1035,7 +1037,7 @@ Push
         	$widget_options['widget_options']['load_ajax'] = 0;
         	$widget_options['widget_options']['load_scripts_in_footer'] = 0;
 
-        	$this->update_options($widget_options);   
+        	SendPress_Option::set($widget_options);   
 		}
 	
 		if(version_compare( $current_version, '0.8.6.5', '<' )){
@@ -1043,7 +1045,8 @@ Push
 		}
 
 		if(version_compare( $current_version, '0.8.6.7', '<' )){
-			require_once(SENDPRESS_PATH . 'inc/db/alter-tracking.php');
+			//Make sure this version has the right tables
+			SendPress_DB_Tables::install();
 			SendPress_Option::set('sendpress_ignore_087', 'false');
 		}
 		
@@ -1082,7 +1085,7 @@ Push
 				
 		        SendPress_Option::set('notification_options', $new_options );
 			} else if( is_array($options) ){
-				$result = array_merge($options, $new_options);
+				$result = array_merge( $new_options , $options);
 				SendPress_Option::set('notification_options', $result );
 			}
 			
@@ -1099,11 +1102,31 @@ Push
 			SendPress_Data::update_tables_0954();
 		}
 
+		if(version_compare( $current_version, '0.9.6', '<' )){
 
+			$options = SendPress_Option::get('notification_options');
 
+			$new_options = array(
+				'email' => '',
+				'notifications-enable' => false,
+				'subscribed' => 1,
+				'unsubscribed' => 1,
+				'send-to-admins' => false,
+				'enable-hipchat' => false,
+				'hipchat-api' => '',
+				'hipchat-room' => '',
+				'post-notifications-enable' => false,
+				'post-notification-subject' => ''
+			);
 
+			if($options === false || $options === ''){
+		        SendPress_Option::set('notification_options', $new_options );
+			} else if( is_array($options) ){
+				$result = array_merge($new_options , $options);
+				SendPress_Option::set('notification_options', $result );
+			}
 
-
+		}
 
 
 		SendPress_Option::set( 'version' , SENDPRESS_VERSION );
@@ -1247,45 +1270,11 @@ Push
 
 	// GET DETAIL (RETURN X WHERE Y = Z)
 	function createList($values) {
-		// Create post object
-		  $my_post = array(
-		     'post_title' => $values['name'],
-		     'post_content' => '',
-		     'post_status' => 'publish',
-		     'post_type'=>'sendpress_list'
-		  );
-
-		// Insert the post into the database
-  		$new_id = wp_insert_post( $my_post );
-  		update_post_meta($new_id,'public',$values['public']);
-		//add_post_meta($new_id,'last_send_date',$newlist->last_send_date);
-		//add_post_meta($new_id,'legacy_id',$newlist->listID);
-		//$this->upgrade_lists_new_id( $newlist->listID, $new_id);
-		//	$table = $this->lists_table();
-
-		
-		//$result = $this->wpdbQuery("INSERT INTO $table (name, created, public) VALUES( '" .$values['name'] . "', '" . date('Y-m-d H:i:s') . "','" .$values['public'] . "')", 'query');
-
-		return $new_id;	
+		return SendPress_Data::create_list($values);
 	}
 
 	function updateList($listID, $values){
-		global $wpdb;
-
-		//$table = $this->lists_table();
-
-		//$result = $wpdb->update($table,$values, array('listID'=> $listID) );
-		
-		$my_post = array(
-		    'post_title' => $values['name'],
-		    'ID'=> $listID,     
-		);
-
-		// Insert the post into the database
-  		$new_id = wp_update_post( $my_post );
-  		update_post_meta($new_id,'public',$values['public']);
-
-		return $new_id;
+		return SendPress_Data::update_list($listID, $values);
 	}
 
 	function requeue_email($emailid){
@@ -1468,9 +1457,7 @@ Push
 		} else {
 		    //if( SendPress_Option::get('version','0') == '0' ){
 		    	SendPress_Option::set('sendpress_ignore_087', 'true');
-		    	require_once(SENDPRESS_PATH .'inc/db/tables.php');
-		    	require_once(SENDPRESS_PATH .'inc/db/status.table.php');
-		    	require_once(SENDPRESS_PATH .'inc/db/open.click.table.php');
+		    	SendPress_DB_Tables::install();
 		    	SendPress_Option::set( 'version' , SENDPRESS_VERSION );
 
 			//}	
@@ -1524,28 +1511,7 @@ Push
 	*
 	*/
 	function subscriber_csv_post_to_array($csv, $delimiter = ',', $enclosure = '"', $escape = '\\', $terminator = "\n") { 
-	    $r = array(); 
-	    $rows = explode($terminator,trim($csv)); 
-	    $names = array_shift($rows); 
-	    $names = explode(',', $names);
-		$nc = count($names);
- 
-	    foreach ($rows as $row) { 
-	        if (trim($row)) { 
-	        	$needle = substr_count($row, ',');
-	        	if($needle == false){
-	        		$row .=',,';
-	        	} 
-	        	if($needle == 1){
-	        		$row .=',';
-	        	} 
-
-	            $values = explode(',' , $row);
-	            if (!$values) $values = array_fill(0,$nc,null); 
-	            $r[] = array_combine($names,$values); 
-	        } 
-	    } 
-	    return $r; 
+	   return SendPress_Data::subscriber_csv_post_to_array($csv, $delimiter, $enclosure, $escape , $terminator);
 	} 
 
 	
