@@ -266,9 +266,9 @@ class SendPress_Manager {
 			$code = SendPress_Data::encrypt( $code );
 
 			if( SendPress_Option::get('old_permalink') || !get_option('permalink_structure') ){
-				$link = site_url() ."?sendpress=".$code;
+				$link = home_url() ."?sendpress=".$code;
 			} else {
-				$link = site_url() ."/sendpress/".$code;
+				$link = home_url() ."/sendpress/".$code;
 			}
 			
 			$href = $link;
@@ -300,6 +300,26 @@ class SendPress_Manager {
 	   	$to = $email->to_email;
 	   	$text = $message->text();
 	   	return SendPress_Manager::send($to , $subject, $body, $text, false, $email->subscriberID ,$email->listID, $email->emailID );
+	   
+	}
+
+	/**
+	* Used to add Overwrite send info for testing. 
+	*
+	* @return boolean true if mail sent successfully, false if an error
+	*/
+    static function send_test_email( $email ) {
+
+	   	$message = new SendPress_Email();
+	   	$message->id( $email->emailID );
+	   	$message->purge( true );
+	   	$message->subscriber_id( $email->subscriberID );
+	   	$message->list_id( $email->listID );
+	   	$body = $message->html();
+	   	$subject = $message->subject();
+	   	$to = $email->to_email;
+	   	$text = $message->text();
+	   	return SendPress_Manager::send($to , $subject, $body, $text, true, $email->subscriberID ,$email->listID, $email->emailID );
 	   
 	}
 

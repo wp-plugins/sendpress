@@ -36,8 +36,14 @@ class SendPress_Cron {
                 }
                 $stuck = SendPress_Data::emails_stuck_in_queue();
                 $limit = SendPress_Manager::limit_reached();
+                $emails_per_day = SendPress_Option::get('emails-per-day');
+                $emails_per_hour =  SendPress_Option::get('emails-per-hour');
+                $hourly_emails = SendPress_Data::emails_sent_in_queue("hour");
+                $emails_so_far = SendPress_Data::emails_sent_in_queue("day");
+                
+                $limits = array('dl'=>$emails_per_day,'hl'=>$emails_per_hour,'ds'=>$emails_so_far,'hs'=>$hourly_emails);
 
-                echo json_encode(array( "queue"=>$count,"stuck"=>$stuck,"version"=>SENDPRESS_VERSION,"pro"=> $pro ,"limit" => $limit ));
+                echo json_encode(array( "queue"=>$count,"stuck"=>$stuck,"version"=>SENDPRESS_VERSION,"pro"=> $pro ,"limit" => $limit, 'info'=>$limits  ));
                 //die();
             }
             
@@ -134,8 +140,8 @@ class SendPress_Cron {
         
         $url = SendPress_Cron::remove_http( site_url() );
         $domain = base64_encode( $url );
-        SendPress_Error::log( 'http://sendpress.com/iron/cron/set/'. $domain .'/'. SENDPRESS_CRON);
-        $body = wp_remote_retrieve_body( wp_remote_get( 'http://sendpress.com/iron/cron/set/'. $domain .'/'. SENDPRESS_CRON ) );
+        //SendPress_Error::log( 'http://api.sendpress.com/set/'. $domain .'/'. SENDPRESS_CRON);
+        $body = wp_remote_retrieve_body( wp_remote_get( 'http://api.sendpress.com/set/'. $domain .'/'. SENDPRESS_CRON ) );
         wp_clear_scheduled_hook( 'sendpress_cron_action' );
     }
 
