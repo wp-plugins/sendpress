@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.6.4
+Version: 0.9.7
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Marketing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: http://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-	define( 'SENDPRESS_VERSION', '0.9.6.4' );
+	define( 'SENDPRESS_VERSION', '0.9.7' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -282,11 +282,13 @@ Author URI: http://sendpress.com/
 		}
 
 		static function add_cron(){
-			if ( ! wp_next_scheduled( 'sendpress_cron_action' )   ){
-				wp_schedule_event( time() , 'hourly', 'sendpress_cron_action' );  
-			} 
-			if( SendPress_Option::get('autocron','no') == 'yes' ) {
+			
+			if( SendPress_Option::get('autocron','no') == 'yes' && wp_next_scheduled( 'sendpress_cron_action' ) ) {
 				wp_clear_scheduled_hook('sendpress_cron_action');
+			} else {
+				if ( ! wp_next_scheduled( 'sendpress_cron_action' )   ){
+					wp_schedule_event( time() , 'hourly', 'sendpress_cron_action' );  
+				} 
 			}
 		}
 	
@@ -386,6 +388,9 @@ Author URI: http://sendpress.com/
 	 
 		// Hook into that action that'll fire weekly
 		function sendpress_cron_action_run() {
+			if( SendPress_Option::get('autocron','no') == 'yes'){
+				return;
+			}
 			if(!SendPress_Manager::limit_reached() ){
 				SendPress_Queue::send_mail_cron();
 			}
@@ -632,7 +637,20 @@ Author URI: http://sendpress.com/
 		*/
 		
 
-	
+		if( ( isset($_GET['page']) && $_GET['page'] == 'sp-templates' ) || (isset( $_GET['view'] ) && $_GET['view'] == 'style-email' )) {
+			wp_register_script('sendpress_js_styler', SENDPRESS_URL .'js/styler.js' ,'', SENDPRESS_VERSION);
+			wp_enqueue_script('sendpress_js_styler');
+		}
+		wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false, SENDPRESS_VERSION );
+    	wp_enqueue_style( 'sendpress_css_admin' );
+
+    	global $pagenow;
+
+    	if( $pagenow === 'widgets.php' ){
+    		wp_register_script('sendpress-widget-js', SENDPRESS_URL .'js/sendpress.widget.js','', SENDPRESS_VERSION );
+			wp_enqueue_script('sendpress-widget-js');
+    	}
+
 		//MAKE SURE WE ARE ON AN ADMIN PAGE
 		if(isset($_GET['page']) && in_array($_GET['page'], $this->adminpages)){
 
@@ -640,12 +658,7 @@ Author URI: http://sendpress.com/
 				SendPress_Option::set('whatsnew','hide');
 				SendPress_Admin::redirect('Help_Whatsnew');
 			}
-				if( ( isset($_GET['page']) && $_GET['page'] == 'sp-templates' ) || (isset( $_GET['view'] ) && $_GET['view'] == 'style-email' )) {
-			wp_register_script('sendpress_js_styler', SENDPRESS_URL .'js/styler.js' ,'', SENDPRESS_VERSION);
-			wp_enqueue_script('sendpress_js_styler');
-		}
-		wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false, SENDPRESS_VERSION );
-    	wp_enqueue_style( 'sendpress_css_admin' );
+
 
 			$this->_page = $_GET['page'];
 			add_filter('tiny_mce_before_init',  array($this,'myformatTinyMCE') );
@@ -685,10 +698,12 @@ Author URI: http://sendpress.com/
 			wp_enqueue_script('sendpress_ls');
 			//wp_localize_script( 'sendpress_js', 'sendpress', array( 'ajaxurl' => admin_url( 'admin-ajax.php', 'http' ) ) );
 
+			/*
 			wp_register_style( 'sendpress_jquery_ibutton_css', SENDPRESS_URL . 'css/jquery.ibutton.css', false, SENDPRESS_VERSION );
     		wp_enqueue_style( 'sendpress_jquery_ibutton_css' );
     		wp_register_script('sendpress_jquery_ibutton_js', SENDPRESS_URL .'js/jquery.ibutton.min.js' ,'',SENDPRESS_VERSION);
 			wp_enqueue_script('sendpress_jquery_ibutton_js');
+			*/
 
 			wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', false, SENDPRESS_VERSION );
     		wp_enqueue_style( 'sendpress_css_base' );
@@ -871,7 +886,7 @@ Author URI: http://sendpress.com/
 
 				var continueHref = continueButton.attr( 'href' );
 
-				continueHref = continueHref + '&is_sendpress=yes';
+				continueHref = continueHref + '&is_woothemes=yes';
 
 				continueButton.attr( 'href', continueHref );
 			} );
