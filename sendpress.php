@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.7.3
+Version: 0.9.8
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Marketing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: http://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-	define( 'SENDPRESS_VERSION', '0.9.7.3' );
+	define( 'SENDPRESS_VERSION', '0.9.8' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -31,7 +31,7 @@ Author URI: http://sendpress.com/
 	}
 
 	global $pro_names;
-	$pro_names = array('SendPress Pro','Pro3','Pro20');
+	$pro_names = array('Pro1','Pro3','Pro20');
 	
 	/*
 	*
@@ -277,7 +277,7 @@ Author URI: http://sendpress.com/
 			// global $load_signup_js;
 			// $load_signup_js = false;
 			
-			add_action( 'get_header', array( $this, 'add_front_end_scripts' ) );
+			add_action( 'wp_enqueue_scripts', array( $this, 'add_front_end_scripts' ) );
 			add_action( 'wp_enqueue_scripts', array( $this, 'add_front_end_styles' ) );
 	
 			add_action( 'wp_head', array( $this, 'handle_front_end_posts' ) );
@@ -688,9 +688,7 @@ remove_filter("mce_plugins", "cforms_plugin");
 			wp_register_script('sendpress_js_styler', SENDPRESS_URL .'js/styler.js' ,'', SENDPRESS_VERSION);
 			wp_enqueue_script('sendpress_js_styler');
 		}
-		wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false, SENDPRESS_VERSION );
-    	wp_enqueue_style( 'sendpress_css_admin' );
-
+		
 			$this->_page = $_GET['page'];
 			add_filter('tiny_mce_before_init',  array($this,'myformatTinyMCE') );
 			
@@ -730,6 +728,8 @@ remove_filter("mce_plugins", "cforms_plugin");
 
     		wp_register_script('sendpress_ls', SENDPRESS_URL .'js/jquery.autocomplete.js' ,'', SENDPRESS_VERSION );
 			wp_enqueue_script('sendpress_ls');
+
+
 			//wp_localize_script( 'sendpress_js', 'sendpress', array( 'ajaxurl' => admin_url( 'admin-ajax.php', 'http' ) ) );
 
 			/*
@@ -741,7 +741,8 @@ remove_filter("mce_plugins", "cforms_plugin");
 
 			wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', false, SENDPRESS_VERSION );
     		wp_enqueue_style( 'sendpress_css_base' );
-
+wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false, SENDPRESS_VERSION );
+    	wp_enqueue_style( 'sendpress_css_admin' );
 	    	do_action('sendpress_admin_scripts');
 	    	$view_class = $this->get_view_class($this->_page, $this->_current_view);
 			$view_class = NEW $view_class;
@@ -795,10 +796,11 @@ remove_filter("mce_plugins", "cforms_plugin");
 
    	function add_front_end_scripts(){
 		$widget_options = SendPress_Option::get('widget_options');
-
+		if(isset($widget_options['load_ajax']) &&  $widget_options['load_ajax'] != 1 && !is_admin() ){
 		wp_register_script('sendpress-signup-form-js', SENDPRESS_URL .'js/sendpress.signup.js', array('jquery'), SENDPRESS_VERSION, (bool)$widget_options['load_scripts_in_footer'] );
 		wp_enqueue_script( 'sendpress-signup-form-js' );
 		wp_localize_script( 'sendpress-signup-form-js', 'sendpress', array( 'invalidemail'=>__("Please enter your e-mail address","sendpress"),  'missingemail'=>__("Please enter your e-mail address","sendpress"), 'ajaxurl' => admin_url( 'admin-ajax.php', 'http' ) ) );
+		}
    	}
 
    	function handle_front_end_posts(){
