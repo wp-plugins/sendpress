@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.8.1
+Version: 0.9.8.2
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Marketing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: http://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-	define( 'SENDPRESS_VERSION', '0.9.8.1' );
+	define( 'SENDPRESS_VERSION', '0.9.8.2' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -140,7 +140,9 @@ Author URI: http://sendpress.com/
 		    			return;
 		    		}
 		    	}
-		    	include SENDPRESS_PATH."classes/public-views/class-".$cls.".php";
+		    	if(file_exists( SENDPRESS_PATH."classes/public-views/class-".$cls.".php" )){
+		    		include SENDPRESS_PATH."classes/public-views/class-".$cls.".php";
+				}
 		  		return;
 		  	} 
 	
@@ -176,7 +178,12 @@ Author URI: http://sendpress.com/
 	    			return;
 	    		}
 	    	}
-		    include SENDPRESS_PATH."classes/class-".$cls.".php";
+
+	    	if(file_exists( SENDPRESS_PATH."classes/class-".$cls.".php" )){
+		    		include SENDPRESS_PATH."classes/class-".$cls.".php";
+			}
+		  	return;
+		    
 	    
 	  }
 	
@@ -1524,6 +1531,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 	function plugin_deactivation(){
 		flush_rewrite_rules( );
 		wp_clear_scheduled_hook( 'sendpress_cron_action' );
+		wp_clear_scheduled_hook( 'sendpress_notification_daily' );
 	} 
 
 	
