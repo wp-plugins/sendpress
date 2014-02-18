@@ -570,12 +570,32 @@ class SendPress_Data extends SendPress_DB_Tables {
 			}
 			$query_update_status .=";";
 			$wpdb->query($query_update_status);
-			
+			/*
 			$clean_list_query =  "DELETE FROM "	.SendPress_Data::list_subcribers_table(). " WHERE listID = ".$listid." AND subscriberID not in ('".implode("','", $good_ids)."')";
+			$wpdb->query($clean_list_query);	
+			*/
+		}
+	}
+
+
+	static function drop_active_subscribers_for_sync( $listid  = false ) {
+		if( $listid != false ){
+			global $wpdb;
+			$clean_list_query =  "DELETE FROM "	.SendPress_Data::list_subcribers_table(). " WHERE listID = ".$listid." AND status = 2";
 			$wpdb->query($clean_list_query);	
 
 		}
+
 	}
+
+
+	static function sync_lists_micro( $listid, $emails ) {
+
+
+
+	}
+
+
 
 	static function update_subscriber($subscriberID, $values){
 		$table = SendPress_Data::subscriber_table();
@@ -692,7 +712,19 @@ class SendPress_Data extends SendPress_DB_Tables {
 	}
 
 	
+	function export_subscirbers($listID = false){
+		global $wpdb;
+		if($listID){
+        $query = "SELECT t1.*, t3.status FROM " .  SendPress_Data::subscriber_table() ." as t1,". SendPress_Data::list_subcribers_table()." as t2,". SendPress_Data::subscriber_status_table()." as t3 " ;
 
+        
+            $query .= " WHERE (t1.subscriberID = t2.subscriberID) AND ( t3.statusid = t2.status ) AND (t2.listID =  ". $listID .")";
+        } else {
+            $query = "SELECT * FROM " .  SendPress_Data::subscriber_table();
+        }
+
+        return $wpdb->get_results( $query );
+	}
 
 
 
