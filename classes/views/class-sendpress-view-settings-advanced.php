@@ -23,6 +23,10 @@ class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
 		SendPress_Option::set('old_permalink', false );
 	}
 
+	SendPress_Option::set('sync-per-call', $post['sync-per-call'] );
+	SendPress_Option::set('autocron-per-call', $post['autocron-per-call'] );
+	SendPress_Option::set('wpcron-per-call', $post['wpcron-per-call'] );
+
 	$widget_options =  array();
 
         $widget_options['widget_options']['load_css'] = 0;
@@ -43,6 +47,8 @@ class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
         SendPress_Admin::redirect('Settings_Advanced');
 	}
 
+
+
 	function reset_transients(){
 		delete_transient('sendpress_weekly_post_notification_check');
 		delete_transient('sendpress_daily_post_notification_check');
@@ -57,9 +63,14 @@ class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
 </div>
 <br class="clear">
 		<br class="clear">
-<div class="boxer form-box">
-	<div style="float: right; width: 45%;">
-		<h2>Javascript & CSS</h2>
+<div class="sp-row">
+	<div class="sp-50 sp-first">
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h3 class="panel-title">Javascript & CSS</h3>
+	  </div>
+	  <div class="panel-body">
+
 		<?php 
 				$widget_options = SendPress_Option::get('widget_options');
 				//print_r($widget_options);
@@ -71,26 +82,61 @@ class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
 			
 			<input class="footer-scripts-checkbox sendpress_checkbox" value="<?php echo $widget_options['load_scripts_in_footer']; ?>" type="checkbox" <?php if( $widget_options['load_scripts_in_footer'] == 1 ){ echo 'checked'; } ?> id="load_scripts_in_footer" name="load_scripts_in_footer"/>  <?php _e('Load Javascript in Footer','sendpress'); ?> 
 		
-			<h2>Permalink Settings</h2>
-			<?php $ctype = SendPress_Option::get('old_permalink'); ?>
-			<input type="checkbox" name="old_permalink" value="true" <?php if($ctype){echo "checked='checked'"; } ?> /> Use old permalink with ?sendpress=.
-			<br><br>
-			<h2>Table Info</h2>
-			<pre><?php echo SendPress_DB_Tables::check_setup_support(); ?></pre>
-			<a class="btn btn-danger" href="<? echo SendPress_Admin::link('Settings_Install'); ?>">Install Missing Tables</a>
-			
+		</div>
+	</div>
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+			<h3 class="panel-title">Permalink Settings</h3>
+	  </div>
+		<div class="panel-body">
+		<?php $ctype = SendPress_Option::get('old_permalink'); ?>
+		<input type="checkbox" name="old_permalink" value="true" <?php if($ctype){echo "checked='checked'"; } ?> /> Use old permalink with ?sendpress=.
+		
+		
 
-	<br class="clear">
+		</div>
+	</div>
+
+
+	<h2>Table Info</h2>
+		<pre><?php echo SendPress_DB_Tables::check_setup_support(); ?></pre>
+		<a class="btn btn-danger" href="<? echo SendPress_Admin::link('Settings_Install'); ?>">Install Missing Tables</a>
+
+
 	</div>	
-	<div style="width: 45%; margin-right: 10%">
-		<h2>Tracking</h2>
+	<div class="sp-50">
+		<div class="panel panel-default">
+	  <div class="panel-heading">
+			<h3 class="panel-title">Tracking</h3>
+	  </div>
+		<div class="panel-body">
 		<?php $ctype = SendPress_Option::get('allow_tracking'); ?>
 	<input type="checkbox" name="allow_tracking" value="yes" <?php if($ctype=='yes'){echo "checked='checked'"; } ?> /> Allow tracking of this WordPress installs anonymous data.
 		<p>	
 	To maintain a plugin as big as SendPress, we need to know what we're dealing: what kinds of other plugins our users are using, what themes, etc. Please allow us to track that data from your install. It will not track any user details, so your security and privacy are safe with us.</p>
-
+</div></div>
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+			<h3 class="panel-title">Execution Limits</h3>
+	  </div>
+		<div class="panel-body">
+			<p>Please take care when changing these settings. We have attempted to set these to work on almost all servers. If you have a faster server you may be able to increase the limits below or if you are having troubles you may need to decrease the settings.</p>
+			<hr>
+			Users to Sync per ajax call: <?php $this->select('sync-per-call',SendPress_Option::get('sync-per-call',250) ); ?> Default: 250
+			<hr>
+			Emails sent per AutoCron execution: <?php $this->select('autocron-per-call',SendPress_Option::get('autocron-per-call',25), array(15,25,30,35,40,45,50) ); ?> Default: 25<br>
+			<small>If AutoCron errors it will shut itself off.</small>
+			<hr>
+			WordPress cron emails sent per execution: <?php $this->select('wpcron-per-call',SendPress_Option::get('wpcron-per-call',25), array(15,25,30,35,40,45,50,100,250,500,1000) ); ?> Default: 25<br>
+			
+		</div>
+	</div>
 	<?php do_action('sendpress_advanced_settings'); ?>
-	<br class="clear">
+		
+	
+
+
+	
 	
 	</div>
 

@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.8.2
+Version: 0.9.8.3
 Plugin URI: http://sendpress.com
 Description: Easy to manage Email Marketing and Newsletter plugin for WordPress. 
 Author: SendPress
@@ -15,8 +15,8 @@ Author URI: http://sendpress.com/
 	global $blog_id;
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
-	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.2' );
-	define( 'SENDPRESS_VERSION', '0.9.8.2' );
+	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
+	define( 'SENDPRESS_VERSION', '0.9.8.3' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -200,18 +200,18 @@ Author URI: http://sendpress.com/
 
 			//add_action('register_form',array( $this , 'add_registration_fields'));
 
-
 			SendPress_Ajax_Loader::init();
 			SendPress_Signup_Shortcode::init();
+			SendPress_Shortcode_Manage::init();
 			SendPress_Sender::init();
 			SendPress_Pro_Manager::init();
 			SendPress_Cron::get_instance();
 			SendPress_Cron::auto();
 			SendPress_Notifications_Manager::init();
 			SendPress_Tracking::init();
+			SendPress_Videos::init();
 			sendpress_register_sender('SendPress_Sender_Website');
 			sendpress_register_sender('SendPress_Sender_Gmail');
-
 
 			add_action( 'sendpress_event', array('SendPress_Tracking','event'), 1, 1 );
 
@@ -291,7 +291,6 @@ Author URI: http://sendpress.com/
 			
 		}
 
-
 		function add_registration_fields() {
 
 		    //Get and set any values already sent
@@ -300,7 +299,7 @@ Author URI: http://sendpress.com/
 
 		    <p>
 		        <label for="user_extra">
-		        <input type="checkbox" name="user_extra" id="user_extra"  value="<?php echo esc_attr(stripslashes($user_extra)); ?>" /> <?php _e('Join our mailing List.','sendpres'); ?></label><br>
+		        <input type="checkbox" name="user_extra" id="user_extra"  value="<?php echo esc_attr(stripslashes($user_extra)); ?>" /> <?php _e('Join our mailing List.','sendpress'); ?></label><br>
 		    </p><br>
 
 		    <?php
@@ -500,6 +499,7 @@ Author URI: http://sendpress.com/
 		static function add_vars($public_query_vars) {
 			$public_query_vars[] = 'fxti';
 			$public_query_vars[] = 'sendpress';
+			$public_query_vars[] = 'spmanage';
 			$public_query_vars[] = 'splist';
 			$public_query_vars[] = 'spreport';
 			$public_query_vars[] = 'spurl';
@@ -680,10 +680,10 @@ Author URI: http://sendpress.com/
 		//MAKE SURE WE ARE ON AN ADMIN PAGE
 		if(isset($_GET['page']) && in_array($_GET['page'], $this->adminpages)){
 
-
-			remove_filter( 'mce_external_plugins', 'cforms_plugin');
+				remove_action('admin_init', 'Zotpress_add_meta_box', 1);
+				remove_filter( 'mce_external_plugins', 'cforms_plugin');
 				remove_filter( 'mce_buttons', 'cforms_button');
-remove_filter("mce_plugins", "cforms_plugin");
+				remove_filter("mce_plugins", "cforms_plugin");
 				remove_filter('mce_buttons', 'cforms_button');
 				remove_filter('tinymce_before_init','cforms_button_script');
 
@@ -1504,7 +1504,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
      *
      * @return mixed Value.
      */
-	function plugin_activation(){
+	static function plugin_activation(){
 		if ( version_compare( $GLOBALS['wp_version'], SENDPRESS_MINIMUM_WP_VERSION, '<' ) ) {
 			deactivate_plugins( __FILE__ );
 	    	wp_die( sprintf( __('SendPress requires WordPress version %s or later.', 'sendpress'), SENDPRESS_MINIMUM_WP_VERSION) );
@@ -1528,7 +1528,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 	*	Nothing going on here yet
 	*	@static
 	*/
-	function plugin_deactivation(){
+	static function plugin_deactivation(){
 		flush_rewrite_rules( );
 		wp_clear_scheduled_hook( 'sendpress_cron_action' );
 		wp_clear_scheduled_hook( 'sendpress_notification_daily' );
@@ -1816,6 +1816,8 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 	*	FUNCTIONS TO BE REMOVED PLEASE DO NOT USE
 	* 
 	*/
+
+	
 	function send_single_from_queue(){
 		_deprecated_function( __FUNCTION__, '0.9.4.8', 'SendPress_Manager::send_single_from_queue()' );
 		return SendPress_Manager::send_single_from_queue();
@@ -1961,6 +1963,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 		_deprecated_function( __FUNCTION__, '0.8.9', 'SendPress_Manager::send_test()' );
 		SendPress_Manager::send_test();
 	}
+	
 	/*
 	*
 	*	END FUNCTIONS TO BE REMOVED PLEASE DO NOT USE
