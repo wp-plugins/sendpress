@@ -1148,6 +1148,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 			
 		}
 
+		/*
 		if(version_compare( $current_version, '0.9.4.7', '<' )){
 			SendPress_Data::update_tables_0947();
 		}
@@ -1159,7 +1160,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 			SendPress_Data::update_tables_0954();
 		}
 
-
+		*/
 	
 		if(version_compare( $current_version, '0.9.6', '<' )){
 
