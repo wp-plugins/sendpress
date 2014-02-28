@@ -1,9 +1,9 @@
 <?php 
 /*
-Plugin Name: SendPress: Email Marketing and Newsletters
-Version: 0.9.8.5
+Plugin Name: SendPress Newsletters
+Version: 0.9.8.6
 Plugin URI: http://sendpress.com
-Description: Easy to manage Email Marketing and Newsletter plugin for WordPress. 
+Description: Easy to manage Newsletters for WordPress. 
 Author: SendPress
 Author URI: http://sendpress.com/
 */
@@ -16,7 +16,7 @@ Author URI: http://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '0.9.8.5' );
+	define( 'SENDPRESS_VERSION', '0.9.8.6' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -524,9 +524,9 @@ Author URI: http://sendpress.com/
 		}
 		
 		function create_color_picker( $value ) { ?>	
-		<input class="cpcontroller" data-id="<?php echo $value['id']; ?>" css-id="<?php echo $value['css']; ?>" link-id="<?php echo $value['link']; ?>" name="<?php echo $value['id']; ?>" id="<?php echo $value['id']; ?>" type="text" value="<?php  echo isset($value['value']) ? $value['value'] : $value['std'] ; ?>" />
+		<input class="cpcontroller " data-id="<?php echo $value['id']; ?>" css-id="<?php echo $value['css']; ?>" link-id="<?php echo $value['link']; ?>" name="<?php echo $value['id']; ?>" id="<?php echo $value['id']; ?>" type="text" value="<?php  echo isset($value['value']) ? $value['value'] : $value['std'] ; ?>" />
 		<input type='hidden' value='<?php echo $value['std'];?>' id='default_<?php echo $value['id']; ?>'/>
-		<a href="#" class="btn btn-mini reset-line" data-type="cp" data-id="<?php echo $value['id']; ?>" >Reset</a>
+		<a href="#" class="btn btn-default btn-xs reset-line" data-type="cp" data-id="<?php echo $value['id']; ?>" >Reset</a>
 		<div id="pickholder_<?php echo $value['id']; ?>" class="colorpick clearfix" style="display:none;">
 			<a class="close-picker">x</a>
 			<div id="<?php echo $value['id']; ?>_colorpicker" class="colorpicker_space"></div>
@@ -538,7 +538,7 @@ Author URI: http://sendpress.com/
 	function create_color_picker_iframe( $value ) { ?>	
 		<input class="cpcontroller" iframe="true" data-id="<?php echo $value['id']; ?>" css-id="<?php echo $value['css']; ?>" target="<?php echo $value['iframe']; ?>" link-id="<?php echo $value['link']; ?>" name="<?php echo $value['id']; ?>" id="<?php echo $value['id']; ?>" type="text" value="<?php  echo isset($value['value']) ? $value['value'] : $value['std'] ; ?>" />
 		<input type='hidden' value='<?php echo $value['std'];?>' id='default_<?php echo $value['id']; ?>'/>
-		<a href="#" class="btn btn-mini reset-line" data-type="cp" data-id="<?php echo $value['id']; ?>" >Reset</a>
+		<a href="#" class="btn btn-default btn-xs reset-line" data-type="cp" data-id="<?php echo $value['id']; ?>" >Reset</a>
 		<div id="pickholder_<?php echo $value['id']; ?>" class="colorpick clearfix" style="display:none;">
 			<a class="close-picker">x</a>
 			<div id="<?php echo $value['id']; ?>_colorpicker" class="colorpicker_space"></div>
@@ -1147,6 +1147,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 			}
 			
 		}
+		/*
 
 		if(version_compare( $current_version, '0.9.4.7', '<' )){
 			SendPress_Data::update_tables_0947();
@@ -1158,7 +1159,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 		if(version_compare( $current_version, '0.9.5.4', '<' )){
 			SendPress_Data::update_tables_0954();
 		}
-
+		*/
 
 	
 		if(version_compare( $current_version, '0.9.6', '<' )){
