@@ -11,7 +11,13 @@ letter-spacing: -3px;
 display: none;
 }
 
+.panel-title{
+  font-weight: normal;
+}
 
+button{
+  margin: 0;
+}
 
 .bslabel {
     padding: 1px 3px 2px;
@@ -135,7 +141,9 @@ width: 25%;
 .w-25 .panel-heading{
     border-bottom: 0px;
 }
-
+.qemails .column-actions{
+  width: auto;
+}
 
 
 @media (max-width: 767px) {

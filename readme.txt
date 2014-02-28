@@ -1,14 +1,14 @@
-=== SendPress: Email Marketing and Newsletters ===
+=== SendPress Newsletters ===
 Plugin URI: http://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
 Tested up to: 3.8.1
-Stable tag: 0.9.8.5
+Stable tag: 0.9.8.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Easily create, send, manage and track your newsletters and emails right from WordPress.
+Easy to use Email Newsletter Plugin for WordPress to create, send, manage and track your Newsletters.
 
 == Description ==
 
@@ -38,7 +38,6 @@ More information at [SendPress.com](http://sendpress.com/).
 
 Please check out our support site [http://sendpress.com/support/knowledgebase/](http://sendpress.com/support/) if you need help with anything.
 
-https://www.codeship.io/projects/797186c0-1fa4-0131-c737-22bb51795562/status
 
 == Installation ==
 
@@ -102,6 +101,15 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 15. Pro Tab.
 
 == Changelog ==
+
+= 0.9.8.6 - 2014.2.28 =
+* New: Queue History Tab - see what has been sent
+* Fix: Added option to repair events table
+* Fix: Bugs from updated UI
+* Fix: Pro missing send count on reports
+* Fix: removed Presstrends Code
+* New: Sending alert so you have to pick list
+
 
 = 0.9.8.5 - 2014.2.24 =
 * Fix: Shortcodes from WooCommerce causing conflict
@@ -410,6 +418,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.9.8.6 =
+Queue History and Bug Fixes
 
 = 0.9.8.3 =
 Video embed as images support added
