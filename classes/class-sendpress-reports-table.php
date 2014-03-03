@@ -426,9 +426,19 @@ $canceled = get_post_meta($item->ID, '_canceled', true);
              $this->_column_headers = array($columns, $hidden, $sortable);
         /* -- Fetch the items -- */
             $args = array(
-            'post_type' => $this->_sendpress->_report_post_type ,
-            'post_status' => array('publish','draft')
+                'post_type' => $this->_sendpress->_report_post_type ,
+                'post_status' => array('publish','draft'),
+                        
+
+                'meta_query'             => array(
+                   array(
+                        'key'       => '_report_type',
+                       'compare' => 'not exists',
+                    
+                    ),
+                ),
             );
+
             $query = new WP_Query( $args );
             /*
             echo '<pre>';
@@ -485,8 +495,17 @@ $canceled = get_post_meta($item->ID, '_canceled', true);
             
 
             $args = array(
-            'post_type' => $this->_sendpress->_report_post_type ,
-            'post_status' => array('publish','draft'),
+             'post_type' => $this->_sendpress->_report_post_type ,
+                'post_status' => array('publish','draft'),
+                        
+
+                'meta_query'             => array(
+                    array(
+                        'key'       => '_report_type',
+                       'compare' => 'not exists',
+                    
+                    ),
+                ),
             'posts_per_page' => $per_page,
             'paged'=> $paged,
             );
