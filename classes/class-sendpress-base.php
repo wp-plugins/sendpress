@@ -7,6 +7,7 @@ if ( !defined('SENDPRESS_VERSION') ) {
 }
 
 class SendPress_Base {
+
 	 /**
      * Encrypt text data
      **/
@@ -30,4 +31,3 @@ class SendPress_Base {
     }
 
 }
-

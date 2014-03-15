@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress Newsletters
-Version: 0.9.8.7
+Version: 0.9.9
 Plugin URI: http://sendpress.com
 Description: Easy to manage Newsletters for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: http://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '0.9.8.7' );
+	define( 'SENDPRESS_VERSION', '0.9.9' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -111,10 +111,11 @@ Author URI: http://sendpress.com/
 		
 		
 		function __construct() {
-			add_action( 'init', array( $this, 'init' ) );
-			add_action( 'widgets_init', array( $this,'load_widgets') );
-			add_action('plugins_loaded',array( $this, 'load_plugin_language'));
-				
+			add_action( 'wp_loaded' , array( $this , 'wp' ) );
+			add_action( 'init', array( $this , 'init' ) );
+			add_action( 'widgets_init', array( $this , 'load_widgets' ) );
+			add_action( 'plugins_loaded', array( $this , 'load_plugin_language' ) );
+			
 			do_action( 'sendpress_loaded' );
 		}
 	
@@ -194,12 +195,21 @@ Author URI: http://sendpress.com/
 			}
 			return self::$instance;
 		}
+
+		function wp(){
+			sendpress_register_template(
+				array('path'=> SENDPRESS_PATH.'templates/original.html', 'name'=> 'SendPress Original')
+				);
+			sendpress_register_template(
+				array('path'=> SENDPRESS_PATH.'templates/2columns-to-rows.html', 'name'=> '2 Column Top - Wide Bottom - Responsive')
+				);
+		}
 	
 		function init() {
 			$this->maybe_upgrade();
 
 			//add_action('register_form',array( $this , 'add_registration_fields'));
-
+			
 			SendPress_Ajax_Loader::init();
 			SendPress_Signup_Shortcode::init();
 			SendPress_Shortcode_Manage::init();
@@ -607,7 +617,7 @@ Author URI: http://sendpress.com/
 		//dadd_action('admin_notices', array($this,'sendpress_ignore_087'));
 
 		if( SendPress_Option::get('sendmethod') == false ){
-			SendPress_Option::set('sendmethod','website');
+			SendPress_Option::set('sendmethod','SendPress_Sender_Website');
 		}
 
 		if( SendPress_Option::get('send_optin_email') == false ){
@@ -634,7 +644,7 @@ Author URI: http://sendpress.com/
 		//Removed in 0.9.2
 		//$this->create_initial_list();
 		
-
+		/*
 		if( SendPress_Option::get('emails-today') == false ){
 			$emails_today = array( date("z") => '0' );
 			SendPress_Option::set('emails-today', $emails_today);
@@ -644,8 +654,8 @@ Author URI: http://sendpress.com/
 		$emails_today[date("z") + 1 ] = '0';
 
 		SendPress_Option::set('emails-today', $emails_today);
-
-
+		*/
+		SendPress_Option::set('emails-today', '');
 		//SendPress_Option::set('allow_tracking', '');
 		//wp_clear_scheduled_hook( 'sendpress_cron_action' );
 		// Schedule an action if it's not already scheduled
@@ -747,10 +757,10 @@ Author URI: http://sendpress.com/
 			wp_enqueue_script('sendpress_jquery_ibutton_js');
 			*/
 
-			wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', false, SENDPRESS_VERSION );
+			wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', array('sendpress_bootstrap_css'), SENDPRESS_VERSION );
     		wp_enqueue_style( 'sendpress_css_base' );
-wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false, SENDPRESS_VERSION );
-    	wp_enqueue_style( 'sendpress_css_admin' );
+			wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array('sendpress_bootstrap_css'), SENDPRESS_VERSION );
+    		wp_enqueue_style( 'sendpress_css_admin' );
 	    	do_action('sendpress_admin_scripts');
 	    	$view_class = $this->get_view_class($this->_page, $this->_current_view);
 			$view_class = NEW $view_class;
@@ -1188,7 +1198,21 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', false
 
 		}
 
+if(version_compare( $current_version, '0.9.9', '<' )){
+					$link = SendPress_Option::get('socialicons');
 
+							if($twit =  SendPress_Option::get('twitter') ){
+								$link['Twitter']	 = $twit;
+							}
+
+							if($fb =  SendPress_Option::get('facebook') ){
+							$link['Facebook']	 = $fb;
+							}
+							if($ld =  SendPress_Option::get('linkedin') ){
+							$link['LinkedIn']	 = $ld;
+							}
+	SendPress_Option::set('socialicons',$link);
+}
 		SendPress_Option::set( 'version' , SENDPRESS_VERSION );
 	}	
 	

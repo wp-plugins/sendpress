@@ -97,8 +97,7 @@ class SendPress_View_Settings_Styles extends SendPress_View_Settings {
         SendPress_Option::set('linkedin', $linkedin);
         SendPress_Option::set('facebook', $facebook);
         SendPress_Option::set('twitter', $twitter);
-        SendPress_Option::set('fromemail', $fromemail );
-        SendPress_Option::set('fromname', $fromname );
+       
        // SendPress_Option::set('unsubscribetext', $unsubtext);
 
         SendPress_Admin::redirect('Settings_Styles');
@@ -116,32 +115,18 @@ class SendPress_View_Settings_Styles extends SendPress_View_Settings {
 			$post = get_post( $_GET['emailID'] );
 			$post_ID = $post->ID;
 		}
-	
-$fe = __('From Email','sendpress'); 
-$fn = __('From Name','sendpress'); 
+
 		?>
 		<form method="post" id="post">
 	<br class="clear">
+    <!--
 <div style="float:right;" >
 	<a href="<?php echo SendPress_Admin::link('Settings_Styles'); ?>" class="btn btn-default btn-large" ><i class="icon-remove"></i> <?php _e('Cancel','sendpress'); ?></a> <a href="#" id="save-update" class="btn btn-primary btn-large"><i class="icon-white icon-ok"></i> <?php _e('Save','sendpress'); ?></a>
 </div>
-<br class="clear">
-<h3>Required Settings</h3>
-<div class="boxer form-box">
-<div style="float: right; width: 45%;">
-	<h4 class="nomargin"><?php _e('From Email','sendpress'); ?></h4>
-	<input name="fromemail" tabindex=2 type="text" id="fromemail" value="<?php echo SendPress_Option::get('fromemail'); ?>" class="regular-text sp-text">
-
-</div>	
-<div style="width: 45%; margin-right: 10%">
-	<h4 class="nomargin"><?php _e('From Name','sendpress'); ?></h4>
-	<input name="fromname" tabindex=1 type="text" id="fromname" value="<?php echo SendPress_Option::get('fromname'); ?>" class="regular-text sp-text">
-
-</div>
-</div>
+-->
 
 <br class="clear">
-<h3>Optional Settings</h3>
+
 		<?php 
         define('SENDPRESS_STYLER_PAGE',true);
         require_once( SENDPRESS_PATH. 'inc/forms/email-style.2.0.php' ); ?>
@@ -171,15 +156,7 @@ if( SendPress_Option::get('beta') ) {
 
 
 <div style="float: right; width: 45%;">
-	<h4 class="nomargin">Social Media</h4>
-	<p>These items only show on the tempalte if a url is entered.</p>
-	<p><label><?php _e('Twitter URL','sendpress'); ?>:</label>
-	<input name="twitter" type="text" id="twitter" value="<?php echo SendPress_Option::get('twitter'); ?>" class="regular-text sp-text"></p>
-<p><label><?php _e('Facebook URL','sendpress'); ?>:</label>
-<input name="facebook" type="text" id="facebook" value="<?php echo SendPress_Option::get('facebook'); ?>" class="regular-text sp-text" ></p>
-<p><label><?php _e('LinkedIn URL','sendpress'); ?>:</label>
-<input name="linkedin" type="text" id="linkedin" value="<?php echo SendPress_Option::get('linkedin'); ?>" class="regular-text sp-text"></p>
-	<p class="alert alert-info">Make sure you include http:// in your links</p>
+	
 </div>	
 <div style="width: 45%; margin-right: 10%">
 <h4 class="nomargin"><?php _e('CAN-SPAM','sendpress'); ?>: <small><?php _e('required in the US.','sendpress'); ?></small>&nbsp;&nbsp;&nbsp;&nbsp;<?php _e('This area displays in Email Footer','sendpress'); ?></h4>

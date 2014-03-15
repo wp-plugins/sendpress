@@ -32,9 +32,8 @@ class SendPress_View {
 			return;
 		}
 		add_action('in_admin_footer',array('SendPress_View','footer'));
-		
+
 	}
-	
 	static function footer(){ 
 		
 		?>
@@ -44,6 +43,11 @@ class SendPress_View {
 		<?php
 	}
 
+	function view_buttons(){
+		?>
+		<button class="btn btn-default" id="save-menu-cancel">Cancel</button><button class="btn btn-primary" id="save-menu-post">Save</button>
+		<?php
+	}
 
 
 	function panel_start($title = false){ ?>
@@ -57,6 +61,7 @@ class SendPress_View {
 		<?php
 	}
 
+	
 	function panel_end($footer = false){ ?>
 		</div>
 		<?php if($footer !== false) { ?>
@@ -118,6 +123,7 @@ class SendPress_View {
 	 * Renders the view.
 	 */
 	function render($sp = false) {
+		
 		$this->page_start();
 		$this->sub_menu($sp);
 		if( SendPress_Admin::access( $this ) ){
