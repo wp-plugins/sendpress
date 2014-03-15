@@ -14,10 +14,21 @@ display: none;
 .panel-title{
   font-weight: normal;
 }
-
+.spwrap .bg-primary{color:#fff;background-color:#428bca}
+.spwrap a.bg-primary:hover{background-color:#3071a9}
+.spwrap .bg-success{background-color:#dff0d8}
+.spwrap a.bg-success:hover{background-color:#c1e2b3}
+.spwrap .bg-info{background-color:#d9edf7}
+.spwrap a.bg-info:hover{background-color:#afd9ee}
+.spwrap .bg-warning{background-color:#fcf8e3}
+.spwrap a.bg-warning:hover{background-color:#f7ecb5}
+.spwrap .bg-danger{background-color:#f2dede}
+.spwrap a.bg-danger:hover{background-color:#e4b9b9}
 button{
   margin: 0;
 }
+.sp-row .input-group input[type="checkbox"],
+.sp-row input{ margin: 0px; }
 
 .bslabel {
     padding: 1px 3px 2px;
@@ -53,6 +64,7 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+
 
 .announcement-heading {
 font-size: 50px;
@@ -127,8 +139,23 @@ width: 25%;
     float:left;
 }
 
+.sp-75{
+   width: 74.2%;
+    position: relative;
+    min-height: 1px;
+    margin-left: 3.2%;
+    float:left;
+}
+
+.sp-25{
+  width: 22.6%;
+    position: relative;
+    min-height: 1px;
+    margin-left: 3.2%;
+    float:left;
+}
 .w-25{
-    width: 22.6%;
+  width: 22.6%;
     position: relative;
     min-height: 1px;
     margin-left: 3.2%;
@@ -149,6 +176,82 @@ width: 25%;
   height: 800px;
 }
 
+.in .action-buttons{
+  display: none;
+}
+.top-action-buttons{
+  margin-top: 8px;
+  margin-right:15px;
+}
+
+
+
+.admin-color-midnight .navbar-default .navbar-nav > .active > a, .admin-color-midnight .navbar-default .navbar-nav > .active > a:hover, .admin-color-midnight .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #e14d43;
+  color: #fff;
+}
+
+.admin-color-fresh .navbar-default .navbar-nav > .active > a, .admin-color-fresh .navbar-default .navbar-nav > .active > a:hover, .admin-color-fresh .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #0074a2;
+  color: #fff;
+}
+
+.admin-color-blue .navbar-default .navbar-nav > .active > a, .admin-color-blue .navbar-default .navbar-nav > .active > a:hover, .admin-color-blue .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #096484;
+  color: #fff;
+}
+
+.admin-color-coffee .navbar-default .navbar-nav > .active > a, .admin-color-coffee .navbar-default .navbar-nav > .active > a:hover, .admin-color-coffee .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #c7a589;
+  color: #fff;
+}
+.admin-color-ectoplasm .navbar-default .navbar-nav > .active > a, .admin-color-ectoplasm .navbar-default .navbar-nav > .active > a:hover, .admin-color-ectoplasm .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #a3b745;
+  color: #fff;
+}
+.admin-color-ocean .navbar-default .navbar-nav > .active > a, .admin-color-ocean .navbar-default .navbar-nav > .active > a:hover, .admin-color-ocean .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #9ebaa0;
+  color: #fff;
+}
+.admin-color-sunrise .navbar-default .navbar-nav > .active > a, .admin-color-sunrise .navbar-default .navbar-nav > .active > a:hover, .admin-color-sunrise .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #dd823b;
+  color: #fff;
+}
+.admin-color-light .navbar-default .navbar-nav > .active > a, .admin-color-light .navbar-default .navbar-nav > .active > a:hover, .admin-color-light .navbar-default .navbar-nav > .active > a:focus{
+  background-color: #04a4cc;
+  color: #fff;
+}
+h1, h2, h3, h4, h5, h6 {
+   font-family: "Open Sans", sans-serif !important;
+} 
+
+h2 .nav-tab{
+   font-weight: normal !important;
+   font-family: "Open Sans", sans-serif;
+   }
+/*
+.admin-color-coffee .nav-tab-active{
+  background-color: #c7a589;
+  color: #fff;
+}
+
+.admin-color-light h2.nav-tab-wrapper,.admin-color-light h3.nav-tab-wrapper{
+  border-bottom-color: #04a4cc;
+}
+
+.admin-color-coffee h2.nav-tab-wrapper,.admin-color-coffee h3.nav-tab-wrapper{
+  border-bottom-color: #c7a589;
+}
+
+.admin-color-coffee .nav-tab {
+color: #cdcbc9;
+border-color: #46403c;
+background: #59524c;
+}
+.admin-color-coffee .about-wrap h2 .nav-tab-active, .admin-color-coffee .nav-tab-active, .nav-tab-active:hover{
+border-bottom-color: #f7f7f7;
+}
+*/
 
 @media (max-width: 767px) {
   .w-25{

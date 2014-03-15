@@ -34,7 +34,15 @@
             //Make sure header editors are hidden to start
             this.imagebox = $('#imageaddbox');
             this.textbox = $('#textaddbox');
+            $('#save-menu-post').click(function(e){
+                e.preventDefault();
+                $('#post').submit();
+            });
 
+            $('#save-menu-cancel').click(function(e){
+                e.preventDefault();
+                location.reload();
+            });
 
             $('#delete-this-user').click(function(){
         $('#subscriber-save').val( $(this).is(':checked') ? 'This will delete this Subscriber!' : 'Save' );
@@ -47,6 +55,14 @@
                 }
 
         });
+
+
+            $('#send-test-email-btn').click(function(e){
+                e.preventDefault();
+                $('#test-email-form').val($('#test-email-main').val());
+                $('#post-test').submit();
+            });
+
 
             $('.test-list-add').click(function(){
                 $('#test_report').prop('checked', true);
