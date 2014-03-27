@@ -47,10 +47,13 @@ class SendPress_Shortcode_Loader {
 			<div class="panel panel-default">
 			    <div class="panel-heading">
 			      <h4 class="panel-title">
-			        <a data-toggle="collapse" data-parent="#accordion" href="#<? echo $classname ?>">
+			        <a data-toggle="collapse" data-parent="#accordion" href="#<? echo $classname; ?>">
 			        	<?php
-			        		$title = $classname::title() !==false ? $classname::title() : "[sp-". $shortcode ."]";
-			         	 echo $title;
+			        		$sc_title = "[sp-". $shortcode ."]";
+			        		if( $classname::title() != false ){
+			        			$sc_title = $classname::title();
+			        		}
+			         	 	echo $sc_title;
 			         	  ?>
 			        </a>
 			      </h4>
