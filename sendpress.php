@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress Newsletters
-Version: 0.9.9.3
+Version: 0.9.9.4
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '0.9.9.3' );
+	define( 'SENDPRESS_VERSION', '0.9.9.4' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -44,7 +44,6 @@ Author URI: https://sendpress.com/
 	
 	// AutoLoad Classes
 	spl_autoload_register(array('SendPress', 'autoload'));
-	
 	
 	require_once( SENDPRESS_PATH . 'inc/functions.php' );
 	/*
@@ -115,7 +114,9 @@ Author URI: https://sendpress.com/
 			add_action( 'init', array( $this , 'init' ) );
 			add_action( 'widgets_init', array( $this , 'load_widgets' ) );
 			add_action( 'plugins_loaded', array( $this , 'load_plugin_language' ) );
-			
+
+			add_action( 'init', array( 'SendPress_Shortcode_Loader', 'init' ) );
+		
 			do_action( 'sendpress_loaded' );
 		}
 	
@@ -123,8 +124,8 @@ Author URI: https://sendpress.com/
 		  	if( strpos($className, 'SendPress') !== 0 ){
 		  		return;
 		  	}
-		  
-		    $cls = str_replace('_', '-',	strtolower($className) );
+		 	// Convert Classname to filename 
+		    $cls = str_replace('_', '-', strtolower($className) );
 		    if( substr($cls, -1) == '-'){
 		    	//AutoLoad seems to get odd clasname sometimes that ends with _
 	  			return;
@@ -132,8 +133,20 @@ Author URI: https://sendpress.com/
 		    if(class_exists($className)){
 		    	return;
 		    }
-	
-		    if( strpos($className, 'Public_View') != false ){
+			
+		    if( strpos($className, '_SC_') != false ){
+		    	if( defined('SENDPRESS_PRO_PATH') ) {
+		    		$pro_file = SENDPRESS_PRO_PATH."classes/sc/class-".$cls.".php";
+		    		if( file_exists( $pro_file ) ){
+		    			include SENDPRESS_PRO_PATH."classes/sc/class-".$cls.".php";
+		    			return;
+		    		}
+		    	}
+		    	include SENDPRESS_PATH."classes/sc/class-".$cls.".php";
+		  		return;
+		  	}
+
+		  	  if( strpos($className, 'Public_View') != false ){
 		    	if( defined('SENDPRESS_PRO_PATH') ) {
 		    		$pro_file = SENDPRESS_PRO_PATH."classes/public-views/class-".$cls.".php";
 		    		if( file_exists( $pro_file ) ){
@@ -146,8 +159,8 @@ Author URI: https://sendpress.com/
 				}
 		  		return;
 		  	} 
-	
-		    if( strpos($className, 'View') != false ){
+
+			if( strpos($className, 'View') != false ){
 		    	if( defined('SENDPRESS_PRO_PATH') ) {
 		    		$pro_file = SENDPRESS_PRO_PATH."classes/views/class-".$cls.".php";
 		    		if( file_exists( $pro_file ) ){
@@ -158,6 +171,10 @@ Author URI: https://sendpress.com/
 		    	include SENDPRESS_PATH."classes/views/class-".$cls.".php";
 		  		return;
 		  	}
+
+		  
+	
+		    
 	
 		  	if( strpos($className, 'Module') != false ){
 		  		if( defined('SENDPRESS_PRO_PATH') ) {
@@ -197,7 +214,6 @@ Author URI: https://sendpress.com/
 		}
 
 		function wp(){
-			
 			sendpress_register_template(
 				array('path'=> SENDPRESS_PATH.'templates/original.html', 'name'=> 'SendPress Original')
 				);
@@ -209,11 +225,10 @@ Author URI: https://sendpress.com/
 	
 		function init() {
 			$this->maybe_upgrade();
-
 			//add_action('register_form',array( $this , 'add_registration_fields'));
 			
 			SendPress_Ajax_Loader::init();
-			SendPress_Signup_Shortcode::init();
+			//SendPress_Signup_Shortcode::init();
 			SendPress_Shortcode_Manage::init();
 			SendPress_Sender::init();
 			SendPress_Shortcodes::init();
@@ -223,6 +238,7 @@ Author URI: https://sendpress.com/
 			SendPress_Notifications_Manager::init();
 			SendPress_Tracking::init();
 			SendPress_Videos::init();
+
 			sendpress_register_sender('SendPress_Sender_Website');
 			sendpress_register_sender('SendPress_Sender_Gmail');
 
@@ -598,7 +614,6 @@ Author URI: https://sendpress.com/
 
 
 	function admin_init(){
-		
 		$this->add_caps();
 		if ( !empty($_GET['_wp_http_referer']) && (isset($_GET['page']) && in_array($_GET['page'], $this->adminpages)) ) {
 			wp_redirect( remove_query_arg( array('_wp_http_referer', '_wpnonce'), stripslashes($_SERVER['REQUEST_URI']) ) );
@@ -642,6 +657,13 @@ Author URI: https://sendpress.com/
 			SendPress_Option::set('emails-per-day','1000');
 			SendPress_Option::set('emails-per-hour','100');
 		}
+
+		if( SendPress_Option::get('queue-per-call') == false ){
+			SendPress_Option::set('queue-per-call' , 1000 );
+	
+		}
+		
+		 
 
 		//Removed in 0.9.2
 		//$this->create_initial_list();
@@ -699,7 +721,8 @@ Author URI: https://sendpress.com/
 				remove_filter("mce_plugins", "cforms_plugin");
 				remove_filter('mce_buttons', 'cforms_button');
 				remove_filter('tinymce_before_init','cforms_button_script');
-
+				
+			
 			if(SendPress_Option::get('whatsnew','show') == 'show'){
 				SendPress_Option::set('whatsnew','hide');
 				SendPress_Admin::redirect('Help_Whatsnew');
@@ -708,7 +731,11 @@ Author URI: https://sendpress.com/
 			wp_register_script('sendpress_js_styler', SENDPRESS_URL .'js/styler.js' ,'', SENDPRESS_VERSION);
 			wp_enqueue_script('sendpress_js_styler');
 		}
-		
+			if(defined('WPE_PLUGIN_BASE') ){
+				add_action('admin_print_styles', array( $this ,'remove_wpengine_style'));
+			}
+
+
 			$this->_page = $_GET['page'];
 			add_filter('tiny_mce_before_init',  array($this,'myformatTinyMCE') );
 			
@@ -812,6 +839,11 @@ Author URI: https://sendpress.com/
 		}
    	}
 
+	static function remove_wpengine_style() {
+		error_log('test');
+		wp_dequeue_style('wpe-common');
+		wp_deregister_style('wpe-common');
+	}
    	
 
    	function add_front_end_scripts(){
