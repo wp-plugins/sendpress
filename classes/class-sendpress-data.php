@@ -722,6 +722,22 @@ class SendPress_Data extends SendPress_DB_Tables {
 		//$result = $wpdb->update($table, $values, array('email'=> $email) );
 	}
 
+	static function update_subscriber_by_wp_user($wp_user_id, $values){
+		$table = SendPress_Data::subscriber_table();
+		global $wpdb;
+		$key = SendPress_Data::random_code();
+		
+		$current = $wpdb->get_var( $wpdb->prepare("SELECT subscriberID FROM $table WHERE wp_user_id = %d", $wp_user_id) );
+		if( $current !== null ){
+			$wpdb->update($table , $values, array( 'subscriberID' => $current ) );
+		} else {	
+			$q = "INSERT INTO $table (email,wp_user_id,identity_key,join_date,firstname,lastname) VALUES (%s,%d,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE wp_user_id=%d,firstname=%s,lastname=%s";
+			$q = $wpdb->prepare($q,$values['email'],$wp_user_id,$key,date('Y-m-d H:i:s'),$values['firstname'],$values['lastname'],$wp_user_id,$values['firstname'],$values['lastname']);
+			$result = $wpdb->query($q);
+		}
+		//$result = $wpdb->update($table, $values, array('email'=> $email) );
+	}
+
 
 	static function get_subcribers_by_meta($meta_key = false, $meta_value = false, $list_id= false){
 
@@ -986,6 +1002,21 @@ class SendPress_Data extends SendPress_DB_Tables {
 		);
 		
 		$wpdb->insert( SendPress_Data::subscriber_event_table(),  $event_data);
+	}
+
+
+	static  function get_bad_post_count(){
+		global $wpdb;
+		$result = $wpdb->get_var("select count(*) from ". $wpdb->posts ." where post_type='sptemplates' and post_name not in('sp-template-user-style','sp-template-default-style','sp-template-double-optin')");
+		return $result;
+	}
+
+
+	static function delete_extra_posts(){
+		global $wpdb;
+		$wpdb->query("delete from ". $wpdb->posts ." where post_type='sptemplates' and post_name not in('sp-template-user-style','sp-template-default-style','sp-template-double-optin')");
+
+
 	}
 
 	static function add_subscribe_event( $sid, $lid, $type ){
