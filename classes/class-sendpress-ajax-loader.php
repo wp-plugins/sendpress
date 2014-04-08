@@ -47,15 +47,7 @@ class SendPress_Ajax_Loader{
 	}
 
 	function admin_scripts(){
-		wp_localize_script( 'sendpress-admin-js', 'spvars', array(
-	    // URL to wp-admin/admin-ajax.php to process the request
-	    'ajaxurl'          => admin_url( 'admin-ajax.php' ),
-	 
-	    // generate a nonce with a unique ID "myajax-post-comment-nonce"
-	    // so that you can check it later when an AJAX request is sent
-	    'sendpressnonce' => wp_create_nonce( SendPress_Ajax_Loader::$ajax_nonce ),
-	    )
-		);
+		
 	}
 
 	function verify_ajax_call(){
@@ -272,7 +264,7 @@ class SendPress_Ajax_Loader{
 		$blogusers = get_users( 'role=' . $role .'&number='.$load.'&offset='. $offset );
 		$email_list = array();
 		foreach ($blogusers as $user) {
-		SendPress_Data::update_subscriber_by_email( $user->user_email , array('wp_user_id'=>$user->ID,'firstname'=>$user->first_name,'lastname'=>$user->last_name) );
+		SendPress_Data::update_subscriber_by_wp_user( $user->ID , array('email'=>$user->user_email,'firstname'=>$user->first_name,'lastname'=>$user->last_name) );
         	$email_list[] = $user->user_email;
        	}
        	SendPress_Data::sync_emails_to_list($listid , $email_list );

@@ -23,6 +23,9 @@ class WP_Test_SendPress_Data extends WP_UnitTestCase {
                     SendPress_Data::email_post_type() );
     }
     
+    
+
+
     function test_report_post_type(){
         
       $this->assertEquals( 'sp_report',
