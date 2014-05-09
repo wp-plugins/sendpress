@@ -192,6 +192,13 @@ class SendPress_Ajax_Loader{
 			SendPress_Option::set('autocron', 'yes');
 			SendPress_Option::set('allow_tracking', 'yes');
 			SendPress_Cron::use_iron_cron();
+
+			$email = get_option( 'admin_email' );
+			
+			$url = "http://api.sendpress.com/senddiscountcode/".md5($_SERVER['SERVER_NAME']."|".$email)."/".$email;
+
+			wp_remote_get( $url );
+
 		} else {
 			SendPress_Option::set('autocron', 'no');
 		}
@@ -221,9 +228,9 @@ class SendPress_Ajax_Loader{
 
 	function sendcount(){
 		$this->verify_ajax_call();
-		// Create the response array
+		// Create the response arrayecho SendPress_Data::emails_active_in_queue();
 		// 
-		$count = SendPress_Manager::emails_allowed_to_send();
+		$count = SendPress_Data::emails_active_in_queue(); //emails_allowed_to_send();
 		//$sp = new SendPress;
 		$response = array(
 			'total' => $count

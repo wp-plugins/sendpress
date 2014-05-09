@@ -17,7 +17,7 @@ if ( !defined('SENDPRESS_VERSION') ) {
  * 
  * Our theme for this list table is going to be movies.
  */
-class SendPress_Queue_Table extends WP_List_Table {
+class SendPress_Queue_Errors_Table extends WP_List_Table {
     
     /** ************************************************************************
      * Normally we would be querying data from a database and manipulating that
@@ -78,6 +78,10 @@ class SendPress_Queue_Table extends WP_List_Table {
             case 'status':
                return $item->$column_name;
            */
+               case 'details':
+                return $item->post_content;
+               break;
+
             case 'max_attempts':
 
 
@@ -161,8 +165,8 @@ class SendPress_Queue_Table extends WP_List_Table {
         );
         
         //Return the title contents
-        return sprintf('%1$s <span style="color:silver">(subscriber id:%2$s)</span>%3$s',
-            /*$1%s*/ $item->to_email,
+        return sprintf('%1$s',
+            /*$1%s*/ $item->post_title,
             /*$2%s*/ $item->subscriberID,
             /*$3%s*/ $this->row_actions($actions)
         );
@@ -202,17 +206,17 @@ class SendPress_Queue_Table extends WP_List_Table {
     function get_columns(){
        
         $columns = array(
-            'cb'        => '<input type="checkbox" />', //Render a checkbox instead of text
-            'gravatar' => ' ',
-            'title' => 'Email',
-            'listid' => 'List',
+            //'cb'        => '<input type="checkbox" />', //Render a checkbox instead of text
+          //  'gravatar' => ' ',
+            'title' => 'Error',
+            'details' => 'Details',
             
-            
+            /*
             'max_attempts' => 'Max&nbsp;Attempts',
             'attempts' => 'Attempted',
             'last_attemp' => 'Last&nbsp;Attempt',
             'actions' => 'Actions'
-
+        */
             
         );
         return $columns;
@@ -263,7 +267,7 @@ class SendPress_Queue_Table extends WP_List_Table {
      **************************************************************************/
     function get_bulk_actions() {
         $actions = array(
-            'delete-email-queue' => 'Delete'
+         //   'delete-email-queue' => 'Delete'
         );
 
         
@@ -320,9 +324,9 @@ class SendPress_Queue_Table extends WP_List_Table {
 <?php
         if ( 'top' == $which && !is_singular() ) {
 
-           $this->list_select();
-           $this->email_finder();
-           submit_button( __( 'Filter' ), 'button', false, false, array( 'id' => 'post-query-submit' ) );
+           //$this->list_select();
+           //$this->email_finder();
+           //submit_button( __( 'Filter' ), 'button', false, false, array( 'id' => 'post-query-submit' ) );
         }
 
         
@@ -355,12 +359,12 @@ class SendPress_Queue_Table extends WP_List_Table {
 
  
        
-        $query = "SELECT * FROM " .  SendPress_Data::queue_table();
+        //$query = "SELECT * FROM " .  SendPress_Data::queue_table();
        
        
         /* -- Pagination parameters -- */
         //Number of elements in your table?
-        $totalitems = SendPress_Data::emails_in_queue();//$wpdb->query($query); //return the total number of affected rows
+        $totalitems = SPNL()->log->get_log_count(0,'sending');
         //How many to display per page?
         // get the current user ID
             $user = get_current_user_id();
@@ -386,31 +390,7 @@ class SendPress_Queue_Table extends WP_List_Table {
         if(empty($paged) || !is_numeric($paged) || $paged<=0 ){ $paged=1; }
         //How many pages do we have in total?
         $totalpages = ceil($totalitems/$per_page);
-        $query.=' WHERE success = 0 AND max_attempts > attempts ';
-        $query.="AND ( date_sent = '0000-00-00 00:00:00' or date_sent < '".date_i18n('Y-m-d H:i:s')."') ";
-        if(isset($_GET["listid"]) &&  $_GET["listid"]> 0 ){
-            $query .= ' AND listID = '. $_GET["listid"];
-        }
-
-        if(isset($_GET["qs"] )){
-            $query .= ' AND to_email LIKE "%'. $_GET["qs"] .'%"';
-
-        }
-         /* -- Ordering parameters -- */
-        //Parameters that are going to be used to order the result
-        $orderby = !empty($_GET["orderby"]) ? mysql_real_escape_string($_GET["orderby"]) : '';
-        $order = !empty($_GET["order"]) ? mysql_real_escape_string($_GET["order"]) : 'ASC';
-        if(!empty($orderby) & !empty($order)){ $query.=' ORDER BY '.$orderby.' '.$order; }
-
-        if( empty( $orderby ) ){
-          $query .=  ' ORDER BY  attempts ASC, id ASC ';
-        }
-
-        //adjust the query to take pagination into account
-        if(!empty($paged) && !empty($per_page)){
-            $offset=($paged-1)*$per_page;
-             $query.=' LIMIT '.(int)$offset.','.(int)$per_page;
-        }
+       
       
     /* -- Register the pagination -- */
         $this->set_pagination_args( array(
@@ -426,7 +406,7 @@ class SendPress_Queue_Table extends WP_List_Table {
          $sortable = $this->get_sortable_columns();
          $this->_column_headers = array($columns, $hidden, $sortable);
     /* -- Fetch the items -- */
-        $this->items = $wpdb->get_results($query);
+        $this->items = SPNL()->log->get_logs(0,'sending', $paged);
     }
     
    
