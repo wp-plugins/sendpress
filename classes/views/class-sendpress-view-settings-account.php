@@ -45,6 +45,7 @@ class SendPress_View_Settings_Account extends SendPress_View_Settings {
         SendPress_Option::set('fromemail', $fromemail );
         SendPress_Option::set('fromname', $fromname );
         
+        
         $options['sendmethod'] = $_POST['sendpress-sender'];
         // Provides: Hll Wrld f PHP
         $chars = array(".", ",", " ", ":", ";", "$", "%", "*", "-", "=");
@@ -52,7 +53,7 @@ class SendPress_View_Settings_Account extends SendPress_View_Settings {
         $options['emails-per-hour'] = str_replace($chars,"",$_POST['emails-per-hour']);
         $options['email-charset'] = $_POST['email-charset'];
         $options['email-encoding'] = $_POST['email-encoding'];
-
+        $options['testemail'] = $_POST['testemail'];
         $options['phpmailer_error'] = '';
         $options['last_test_debug'] = '';
         SendPress_Option::set( $options );
@@ -65,7 +66,6 @@ class SendPress_View_Settings_Account extends SendPress_View_Settings {
             $sender->save();
           }
        // }
-
         SendPress_Admin::redirect('Settings_Account');
 
 
@@ -77,7 +77,7 @@ class SendPress_View_Settings_Account extends SendPress_View_Settings {
         
         SendPress_Option::set($options);
         SendPress_Manager::send_test();
-         SendPress_Admin::redirect('Settings_Account');
+        // SendPress_Admin::redirect('Settings_Account');
        // $this->send_test();
        // $this->redirect();
   }
@@ -128,9 +128,35 @@ $fn = __('From Name','sendpress');
  <div class="sp-50">
 <button class="btn btn-danger btn-block" data-toggle="modal" data-target="#debugModal" type="button"><?php _e( 'Debug Info', 'sendpress' ); ?></button>
 </div>
+<div class="sp-row">
+<br>
+<div class="panel-group" id="accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+          Click to View Last Error
+        </a>
+      </h4>
+    </div>
+    <div id="collapseOne" class="panel-collapse collapse">
+      <div class="panel-body">
+     
+<?php
+
+  $logs = SPNL()->log->get_connected_logs( array( 'posts_per_page' => 1, 'log_type'=>'sending' ) );
+  foreach ($logs as $log) {
+    echo "<strong>". $log->post_date ."</strong>  ". $log->post_title;
+    echo "<br>". $log->post_content;
+  }
+   
+?>
+ </div>
+    </div>
+  </div>
+  </div>
 </div>
-
-
+</div>
 <?php $this->panel_end(); ?>
    </div>
 </div>
@@ -269,14 +295,16 @@ Older versions of SendPress used "quoted-printable"
     <p>At least once every hour we visit your site, just like a "cron" job.<br>There's no setup involved. Easy and hassle free.</p>
 
     <button id="sp-enable-cron" <?php if($tl == 'yes'){ echo "style='display:none;'";} ?> class="btn  btn-success">Enable Pro Auto Cron</button><button id="sp-disable-cron" <?php if($tl == 'no'){ echo "style='display:none;'";} ?> class="btn  btn-danger">Disable Pro Auto Cron</button>
-    <br>
+    <br><br>
+<strong>Enable AutoCron and receive a 20% discount code for SendPress Pro. Your discount code will be emailed to you.</strong>
+    <br><br>
     <p class="well">
       <strong>Without SendPress Pro</strong><br>
       Auto Cron is limited to a max of <strong>3,000*</strong> emails per day at a max rate of <strong>125*</strong> emails per hour.
       <br><br>
       <strong>With SendPress Pro</strong><br>
       Auto Cron starts at a max of <strong>12,000*</strong> emails per day at a max rate of <strong>500*</strong> emails per hour. Sending of up to <strong>36,000*</strong> emails a day available provided your server can handle it. <br><br><br>
-      <strong>*</strong>Auto Cron will not send faster then your <strong>Email Sending Limits</strong> to the right.<br>Please make sure you follow the rules of your hosting provider or upgrade to <strong><a href="http://sendpress.com">SendPress Pro</a></strong> to use a third-party service.
+      <strong>*</strong>Auto Cron will not send faster then your <strong>Email Sending Limits</strong> to the right.<br><br>Please make sure you follow the rules of your hosting provider or upgrade to <strong><a href="http://sendpress.com">SendPress Pro</a></strong> to use a third-party service.
     </p>
     <small>Pro Auto Cron does collect some data about your website and usage of SendPress. It will not track any user details, so your security and privacy are safe with us.</small>
 

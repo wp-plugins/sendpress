@@ -89,7 +89,12 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 	static function delete_queue_emails(){
 		$table = self::queue_table();
-		self::wpdbQuery("DELETE FROM $table WHERE success = 0", 'query');
+		self::wpdbQuery("DELETE FROM $table WHERE success = 0 AND max_attempts > attempts", 'query');
+	}
+
+	static function delete_stuck_queue_emails(){
+		$table = self::queue_table();
+		self::wpdbQuery("DELETE FROM $table WHERE success = 0 AND max_attempts = attempts ", 'query');
 	}
 
 	static function queue_email_process($id){
@@ -127,6 +132,56 @@ class SendPress_Data extends SendPress_DB_Tables {
 		}	
 		return $wpdb->get_var( $query );
 	}
+
+	static function emails_maxed_in_queue($id = false){
+		global $wpdb;
+		$table = self::queue_table();
+		if($id == false){
+			$query = "SELECT COUNT(*) FROM $table where success = 0";
+			 $query.=" AND ( date_sent = '0000-00-00 00:00:00' or date_sent < '".date_i18n('Y-m-d H:i:s')."') ";
+       
+	        if(isset($_GET["listid"]) &&  $_GET["listid"]> 0 ){
+	            $query .= ' AND listID = '. $_GET["listid"];
+	        }
+
+	        if(isset($_GET["qs"] )){
+	            $query .= ' AND to_email LIKE "%'. $_GET["qs"] .'%"';
+
+	        }
+
+	        $query .= " AND max_attempts = attempts ";
+
+		} else {
+			$query = $wpdb->prepare("SELECT COUNT(*) FROM $table where emailID = %d and success = 0", $id );
+		}	
+		return $wpdb->get_var( $query );
+	}
+
+	static function emails_active_in_queue($id = false){
+		global $wpdb;
+		$table = self::queue_table();
+		if($id == false){
+			$query = "SELECT COUNT(*) FROM $table where success = 0";
+			 $query.=" AND ( date_sent = '0000-00-00 00:00:00' or date_sent < '".date_i18n('Y-m-d H:i:s')."') ";
+       
+	        if(isset($_GET["listid"]) &&  $_GET["listid"]> 0 ){
+	            $query .= ' AND listID = '. $_GET["listid"];
+	        }
+
+	        if(isset($_GET["qs"] )){
+	            $query .= ' AND to_email LIKE "%'. $_GET["qs"] .'%"';
+
+	        }
+
+	        $query .= " AND max_attempts > attempts ";
+
+		} else {
+			$query = $wpdb->prepare("SELECT COUNT(*) FROM $table where emailID = %d and success = 0", $id );
+		}	
+		return $wpdb->get_var( $query );
+	}
+
+
 
 	static function emails_stuck_in_queue($id = false){
 		global $wpdb;
@@ -268,6 +323,7 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$table = SendPress_Data::queue_table();
 		$messageid = SendPress_Data::unique_message_id();
 		$values["messageID"] = $messageid;
+		$values["max_attempts"] = 1;
 		$values["date_published"] = date('Y-m-d H:i:s');
 		$wpdb->insert( $table, $values);
 	}
@@ -727,13 +783,21 @@ class SendPress_Data extends SendPress_DB_Tables {
 		global $wpdb;
 		$key = SendPress_Data::random_code();
 		
+		//Check by WordPress user ID
 		$current = $wpdb->get_var( $wpdb->prepare("SELECT subscriberID FROM $table WHERE wp_user_id = %d", $wp_user_id) );
 		if( $current !== null ){
 			$wpdb->update($table , $values, array( 'subscriberID' => $current ) );
-		} else {	
-			$q = "INSERT INTO $table (email,wp_user_id,identity_key,join_date,firstname,lastname) VALUES (%s,%d,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE wp_user_id=%d,firstname=%s,lastname=%s";
-			$q = $wpdb->prepare($q,$values['email'],$wp_user_id,$key,date('Y-m-d H:i:s'),$values['firstname'],$values['lastname'],$wp_user_id,$values['firstname'],$values['lastname']);
-			$result = $wpdb->query($q);
+		} else {
+			//Check by Email
+			$current_email = $wpdb->get_var( $wpdb->prepare("SELECT subscriberID FROM $table WHERE email = %s", $values['email']) );
+			if( $current_email !== null ){
+				$wpdb->update($table , array('firstname' => $values['firstname'] , 'lastname'=>$values['lastname'], 'wp_user_id'=> $wp_user_id ), array( 'subscriberID' => $current_email ) );
+			} else {
+				//Add New
+				$q = "INSERT INTO $table (email,wp_user_id,identity_key,join_date,firstname,lastname) VALUES (%s,%d,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE wp_user_id=%d,firstname=%s,lastname=%s";
+				$q = $wpdb->prepare($q,$values['email'],$wp_user_id,$key,date('Y-m-d H:i:s'),$values['firstname'],$values['lastname'],$wp_user_id,$values['firstname'],$values['lastname']);
+				$result = $wpdb->query($q);
+			}
 		}
 		//$result = $wpdb->update($table, $values, array('email'=> $email) );
 	}
@@ -1186,15 +1250,16 @@ class SendPress_Data extends SendPress_DB_Tables {
 				if( empty($current_status) || ( isset($current_status->status) && $current_status->status < 2 ) ){
 					$success = SendPress_Data::update_subscriber_status($list->ID, $subscriberID, $status);
 				} else {
-
 					$success = true;
 				}
+				foreach ($custom as $key => $value) {
+					SendPress_Data::update_subscriber_meta( $subscriberID, $key, $value, $list->ID );
+				}
+
 			}
 		}
 
-		foreach ($custom as $key => $value) {
-			SendPress_Data::update_subscriber_meta($subscriberID,$key,$value,$listid);
-		}
+		
 
 		return $success;
 	}
