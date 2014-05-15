@@ -1,7 +1,7 @@
 <?php 
 /*
 Plugin Name: SendPress Newsletters
-Version: 0.9.9.9
+Version: 0.9.9.9.1
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress. 
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '0.9.9.9' );
+	define( 'SENDPRESS_VERSION', '0.9.9.9.1' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -766,8 +766,9 @@ Author URI: https://sendpress.com/
 	    	
 	    	$view_class = $this->get_view_class($this->_page, $this->_current_view);
 			$view_class = NEW $view_class;
-			$view_class->admin_init();	
-	    	$view_class = $this->get_view_class($this->_page, $this->_current_view);
+			$view_class->admin_init();
+			add_action('sendpress_admin_scripts',array($view_class, 'admin_scripts_load'));
+			$view_class = $this->get_view_class($this->_page, $this->_current_view);
 	    		
 	    	$this->_current_action = isset( $_GET['action'] ) ? $_GET['action'] : '' ;
 		    $this->_current_action = isset( $_GET['action2'] ) ? $_GET['action2'] : $this->_current_action ;
@@ -1079,7 +1080,6 @@ Author URI: https://sendpress.com/
 		$view_class->add_tab( __('Help','sendpress'), 'sp-help', ($this->_page === 'sp-help') );
 		$view_class->add_tab( __('Pro','sendpress'), 'sp-pro', ($this->_page === 'sp-pro') );
 		
-
 		$view_class->prerender( $this );
 		$view_class->render( $this );
 	}
@@ -1283,13 +1283,14 @@ Author URI: https://sendpress.com/
 			}
 			SendPress_Option::set('socialicons',$link);
 		}
-
+		/*
 		if( version_compare( $current_version, '0.9.9.8', '<' ) && SendPress_Option::get('autocron','no') == 'yes' ){
 			$email = get_option( 'admin_email' );
 			$url = "http://api.sendpress.com/senddiscountcode/".md5($_SERVER['SERVER_NAME']."|".$email)."/".$email;
 			wp_remote_get( $url );
 		}
-
+		*/
+		
 		SendPress_Option::set( 'version' , SENDPRESS_VERSION );
 	}	
 	
