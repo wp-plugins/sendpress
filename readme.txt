@@ -3,8 +3,8 @@ Plugin URI: https://sendpress.com
 Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
-Tested up to: 3.9
-Stable tag: 0.9.9.9
+Tested up to: 3.9.1
+Stable tag: 0.9.9.9.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,6 +98,14 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 15. Pro Tab.
 
 == Changelog ==
+
+= 0.9.9.9.1 - 2014.5.14 =
+* Fix: Javascript error on some pages
+* Fix: CSS fixes for views
+* Fix: TinyMCE error fix
+* New: DB Support for PRO
+* New: Stats caching to reduce db load
+* Update: Passed 100K Downloads - Thanks for using SendPress
 
 = 0.9.9.9 - 2014.5.8 =
 * Fix: Role list sync updated
@@ -478,6 +486,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.9.9.9.1 =
+Bug fixes
 
 = 0.9.9.9 =
 Queue update and bug fixes
