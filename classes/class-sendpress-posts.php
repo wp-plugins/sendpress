@@ -237,8 +237,10 @@ class SendPress_Posts{
 			'map_meta_cap'      => true,
 			'supports' 			=> array( 'title' ),
 			'can_export'		=> true,
-			'exclude_from_search'=>'true',
+			'exclude_from_search'=>'true'
 		) );
+
+		
 
 	}
 
