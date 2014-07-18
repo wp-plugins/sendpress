@@ -4,7 +4,7 @@ Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
 Tested up to: 3.9.1
-Stable tag: 0.9.9.9.3
+Stable tag: 0.9.9.9.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,6 +98,13 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 15. Pro Tab.
 
 == Changelog ==
+
+= 0.9.9.9.4 - 2014.7.16 =
+* Fix: Overview stat fix
+* Fix: Duplicate email sending to subscribers
+* Fix: Translation code added
+* Fix: Support to turn off mailto tracking
+* Update: Added some more unit tests
 
 = 0.9.9.9.3 - 2014.6.16 =
 * Fix: Shortcode conflict (WooCommerce)
@@ -497,6 +504,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 0.9.9.9.4 =
+Sending and stats update
 
 = 0.9.9.9.3 =
 Shortcode issue fix when in email
