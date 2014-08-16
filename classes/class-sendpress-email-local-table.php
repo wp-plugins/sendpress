@@ -80,8 +80,13 @@ class SendPress_Email_Local_Table extends WP_List_Table {
 				return $item->post_title;
 				break;
 			case 'actions':
+				$type = get_post_meta($item->ID, "_template_type", true);
 				$a = '<div class="inline-buttons" style="text-align:right;">';
-				$a .= '<a class="btn btn-primary" href="'.SendPress_Admin::link('Emails_Tempstyle',array('templateID'=>$item->ID)) .'"><span class="glyphicon glyphicon-tint"></span> Style</a> ';
+				if($type == 'clone'){
+					$a .= '<a class="btn btn-danger" href="'.SendPress_Admin::link('Emails_Tempdelete',array('templateID'=>$item->ID , 'action'=>'delete' )) .'">&times;</a> ';
+				}
+
+				$a .= '<a class="btn btn-default" href="'.SendPress_Admin::link('Emails_Tempclone',array('templateID'=>$item->ID)) .'">Clone</a> <a class="btn btn-primary" href="'.SendPress_Admin::link('Emails_Tempstyle',array('templateID'=>$item->ID)) .'">Edit</a>';
 				$a .= '</div>';
 				return $a;
 			break;
@@ -318,7 +323,7 @@ class SendPress_Email_Local_Table extends WP_List_Table {
 				}
 			}
 			//Which page is this?
-			$paged = !empty($_GET["paged"]) ? mysql_real_escape_string($_GET["paged"]) : '';
+			$paged = !empty($_GET["paged"]) ? esc_sql($_GET["paged"]) : '';
 			//Page Number
 			if(empty($paged) || !is_numeric($paged) || $paged<=0 ){ $paged=1; }
 			//How many pages do we have in total?
