@@ -42,8 +42,9 @@ class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
 		SendPress_Option::set('autocron-per-call', $post['autocron-per-call'] );
 		SendPress_Option::set('wpcron-per-call', $post['wpcron-per-call'] );
 		SendPress_Option::set('queue-history', $post['queue-history'] );
-
-		SendPress_Option::set('sp_widget_shortdoces', $post['sp_widget_shortdoces'] );
+		if(isset( $post['sp_widget_shortdoces'])){
+			SendPress_Option::set('sp_widget_shortdoces', $post['sp_widget_shortdoces'] );
+		}
 		
 		$widget_options =  array();
 
@@ -84,18 +85,7 @@ class SendPress_View_Settings_Advanced extends SendPress_View_Settings {
 		<div class="sp-row">
 			<div class="sp-50 sp-first">
 			
-			<?php 
-			if(SendPress_Option::get('beta')) {
-			$this->panel_start('<span class="glyphicon glyphicon-list-alt"></span> '. __('Pre-Release Template Activation','sendpress')); ?>
-				<p>We are rolling out a completely new Template system for SendPress. If you would like to start using it before it is offically released, you can opt in below.</p>
-				<?php $ctype = SendPress_Option::get('prerelease_templates'); ?>
-				<input type="checkbox" name="prerelease_templates" value="true" <?php if($ctype == 'yes'){echo "checked='checked'"; } ?> /> Activate New Template System ( Please make sure your Queue is Empty )
-			
-
-			<?php 
-			$this->panel_end(); 
-			}
-			?>
+		
 			
 			<div class="panel panel-default">
 			  <div class="panel-heading">

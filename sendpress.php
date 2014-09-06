@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: SendPress Newsletters
-Version: 0.9.9.9.9
+Version: 1.0
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress.
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '0.9.9.9.9' );
+	define( 'SENDPRESS_VERSION', '1.0' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -304,6 +304,9 @@ Author URI: https://sendpress.com/
 				add_filter( 'gettext', array($this, 'change_button_text'), null, 2 );
 				add_action( 'sendpress_notices', array( $this,'sendpress_notices') );
 				add_filter('user_has_cap',array( $this,'user_has_cap') , 10 , 3);
+
+				//SendPress_Option::set('default-signup-widget-settings',false);
+				SendPress_Data::create_default_form();
 			} else{
 				if( SendPress_Option::get('sp_widget_shortdoces') ){
 					add_filter('widget_text', 'do_shortcode');
@@ -385,6 +388,7 @@ Author URI: https://sendpress.com/
 	 */
 			function load_widgets() {
 				register_widget( 'SendPress_Widget_Signup' );
+				register_widget( 'SendPress_Widget_Forms' );
 			}
 
 
@@ -511,15 +515,27 @@ Author URI: https://sendpress.com/
 			  	//$this->load_default_screen($action);
 				die();
 			}
-
-		  	if(isset($post)){
+		
+			if(isset($post)){
 	 			if($post->post_type == $this->_email_post_type || $post->post_type == $this->_report_post_type  ) {
 
 	  				$inline = false;
 					if(isset($_GET['inline']) ){
 						$inline = true;
 					}
-					return SendPress_Template::get_instance()->render(false, true, $inline );
+					SendPress_Email_Cache::build_cache_for_email( $post->ID );
+					
+					$message = new SendPress_Email();
+				   	$message->id( $post->ID );
+				   	$message->subscriber_id( 0 );
+				   	$message->list_id( 0 );
+				   	$body = $message->html();
+				   	//print_r( $body );
+				   	unset($message);
+
+					echo $body; 
+					die();
+					//SendPress_Template::get_instance()->render_html(false, true, $inline );
 	  				//return SENDPRESS_PATH. '/template-loader.php';
 	    		//return dirname(__FILE__) . '/my_special_template.php';
 				}
@@ -631,7 +647,9 @@ Author URI: https://sendpress.com/
 
 
 	function myformatTinyMCE($in){
-		$in['plugins']= str_replace('wpeditimage,', '', $in['plugins']);
+		if(isset($in['plugins'])){
+			$in['plugins']= str_replace('wpeditimage,', '', $in['plugins']);
+		}
 		return $in;
 	}
 
@@ -809,11 +827,16 @@ Author URI: https://sendpress.com/
 	    	$method = str_replace(" ","_",$method);
 
 
+
 	    	if ( !empty($_POST) &&  (isset($_POST['_wpnonce']) && wp_verify_nonce($_POST['_wpnonce'],$this->_nonce_value) )   ){
 
 	    		if( method_exists( $view_class , $method )  ){
+
+
 	    			$save_class = new $view_class;
+
 	    			$save_class->$method();
+	    			//print_r($save_class);
 	    		} elseif( method_exists( $view_class , 'save' )  ) {
 	    			//$view_class::save($this);
 	    			$save_class = new $view_class;
@@ -841,6 +864,7 @@ Author URI: https://sendpress.com/
 
 		    	require_once( SENDPRESS_PATH . 'inc/helpers/sendpress-get-actions.php' );
 	    	}
+
 		}
    	}
 
@@ -859,15 +883,15 @@ Author URI: https://sendpress.com/
 				wp_register_script('sendpress-flot', SENDPRESS_URL .'js/flot/jquery.flot.js' ,'', SENDPRESS_VERSION );
 				wp_register_script('sendpress-flot-selection', SENDPRESS_URL .'js/flot/jquery.flot.selection.js' ,'', SENDPRESS_VERSION );
 				wp_register_script('sendpress-flot-resize', SENDPRESS_URL .'js/flot/jquery.flot.resize.js' ,'', SENDPRESS_VERSION );
-				wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array('sendpress_bootstrap_css'), SENDPRESS_VERSION );
-				wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', array('sendpress_bootstrap_css'), SENDPRESS_VERSION );
-
+				
 
 				wp_register_script('sendpress-admin-js', SENDPRESS_URL .'js/sendpress.js','', SENDPRESS_VERSION );
 				wp_register_script('sendpress_bootstrap', SENDPRESS_URL .'bootstrap/js/bootstrap.min.js' ,'',SENDPRESS_VERSION);
 
 				wp_register_style( 'sendpress_bootstrap_css', SENDPRESS_URL . 'bootstrap/css/bootstrap.css', '', SENDPRESS_VERSION );
 
+wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array('sendpress_bootstrap_css','sendpress_css_base'), SENDPRESS_VERSION );
+				wp_register_style( 'sendpress_css_base', SENDPRESS_URL . 'css/style.css', array('sendpress_bootstrap_css'), SENDPRESS_VERSION );
 
 				wp_register_script('sendpress_ls', SENDPRESS_URL .'js/jquery.autocomplete.js' ,'', SENDPRESS_VERSION );
 					wp_enqueue_script('sendpress-doughnut');

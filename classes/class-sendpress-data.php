@@ -1872,16 +1872,10 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 
 	/********************* Widget Settings functionS **************************/
-
-	static function create_widget_settings(){
-		//SendPress_Option::set('default-signup-widget-settings',null);
-
-		$postid = SendPress_Option::get('default-signup-widget-settings');
-
-		if ( empty($postid) ) {
-			// Create post object
+	static function create_settings_post_signup_form(){
+		// Create post object
 			$my_post = array(
-				'post_title'    => 'default signup settings',
+				'post_title'    => 'Default Signup Settings',
 				'post_status'   => 'draft',
 				'post_type' 	=> 'sp_settings'
 			);
@@ -1891,7 +1885,9 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 			//insert post meta info
 			//add_post_meta($post_id, $meta_key, $meta_value, $unique);
-			add_post_meta($postid, "_setting_type", 'signup_widget', true);
+			add_post_meta($postid, "_setting_type", 'form', true);
+			add_post_meta($postid, "_form_type", 'signup_widget', true);
+			add_post_meta($postid, "_sp_settings_id", $postid, true);
 
 			add_post_meta($postid, "_form_description", '', true);
 			add_post_meta($postid, "_collect_firstname", false, true);
@@ -1906,11 +1902,40 @@ class SendPress_Data extends SendPress_DB_Tables {
 			add_post_meta($postid, "_thankyou_message", 'Check your inbox now to confirm your subscription.', true);
 			add_post_meta($postid, "_thankyou_page", '', true);
 
+			return $postid;
+	}
 
-			SendPress_Option::set('default-signup-widget-settings',$postid);
+	static function create_default_form($type = 'signup'){
+		//SendPress_Option::set('default-signup-widget-settings',null);
+
+		$postid = SendPress_Option::get('default-'.$type.'-widget-settings');
+		$hasPost = false;
+
+		if ( !empty($postid) ) {
+			$hasPost = true;
+
+			$query = get_posts(array(
+				'post_type'=>'sp_settings',
+				'post_status'=>'any',
+				'p'=>$postid
+			));
+
+			if( count($query) === 0 ){
+				$hasPost = false;
+			}
+
 		}
 
+		if(!$hasPost){
+			switch($type){
+				case 'signup':
+					$postid = SendPress_Data::create_settings_post_signup_form();
+					SendPress_Option::set('default-'.$type.'-widget-settings',$postid);
+					break;
+			}
+		}
 		
+
 	}
 
 	static function get_sp_settings_object($postid){
@@ -1938,12 +1963,41 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 		foreach($options as $key => $value){
 			if(array_key_exists($key, $data)){
-				update_post_meta($postid, $key, $value);
+				update_post_meta($postid, $key, $data[$key]);
 			}else{
 				update_post_meta($postid, $key, false);
 			}
 		}
 
+		foreach($data as $key => $value){
+			if(!array_key_exists($key, $options)){
+				update_post_meta($postid, $key, $data[$key]);
+			}
+		}
+
+	}
+
+	static function get_forms_for_widget($type = 'signup_widget'){
+		$query = get_posts(array(
+				'post_type'=>'sp_settings',
+				'post_status'=>'any',
+				'meta_query'=>array(
+					array(
+							'key'     => '_setting_type',
+							'value'   => 'form',
+							'compare' => '='
+						),
+						array(
+							'key'     => '_form_type',
+							'value'   => $type,
+							'compare' => '='
+						),
+
+					
+				)
+			));
+
+		return $query;
 	}
 
 	/********************* END Widget Settings functionS **************************/

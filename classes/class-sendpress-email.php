@@ -113,12 +113,15 @@ class SendPress_Email {
 
 
 	function html(){
-			
+			$post_template = $this->id();
 			global $wpdb;
 			//$email =  $this->email();
 			// Get any existing copy of our transient data
 			if( SendPress_Email_Cache::get( $this->id() ) != null ){
 				$body_html = SendPress_Email_Cache::get( $this->id() );
+				$post_template  = get_post_meta( $this->id() , '_sendpress_template', true );
+				$body_html = spnl_do_email_tags( $body_html, $post_template, $this->id(), $this->subscriber_id(), true );
+
 			} else {
 				if ( false === ( $body_html = get_transient( 'sendpress_report_body_html_'. $this->id() )  ) || ($this->purge() == true) ) {
 
@@ -135,6 +138,7 @@ class SendPress_Email {
 				    set_transient( 'sendpress_report_body_html_'. $this->id(), $body_html , 60*60*2 );
 				}
 			}
+				
 			$subscriber = SendPress_Data::get_subscriber($this->subscriber_id());
 			if (!is_null($subscriber)) {
 				$body_html = str_replace("*|FNAME|*", $subscriber->firstname , $body_html );
@@ -142,6 +146,8 @@ class SendPress_Email {
 				$body_html = str_replace("*|EMAIL|*", $subscriber->email , $body_html );
 				$body_html = str_replace("*|ID|*", $subscriber->subscriberID , $body_html );
 			}
+
+		
 
 			$open_info = array(
 				"id"=>$this->subscriber_id(),
@@ -161,14 +167,21 @@ class SendPress_Email {
 
 			
 				
-
+			$body_html = spnl_do_subscriber_tags( $body_html, $post_template, $this->id(), $this->subscriber_id(), true );
+			
 
 			//$pattern ="/(?<=href=(\"|'))[^\"']+(?=(\"|'))/";
 			//$body_html = preg_replace( $pattern , site_url() ."?sendpress=link&fxti=".$subscriber_key."&spreport=". $this->id ."&spurl=$0", $body_html );
-			if(class_exists("DomDocument")){
+			if(class_exists("DomDocument") ){
 				$dom = new DomDocument();
 				$dom->strictErrorChecking = false;
 				@$dom->loadHtml($body_html);
+				
+				$pTags = $dom->getElementsByTagName('p');
+				foreach ($pTags as $pElement) {
+					$px = $pElement->getAttribute('style');
+					$pElement->setAttribute('style', $px .' margin-top:0;margin-bottom:10px;');
+				}
 				$aTags = $dom->getElementsByTagName('a');
 				foreach ($aTags as $aElement) {
 					$href = $aElement->getAttribute('href');
@@ -276,7 +289,6 @@ class SendPress_Email {
 				$body_html = str_replace("*|EMAIL|*", $subscriber->email , $body_html );
 				$body_html = str_replace("*|ID|*", $subscriber->subscriberID , $body_html );
 			}
-			
 			
             //$body_html = apply_filters('sendpress_post_render_email', $body_html);
 			//echo  $body_html;
