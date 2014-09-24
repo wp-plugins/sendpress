@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: SendPress Newsletters
-Version: 1.0
+Version: 1.0.1
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress.
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '1.0' );
+	define( 'SENDPRESS_VERSION', '1.0.1' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -306,7 +306,7 @@ Author URI: https://sendpress.com/
 				add_filter('user_has_cap',array( $this,'user_has_cap') , 10 , 3);
 
 				//SendPress_Option::set('default-signup-widget-settings',false);
-				SendPress_Data::create_default_form();
+			
 			} else{
 				if( SendPress_Option::get('sp_widget_shortdoces') ){
 					add_filter('widget_text', 'do_shortcode');
@@ -1228,6 +1228,10 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array
 		SendPress_Option::set('whatsnew','show');
 		//On version change update default template
 		$this->set_template_default();
+
+		SendPress_Template_Manager::update_template_content();
+		
+		SendPress_Data::create_default_form();
 
 		SendPress_Option::check_for_keys();
 
