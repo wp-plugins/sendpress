@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: SendPress Newsletters
-Version: 1.0.1
+Version: 1.0.2
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress.
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '1.0.1' );
+	define( 'SENDPRESS_VERSION', '1.0.2' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -1672,34 +1672,84 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array
      *
      * @return mixed Value.
      */
-	static function plugin_activation(){
-		if ( version_compare( $GLOBALS['wp_version'], SENDPRESS_MINIMUM_WP_VERSION, '<' ) ) {
-			deactivate_plugins( __FILE__ );
-	    	wp_die( sprintf( __('SendPress requires WordPress version %s or later.', 'sendpress'), SENDPRESS_MINIMUM_WP_VERSION) );
-		} else {
-		    SendPress_DB_Tables::install();
+	static function plugin_activation( $networkwide = false ){
+
+		if ( ! is_multisite() || ! $networkwide ) {
+			SendPress::plugin_install();
+		}
+		else {
+			SendPress::network_activate_deactivate(true);
+		}
+
+	}
+
+
+		/**
+		 * Run network-wide (de-)activation of the plugin
+		 *
+		 * @param bool $activate  True for plugin activation, false for de-activation
+		 */
+		static function network_activate_deactivate( $activate = true ) {
+			global $wpdb;
+
+			$original_blog_id = get_current_blog_id(); // alternatively use: $wpdb->blogid
+			$all_blogs        = $wpdb->get_col( "SELECT blog_id FROM $wpdb->blogs" );
+
+			if ( is_array( $all_blogs ) && $all_blogs !== array() ) {
+				foreach ( $all_blogs as $blog_id ) {
+					switch_to_blog( $blog_id );
+
+					if ( $activate === true ) {
+						SendPress::plugin_install();
+					}
+					else {
+						SendPress::plugin_remove();
+					}
+				}
+				// Restore back to original blog
+				switch_to_blog( $original_blog_id );
+			}
+
 		}
 
 
 
 
-		//Make sure we stop the old action from running
-		wp_clear_scheduled_hook('sendpress_cron_action_run');
-		flush_rewrite_rules();
 
-		SendPress_Option::set( 'install_date' , time() );
+	static function plugin_install(){
+			if ( version_compare( $GLOBALS['wp_version'], SENDPRESS_MINIMUM_WP_VERSION, '<' ) ) {
+				deactivate_plugins( __FILE__ );
+	    		wp_die( sprintf( __('SendPress requires WordPress version %s or later.', 'sendpress'), SENDPRESS_MINIMUM_WP_VERSION) );
+			} else {
+		    	SendPress_DB_Tables::install();
+			}
+			//Make sure we stop the old action from running
+			wp_clear_scheduled_hook('sendpress_cron_action_run');
+			flush_rewrite_rules();
 
+			SendPress_Option::set( 'install_date' , time() );
 	}
+
+	static function plugin_remove(){
+		flush_rewrite_rules( );
+		wp_clear_scheduled_hook( 'sendpress_cron_action' );
+		wp_clear_scheduled_hook( 'sendpress_notification_daily' );
+	}
+
 
 	/**
 	*
 	*	Nothing going on here yet
 	*	@static
 	*/
-	static function plugin_deactivation(){
-		flush_rewrite_rules( );
-		wp_clear_scheduled_hook( 'sendpress_cron_action' );
-		wp_clear_scheduled_hook( 'sendpress_notification_daily' );
+	static function plugin_deactivation( $networkwide = false ){
+		if ( ! is_multisite() || ! $networkwide ) {
+			SendPress::plugin_remove();
+		}
+		else {
+			
+			SendPress::network_activate_deactivate( false );
+		}
 	}
 
 
