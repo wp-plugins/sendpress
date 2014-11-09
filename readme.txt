@@ -1,10 +1,10 @@
 === SendPress Newsletters ===
 Plugin URI: https://sendpress.com
-Contributors: brewlabs
+Contributors: brewlabs, joshl, jaredharbour, itdoug
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
 Tested up to: 4.0
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,6 +98,12 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 15. Pro Tab.
 
 == Changelog ==
+
+= 1.0.3 - 2014.11.08 =
+* Fix: Multisite Setup
+* Fix: Custom tags showing in emails
+* Fix: Plugin install when site is created
+* Fix: Update sending to improve speed
 
 = 1.0.2 - 2014.10.14 =
 * Fix: form shortcode missing list id
