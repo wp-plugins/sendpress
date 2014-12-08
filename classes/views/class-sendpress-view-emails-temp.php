@@ -18,10 +18,16 @@ class SendPress_View_Emails_Temp extends SendPress_View_Emails{
 	function delete(){
 
 		$p = $_GET['templateID'];
-		$type = get_post_meta( $p , "_template_type", true);
-		if($type == 'clone'){
+		//$type = get_post_meta( $p , "_template_type", true);
+		//if($type == 'clone'){
 			wp_delete_post($p, true);
-		}
+		//}
+		SendPress_Admin::redirect('Emails_Temp');
+	}
+
+	function install(){
+		
+		SendPress_Template_Manager::install_template_content();
 		SendPress_Admin::redirect('Emails_Temp');
 	}
 
@@ -46,13 +52,12 @@ class SendPress_View_Emails_Temp extends SendPress_View_Emails{
 	}
 	
 	function html($sp){
-		 SendPress_Tracking::event('Emails Tab');
-
-	//Create an instance of our package class...
-	$testListTable = new SendPress_Email_Local_Table();
-	//Fetch, prepare, sort, and filter our data...
-	$testListTable->prepare_items();
-
+		SendPress_Tracking::event('Emails Tab');
+		//SendPress_Template_Manager::update_template_content();
+		//Create an instance of our package class...
+		$testListTable = new SendPress_Email_Local_Table();
+		//Fetch, prepare, sort, and filter our data...
+		$testListTable->prepare_items();
 	?>
 	
 	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
@@ -60,14 +65,15 @@ class SendPress_View_Emails_Temp extends SendPress_View_Emails{
 		<div id="taskbar" class="lists-dashboard rounded group"> 
 
 		<h2><?php _e('Templates','sendpress'); ?></h2>
-		<small>Help: <a target="_blank" href="https://sendpress.com/support/knowledgebase/getting-started-sendpress-templates/">Getting Started with Templates</a></small>
+		<small><?php _e('Help','sendpress'); ?>: <a target="_blank" href="https://sendpress.com/support/knowledgebase/getting-started-sendpress-templates/"><?php _e('Getting Started with Templates','sendpress'); ?></a></small>
 	</div>
 		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
 	    <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
 	    <!-- Now we can render the completed list table -->
 	    <?php $testListTable->display(); ?>
 	    <?php wp_nonce_field($this->_nonce_value); ?>
-	</form>
+	</form><br>
+	<a href="<?php echo SendPress_Admin::link('Emails_Temp',array('action'=>'install')); ?>" class="btn btn-primary">Install Responsive Starter</a>
 	<?php
 	}
 
