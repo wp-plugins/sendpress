@@ -31,13 +31,13 @@ class SendPress_View_Reports extends SendPress_View{
 		<div class="navbar navbar-default" >
 			<div class="navbar-header">
 			  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-      <span class="sr-only">Toggle navigation</span>
+       <span class="sr-only"><?php _e('Toggle navigation','sendpress'); ?></span>
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
 
     </button>
-    <a class="navbar-brand" href="#">Reports</a>
+    <a class="navbar-brand" href="#"><?php _e('Reports','sendpress'); ?></a>
 	</div>
 		 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 		<ul class="nav navbar-nav">
@@ -76,7 +76,7 @@ class SendPress_View_Reports extends SendPress_View{
 		    <?php $sp_reports_table->display(); ?>
 		    <?php wp_nonce_field( $this->_nonce_value ); ?>
 		</form>
-		<h3>Information</h3>
+		<h3><?php _e('Information','sendpress'); ?></h3>
 		<div class='well'>
 		<span class="label label-success"><?php _e('Unique','sendpress');?></span> <?php _e('The total number of different recipients that have clicked on a link or opened an email.','sendpress');?><br><br>
 
