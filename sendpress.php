@@ -1,7 +1,7 @@
 <?php
 /**
 Plugin Name: SendPress Newsletters
-Version: 1.0.12.10
+Version: 1.0.12.10.1
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress.
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '1.0.12.10' );
+	define( 'SENDPRESS_VERSION', '1.0.12.10.1' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -747,10 +747,7 @@ Author URI: https://sendpress.com/
 
 				$wp_filter['admin_notices'] = array();
 
-			if(SendPress_Option::get('whatsnew','show') == 'show'){
-				SendPress_Option::set('whatsnew','hide');
-				SendPress_Admin::redirect('Help_Whatsnew');
-			}
+			
 			if( ( isset($_GET['page']) && $_GET['page'] == 'sp-templates' ) || (isset( $_GET['view'] ) && $_GET['view'] == 'style-email' )) {
 				wp_register_script('sendpress_js_styler', SENDPRESS_URL .'js/styler.js' ,'', SENDPRESS_VERSION);
 			}
@@ -830,7 +827,11 @@ Author URI: https://sendpress.com/
 
 		    	require_once( SENDPRESS_PATH . 'inc/helpers/sendpress-get-actions.php' );
 	    	}
-
+	    	
+	    	if(SendPress_Option::get('whatsnew','hide') == 'show'){
+				SendPress_Option::set('whatsnew','hide');
+				SendPress_Admin::redirect('Help_Whatsnew');
+			}
 		}
    	}
 
