@@ -8,6 +8,18 @@ if ( !defined('SENDPRESS_VERSION') ) {
 class SendPress_Data extends SendPress_DB_Tables {
 
 
+	static function devicetypes($value){
+		$v = array('computer'=>1,'phone'=>2,'tablet'=>3);
+		if(is_string($value)){
+			return $v[$value];
+		}
+		if(is_int($value)){
+			return array_search($value, $v);
+		}
+
+	}
+
+
 	static function nonce(){
 		return 'sendpress-is-awesome';
 	}
@@ -489,8 +501,7 @@ class SendPress_Data extends SendPress_DB_Tables {
 
     static function get_last_report(){
     	$f = get_posts(array('post_type' => 'sp_report','posts_per_page'   => 1));
-    	return $f[0];
-
+    	return isset($f[0]) ? $f[0] : '';
     }
 
 
@@ -506,6 +517,35 @@ class SendPress_Data extends SendPress_DB_Tables {
      * @return mixed Value.
      */
     
+ 	static function get_url_by_hash( $hash ) {
+ 		global $wpdb;
+		$table = SendPress_Data::url_table();
+		$result = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE hash = %s" , $hash ) );
+		return $result;	
+	}
+
+	static function insert_url( $url , $hash ) {
+		global $wpdb;
+		$table = SendPress_Data::url_table();
+
+		if( strpos( $url , '{sp-') != false && strpos( $url , '}' ) != false ) {
+			$url = esc_url( $url );
+		}
+
+		$wpdb->insert( 
+			$table, 
+			array( 
+				'hash' => $hash, 
+				'url' => $url
+			), 
+			array( 
+				'%s', 
+				'%s' 
+			) 
+		);
+
+		return $wpdb->insert_id;	
+	}
 
  	static function get_url_by_id( $id ) {
  		global $wpdb;
@@ -670,8 +710,6 @@ class SendPress_Data extends SendPress_DB_Tables {
 		);
 		
 		$wpdb->insert( SendPress_Data::subscriber_event_table(),  $urlData);
-
-		//print_r($this->get_open_without_id($rid,$sid));
 	}
 
 	static function track_open( $sid, $rid, $ip = null , $device_type=null, $device=null ){
@@ -1233,6 +1271,9 @@ class SendPress_Data extends SendPress_DB_Tables {
 			$stat++;
 		}
 		update_post_meta($rid, '_unsubscribe_count', $stat );
+
+		SPNL()->db->subscribers_tracker->unsub( $rid , $sid );
+		
 		$wpdb->update( SendPress_Data::list_subcribers_table() , array('status'=> 3) , array('listID'=> $lid,'subscriberID'=>$sid ));
 	}
 
@@ -1918,7 +1959,33 @@ class SendPress_Data extends SendPress_DB_Tables {
 		);
 	}
 
-	static function create_settings_post($title = 'Settings', $defaults = array(), $copy_from = 0){
+	static function manage_subscriptions_defaults(){
+		return array(
+			"_sp_setting_type" => "form",
+			"_sp_form_type" => "manage_subscriptions",
+			"_sp_form_description" => ""
+		);
+	}
+
+	static function get_default_settings_for_type($type = ""){
+		$defaults = array();
+		switch($type){
+			case "signup_widget":
+				$defaults = SendPress_Data::signup_defaults();
+				break;
+			case "manage_subscriptions":
+				$defaults = SendPress_Data::manage_subscriptions_defaults();
+				break;
+			default:
+				$defaults = SendPress_Data::signup_defaults();
+				break;
+		}
+		return $defaults;
+	}
+
+	static function create_settings_post($title = 'Settings', $type = "", $copy_from = 0){
+		$defaults = SendPress_data::get_default_settings_for_type($type);
+
 		// Create post object
 		$my_post = array(
 			'post_title'    => $title,
@@ -2054,6 +2121,11 @@ class SendPress_Data extends SendPress_DB_Tables {
 			));
 
 		return $query;
+	}
+
+	static function get_widget_form_types(){
+		return array("signup_widget" => "Signup");
+		//"manage_subscriptions" => "Manage Subscriptions"
 	}
 
 	/********************* END Widget Settings functionS **************************/
