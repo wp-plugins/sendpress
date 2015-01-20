@@ -518,9 +518,9 @@ function spnl_get_emails_tags_list() {
  */
 function spnl_do_content_tags( $content, $t_id , $email_id, $subscriber_id = 0 , $example = false ) {
 	// Replace Content Tags
-	
+	remove_filter( 'the_content', 'pdfprnt_content' );
 	$content = SPNL()->template_tags->do_content_tags( $content,$t_id ,  $email_id, $subscriber_id , $example );
-
+	add_filter( 'the_content', 'pdfprnt_content' );
 	// Replace Email tags
 	//$content = SPNL()->template_tags->do_email_tags( $content, $t_id , $email_id, $subscriber_id , $example );
 	
@@ -612,6 +612,7 @@ function spnl_setup_template_tags() {
 			'internal'    => array('SendPress_Tag_Social_Links','internal'),
 			'copy'    => array('SendPress_Tag_Social_Links','copy'),
 		),
+		/*
 		array(
 			'tag'         => 'sp-browser-url',
 			'description' => __( 'Inserts view in browser url.', 'sendpress' ),
@@ -619,6 +620,7 @@ function spnl_setup_template_tags() {
 			'internal'    => array('SendPress_Tag_Browser_Link','internal'),
 			'copy'    => array('SendPress_Tag_Browser_Link','copy'),
 		),
+		*/
 		array(
 			'tag'         => 'sp-site-name',
 			'description' => __( 'Inserts Site Name.', 'sendpress' ),
@@ -633,6 +635,7 @@ function spnl_setup_template_tags() {
 			'internal'    => array('SendPress_Tag_Canspam','internal'),
 			'copy'    => array('SendPress_Tag_Canspam','copy'),
 		),
+		/*
 		array(
 			'tag'         => 'sp-unsubscribe-url',
 			'description' => __( 'Inserts the unsubscribe url.', 'sendpress' ),
@@ -640,6 +643,7 @@ function spnl_setup_template_tags() {
 			'internal'    => array('SendPress_Tag_Unsubscribe','internal'),
 			'copy'    => array('SendPress_Tag_Unsubscribe','copy'),
 		)
+		*/
 
 	);
 

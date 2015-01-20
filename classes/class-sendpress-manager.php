@@ -8,7 +8,7 @@ if ( !defined('SENDPRESS_VERSION') ) {
 
 class SendPress_Manager {
 
-	static function limit_reached(){
+	static function limit_reached($count = 1){
 		global $wpdb;
 		$emails_per_hour = SendPress_Option::get('emails-per-hour');
 		$emails_per_day = SendPress_Option::get('emails-per-day');
@@ -26,12 +26,21 @@ class SendPress_Manager {
 				//We hit the daily limit
 				return true;
 			}
+
+			if( ( intval($email_count_day ) + $count ) > intval($emails_per_day) ){
+				return true;
+			}
+
 		}
 		$email_count_hour = SendPress_Data::emails_sent_in_queue("hour");
 		// Check our hourly send limit
 		if($emails_per_hour != false && $emails_per_hour != 0 ){
 			if( intval($email_count_hour) >= intval($emails_per_hour)  ){
 				//We hit the hourly limit
+				return true;
+			}
+
+			if( ( intval($email_count_hour ) + $count ) > intval($emails_per_hour) ){
 				return true;
 			}
 		}
@@ -123,10 +132,16 @@ class SendPress_Manager {
 		if ($pos > 0) { // note: three equal signs
 			    $indexer = "index.php";
 		}
+		if( is_ssl() ){
+			$h = 'https';
+		} else {
+			$h = 'http';
+		}
+
 		if( SendPress_Option::get('old_permalink') || !get_option('permalink_structure') ){
-				$link = home_url("?sendpress=".$code);
+				$link = home_url("?sendpress=".$code , $h);
 			} else {
-				$link = home_url("{$indexer}/sendpress/".$code."/");
+				$link = home_url("{$indexer}/sendpress/".$code."/", $h);
 				
 			}
 		return $link;
@@ -217,6 +232,8 @@ class SendPress_Manager {
 				if($result === true){
 					$wpdb->update( SendPress_Data::queue_table() , array('success'=>1,'inprocess'=>3 ) , array('id'=> $email->id ));
 					//( $sid, $rid, $lid=null, $uid=null, $ip=null, $device_type=null, $device=null, $type='confirm' )
+					$wpdb->insert(SendPress_Data::subscriber_tracker_table() , array('subscriberID'=>$email->subscriberID,'emailID'=>$email->emailID,'sent_at' => get_gmt_from_date( date('Y-m-d H:i:s') ) ) );
+							
 					SendPress_Data::add_subscriber_event($email->subscriberID, $email->emailID, $email->listID,null,null,null,null, 'send');
 				} else {
 					$wpdb->update( SendPress_Data::queue_table() , array('success'=>2,'inprocess'=>3 ) , array('id'=> $email->id ));
