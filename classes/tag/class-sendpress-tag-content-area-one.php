@@ -18,11 +18,11 @@ class SendPress_Tag_Content_Area_One extends SendPress_Tag_Base  {
 	
 	static function external( $template_id ,  $email_id , $subscriber_id, $example ){
 		if( $example == false ){
+			do_action('sendpress_template_loaded');
 			$content_post = get_post($email_id);
 			$content = $content_post->post_content;
 			$content = apply_filters('the_content', $content);
 			$content = str_replace(']]>', ']]&gt;', $content);
-
 
 		} else {
 			$content = self::lipsum_format();

@@ -23,7 +23,12 @@ class SendPress_Videos{
     }
 
     function add_video_filter(){
+        add_filter('embed_oembed_html', array($this,'avoid_cache'),10, 4);
         add_filter( 'oembed_dataparse', array($this, 'fix_video'), 10, 3 );
+    }
+
+    function avoid_cache($cache, $url, $attr, $post_ID ){
+        return wp_oembed_get($url,$attr);
     }
 
     function fix_video( $return, $data, $url ){
@@ -57,4 +62,3 @@ class SendPress_Videos{
     }
 
 }
-
