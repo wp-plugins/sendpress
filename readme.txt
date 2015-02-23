@@ -3,8 +3,8 @@ Plugin URI: https://sendpress.com
 Contributors: brewlabs, joshl, jaredharbour, itdoug
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
-Tested up to: 4.1
-Stable tag: 1.1.2.11
+Tested up to: 4.1.1
+Stable tag: 1.1.2.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,6 +98,13 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 15. Pro Tab.
 
 == Changelog ==
+
+= 1.1.2.22 - 2015.2.22 =
+* Fix: Autocron running speed
+* Fix: Send now not updating
+* Update: Soft delete Reports
+* Update: added new stat tracker
+
 
 = 1.1.2.11 - 2015.2.11 =
 * Fix: Sending popup not always responding
@@ -601,6 +608,9 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 1.1.2.22 =
+Autocron update and Report soft delete
 
 = 1.1.2.11 =
 Bug fixes for sending and templates
