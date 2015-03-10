@@ -1,7 +1,7 @@
 <?php
 /**
 Plugin Name: SendPress Newsletters
-Version: 1.1.2.25
+Version: 1.1.3.10
 Plugin URI: https://sendpress.com
 Description: Easy to manage Newsletters for WordPress.
 Author: SendPress
@@ -16,7 +16,7 @@ Author URI: https://sendpress.com/
 	defined( 'SENDPRESS_API_BASE' ) or define( 'SENDPRESS_API_BASE', 'http://api.sendpress.com' );
 	define( 'SENDPRESS_API_VERSION', 1 );
 	define( 'SENDPRESS_MINIMUM_WP_VERSION', '3.6' );
-	define( 'SENDPRESS_VERSION', '1.1.2.25' );
+	define( 'SENDPRESS_VERSION', '1.1.3.10' );
 	define( 'SENDPRESS_URL', plugin_dir_url(__FILE__) );
 	define( 'SENDPRESS_PATH', plugin_dir_path(__FILE__) );
 	define( 'SENDPRESS_BASENAME', plugin_basename( __FILE__ ) );
@@ -190,10 +190,6 @@ Author URI: https://sendpress.com/
 		  		return;
 		  	}
 
-
-
-
-
 		  	if( strpos($className, 'Module') != false ){
 		  		if( defined('SENDPRESS_PRO_PATH') ) {
 		    		$pro_file = SENDPRESS_PRO_PATH."classes/modules/class-".$cls.".php";
@@ -220,10 +216,7 @@ Author URI: https://sendpress.com/
 			}
 		  	return;
 
-
 	  	}
-
-
 
 		public static function get_instance() {
 			if ( ! isset( self::$instance ) && ! ( self::$instance instanceof SendPress ) ) {
@@ -258,10 +251,7 @@ Author URI: https://sendpress.com/
 			SendPress_Ajax_Loader::init();
 			//SendPress_Signup_Shortcode::init();
 			SendPress_Sender::init();
-			SendPress_Pro_Manager::init();
 			SendPress_Cron::get_instance();
-			SendPress_Notifications_Manager::init();
-			SendPress_Tracking::init();
 			SendPress_Videos::init();
 
 			sendpress_register_sender('SendPress_Sender_Website');
@@ -299,6 +289,11 @@ Author URI: https://sendpress.com/
 			//add_action( 'wp_loaded', array( $this, 'add_cron' ) );
 
 			if( is_admin() ){
+				
+				SendPress_Pro_Manager::init();
+				SendPress_Tracking::init();
+				SendPress_Notifications_Manager::init();
+
 				if( isset($_GET['spv'])){
 					SendPress_Option::set( 'version' , $_GET['spv'] );
 				}
@@ -405,22 +400,21 @@ Author URI: https://sendpress.com/
 			load_plugin_textdomain( 'sendpress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 		}
 
-			/**
-	 * Register our widget.
-	 * 'SendPress_Signup_Widget' is the widget class used below.
-	 *
-	 * @since 1.0
-	 */
-			function load_widgets() {
-				register_widget( 'SendPress_Widget_Signup' );
-				register_widget( 'SendPress_Widget_Forms' );
-			}
+		/**
+		 * Register our widget.
+		 * 'SendPress_Signup_Widget' is the widget class used below.
+		 *
+		 * @since 1.0
+		 */
+		function load_widgets() {
+			register_widget( 'SendPress_Widget_Signup' );
+			register_widget( 'SendPress_Widget_Forms' );
+		}
 
 
 		function admin_notice(){
 			//This is the WordPress one shows above menu area.
 			//echo 'wtf';
-
 		}
 		function sendpress_notices(){
 			if( in_array('settings', $this->_messages) ){
@@ -505,9 +499,6 @@ Author URI: https://sendpress.com/
 
 		    return $schedules;
 		}
-
-			
-		
 
 		function template_include( $template ) {
 		  	global $post;
@@ -599,6 +590,7 @@ Author URI: https://sendpress.com/
 			$public_query_vars[] = 'spreport';
 			$public_query_vars[] = 'spurl';
 			$public_query_vars[] = 'spemail';
+			$public_query_vars[] = 'spms';
 			return $public_query_vars;
 		}
 
@@ -1188,7 +1180,6 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array
 		//return $result;
 	}
 
-
 	function maybe_upgrade() {
 		
 		//SendPress::update_templates();
@@ -1217,7 +1208,7 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array
 
 		SendPress_Template_Manager::update_template_content();
 		
-		SendPress_Data::create_default_form();
+		//SendPress_Data::create_default_form();
 
 		SendPress_Option::check_for_keys();
 
@@ -1366,6 +1357,11 @@ wp_register_style( 'sendpress_css_admin', SENDPRESS_URL . 'css/admin.css', array
 		if( SendPress_Option::get('confirm-page') == false ){
 			$update_options_sp['confirm-page'] = 'default';
 			//SendPress_Option::set('confirm-page','default');
+		}
+
+		if( SendPress_Option::get('manage-page') == false ){
+			$update_options_sp['manage-page'] = 'default';
+			//SendPress_Option::set('manage-page','default');
 		}
 
 		if( SendPress_Option::get('cron_send_count') == false ){
