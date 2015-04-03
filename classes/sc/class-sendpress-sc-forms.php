@@ -35,6 +35,8 @@ class SendPress_SC_Forms extends SendPress_SC_Base {
 
 		if(is_numeric($formid)){
 			$options = SendPress_Data::get_post_meta_object($formid);
+		} else {
+			$options = false;
 		}
 
 		if( !$options ){
@@ -209,6 +211,7 @@ class SendPress_SC_Forms extends SendPress_SC_Base {
 		//print_r($options);
 
 		global $load_signup_js, $sendpress_show_thanks, $sendpress_signup_error;
+		$sendpress_signup_exists = "You've already signed up, Thanks!";
 		$load_signup_js = true;
 		$no_list_error = '-- NO LIST HAS BEEN SET! --';
 		$_listids = '';
@@ -265,7 +268,7 @@ class SendPress_SC_Forms extends SendPress_SC_Base {
 					}
 
 				?>
-
+				<div id="exists"><?php echo $sendpress_signup_exists; ?></div>
 				<div id="error"><?php echo $sendpress_signup_error; ?></div>
 				<div id="thanks" <?php if( $sendpress_show_thanks ){ echo 'style="display:block;"'; }else{ echo 'style="display:none;"'; } ?>><?php echo $_thankyou_message; ?></div>
 				<div id="form-wrap" <?php if( $sendpress_show_thanks ){ echo 'style="display:none;"'; } ?>>
