@@ -38,7 +38,7 @@ class SendPress_Public_View_Tracker extends SendPress_Public_View {
 		$url = $info->url;
 		switch($info->url){
 			case '{sp-browser-url}':
-				$url = SPNL()->template_tags->do_subscriber_tags( SendPress_Tag_Browser_Link::external( $info->url, $info->report , $info->id, false ), $info->report, $info->report, $info->id, false );
+				$url = SPNL()->template_tags->do_subscriber_tags( SendPress_Tag_Browser_Url::external( $info->url, $info->report , $info->id, false ), $info->report, $info->report, $info->id, false );
 			break;
 			case '{sp-unsubscribe-url}':
 				$url = SPNL()->template_tags->do_subscriber_tags( SendPress_Tag_Unsubscribe::external( $info->url, $info->report, $info->id, false ), $info->report, $info->report, $info->id, false );
@@ -56,7 +56,7 @@ class SendPress_Public_View_Tracker extends SendPress_Public_View {
 
 		SPNL()->db->subscribers_tracker->open( $info->report , $info->id , 2 );
 
-		if(strrpos( $href, "mailto" ) === false){
+		if(strrpos( $url, "mailto" ) === false){
 				header("Location: $url");
 		} else {
 			wp_redirect( $url );

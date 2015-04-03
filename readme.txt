@@ -4,7 +4,7 @@ Contributors: brewlabs, joshl, jaredharbour, itdoug
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
 Tested up to: 4.1.1
-Stable tag: 1.1.3.17
+Stable tag: 1.1.4.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,17 +24,17 @@ Features of the plugin include:
 
 * Simple editor. With an html-free experience
 * Easy to use theme styler with ability to create a default style
-* Stat tracking for each email: clicks, opens and unsubscribes. Bounce handling and report details with [SendPress Pro](http://sendpress.com/).
+* Stat tracking for each email: clicks, opens and unsubscribes. Bounce handling and report details with [SendPress Pro](https://sendpress.com/).
 * Add a subscription form as a sidebar widget or in your pages
 * Send with your web host or Gmail for free (Mandrill, Sendgrid, Amazon SES and more with PRO).
 * Scheduled Sending of emails
 * Sync Lists to WordPress Roles
 
-More information at [SendPress.com](http://sendpress.com/).
+More information at [SendPress.com](https://sendpress.com/).
 
 = Support =
 
-Please check out our support site [http://sendpress.com/support/knowledgebase/](http://sendpress.com/support/) if you need help with anything. Also feel free to post to the WordPress support forum.
+Please check out our Docs site [http://docs.sendpress.com/](http://docs.sendpress.com/) if you need help with anything. Also feel free to post to the WordPress support forum.
 
 **Follow this plugin on [Git Hub](https://github.com/brewlabs/sendpress)**
 
@@ -73,7 +73,7 @@ We only recommend you do this only in a test enviroment. You can get the [SendPr
 
 = How do you contact us? =
 
-Main Site: [http://sendpress.com](http://sendpress.com)
+Main Site: [https://sendpress.com](https://sendpress.com)
 
 Twitter: [@sendpress](http://twitter.com/sendpress)
 
@@ -100,6 +100,15 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 == Changelog ==
 
 Previous releases can be downloaded from [GitHub](https://github.com/brewlabs/sendpress/releases)
+
+= 1.1.4.2 - 2015.4.2 =
+Beta: Overide header and footer when editing email
+Update: Added links to new docs site
+Update: sp-recent-posts resposive email support
+Update: Confirmation email uses new templates
+Update: Query to calculate total sent
+New: System Starter email Template
+Pro: Run shortcodes on custom templates
 
 = 1.1.3.17 - 2015.3.17 =
 Fix: Manange Page and Shortcode

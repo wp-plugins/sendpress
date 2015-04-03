@@ -25,7 +25,7 @@ class SendPress_View_Emails_Temp extends SendPress_View_Emails{
 		SendPress_Admin::redirect('Emails_Temp');
 	}
 
-	function install(){
+	static function install(){
 		
 		SendPress_Template_Manager::install_template_content();
 		SendPress_Admin::redirect('Emails_Temp');
@@ -65,7 +65,7 @@ class SendPress_View_Emails_Temp extends SendPress_View_Emails{
 		<div id="taskbar" class="lists-dashboard rounded group"> 
 
 		<h2><?php _e('Templates','sendpress'); ?></h2>
-		<small><?php _e('Help','sendpress'); ?>: <a target="_blank" href="https://sendpress.com/support/knowledgebase/getting-started-sendpress-templates/"><?php _e('Getting Started with Templates','sendpress'); ?></a></small>
+		<small><?php _e('Help','sendpress'); ?>: <a target="_blank" href="http://docs.sendpress.com/article/58-setting-up-a-newsletter-template/"><?php _e('Getting Started with Templates','sendpress'); ?></a></small>
 	</div>
 		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
 	    <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
@@ -73,7 +73,7 @@ class SendPress_View_Emails_Temp extends SendPress_View_Emails{
 	    <?php $testListTable->display(); ?>
 	    <?php wp_nonce_field($this->_nonce_value); ?>
 	</form><br>
-	<a href="<?php echo SendPress_Admin::link('Emails_Temp',array('action'=>'install')); ?>" class="btn btn-primary">Install Responsive Starter</a>
+	<a href="<?php echo SendPress_Admin::link('Emails_Temp',array('action'=>'install')); ?>" class="btn btn-primary">Install Starter Tempates</a>
 	<?php
 	}
 
