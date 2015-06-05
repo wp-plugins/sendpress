@@ -298,7 +298,8 @@ class SendPress_Manager {
 			$text = str_replace("*|SP:CONFIRMLINK|*", $href , $text );
 			$text = nl2br($text);
 			$sub =  $message->subject();
-			SendPress_Data::register_event( 'confirm_sent', $subscriberID );			
+			SPNL()->db->subscribers_tracker->add( array('subscriber_id' => intval( $subscriberID ), 'email_id' => intval( $optin), 'type' => SendPress_Enum_Tracker_Type::Confirm ) );
+			//SendPress_Data::register_event( 'confirm_sent', $subscriberID );			
 			SendPress_Manager::send( $subscriber->email, $sub , $html, $text, false );
 	}
 
@@ -415,8 +416,11 @@ class SendPress_Manager {
 	   		}
 	   		return $sender->send_email( $to, $subject, $body, $text, $test, $sid , $list_id, $report_id );
    		}
+   		return false;
+   		/*
    		$website = new SendPress_Sender_Website();
    		return  $website->send_email( $to, $subject, $body, $text, $test, $sid , $list_id, $report_id );
+   		*/
 
 	}
 
