@@ -293,7 +293,7 @@ class SendPress_View_Settings_Widgets extends SendPress_View_Settings {
 			</div>
 			<div class="sp-50">
 				<?php $this->panel_start( __('Shortcode','sendpress') ); ?>
-					<p><?php _e('Use the shortcode belot to insert this signup form into your posts and pages','sendpress'); ?>.</p>
+					<p><?php _e('Use the shortcode below to insert this signup form into your posts and pages','sendpress'); ?>.</p>
 					<pre>[sp-form formid=<?php echo $settings['_settings_id']; ?>]</pre>
 				<?php $this->panel_end(); ?>
 
@@ -346,7 +346,9 @@ class SendPress_View_Settings_Widgets extends SendPress_View_Settings {
 				<p><b><?php _e('Check off the lists you would like','sendpress'); ?><br><?php _e('users to subscribe to','sendpress'); ?>.</b></p>
 				<?php 
 				if( count($lists) === 0 ){
-					echo '<p>No public lists available</p>';
+					?><p><?php
+					_e('No public lists available','sendpress');
+					?></p><?php
 				}else{
 					foreach($lists as $list){
 						?>

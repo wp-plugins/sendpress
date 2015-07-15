@@ -4,7 +4,7 @@ Contributors: brewlabs, joshl, jaredharbour, itdoug
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
 Tested up to: 4.2.2
-Stable tag: 1.1.6.23
+Stable tag: 1.1.7.14
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,6 +98,13 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 == Changelog ==
 
 Previous releases can be downloaded from [GitHub](https://github.com/brewlabs/sendpress/releases)
+
+= 1.1.7.14 - 2015.7.14 =
+* Update: Language Translations
+* Update: link tracker to use wp_remote_post
+* New: website sending to support Postman SMTP
+* New: add system check to api
+* Fix: Post notification bulk update
 
 = 1.1.6.23 - 2015.6.23 =
 * Update: Sending Code
@@ -320,7 +327,7 @@ Previous releases can be downloaded from [GitHub](https://github.com/brewlabs/se
 = 0.9.9.6 - 2014.4.8 =
 * Fix: List Sync not updating all users
 * Fix: multiple sptemplates being created on some hosts
-* New: Duplicate tempalte check added to Advanced Settings
+* New: Duplicate template check added to Advanced Settings
 * Update: Trvix CLI tests updated
 * Update: Pro installer should always use SSL
  
@@ -679,6 +686,9 @@ Previous releases can be downloaded from [GitHub](https://github.com/brewlabs/se
 * First version on WP.org
 
 == Upgrade Notice ==
+
+= 1.1.7.14 =
+Support for Postman SMTP
 
 = 1.1.6.23 =
 Sending fixes and tracking updates

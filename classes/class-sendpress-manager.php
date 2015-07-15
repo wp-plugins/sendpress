@@ -119,9 +119,6 @@ class SendPress_Manager {
 		}
 		return $day;
 
-
-
-
 	}
 
 	static function public_url($code){
@@ -145,9 +142,6 @@ class SendPress_Manager {
 			}
 		return $link;
 	}
-
-	
-
 
 	static function increase_email_count( $add = 1 ){
 		$emails_today =  SendPress_Option::get('emails-today');
@@ -255,6 +249,7 @@ class SendPress_Manager {
 
 
 	static function send_optin($subscriberID, $listids, $lists){
+			//SendPress_Error::log('send optin');
 			$subscriber = SendPress_Data::get_subscriber( $subscriberID );
 			$l = '';
 			foreach($lists as $list){
@@ -267,7 +262,23 @@ class SendPress_Manager {
 			$user = SendPress_Data::get_template_id_by_slug('user-style');
 			SendPress_Posts::copy_meta_info($optin,$user);
 			SendPress_Email_Cache::build_cache_for_system_email($optin);
-		
+
+			 $go = array(
+                'from_name' => 'queue',
+                'from_email' => 'queue',
+                'to_email' => $subscriber->email,
+                'emailID'=> intval( $optin),
+                'subscriberID'=> intval( $subscriberID ),
+                //'to_name' => $email->fistname .' '. $email->lastname,
+                'subject' => '',
+                //'date_sent' => $time,
+                'listID'=> 0
+                );
+           
+            SendPress_Data::add_email_to_queue($go);	
+			SPNL()->db->subscribers_tracker->add( array('subscriber_id' => intval( $subscriberID ), 'email_id' => intval( $optin), 'tracker_type' => SendPress_Enum_Tracker_Type::Confirm ) );
+			
+			/*
 			$message = new SendPress_Email();
 			$message->id($optin);
 			$message->subscriber_id($subscriberID);
@@ -301,55 +312,22 @@ class SendPress_Manager {
 			SPNL()->db->subscribers_tracker->add( array('subscriber_id' => intval( $subscriberID ), 'email_id' => intval( $optin), 'tracker_type' => SendPress_Enum_Tracker_Type::Confirm ) );
 			//SendPress_Data::register_event( 'confirm_sent', $subscriberID );			
 			SendPress_Manager::send( $subscriber->email, $sub , $html, $text, false );
+			*/
 	}
 
 	static function send_manage_subscription($subscriberID, $listids, $lists){
-			$subscriber = SendPress_Data::get_subscriber( $subscriberID );
-			$l = '';
-			foreach($lists as $list){
-				if( in_array($list->ID, $listids) ){
-					$l .= $list->post_title ." <br>";
-				}
-			}
-			//	add_filter( 'the_content', array( $this, 'the_content') );	
-			$optin = SendPress_Data::get_template_id_by_slug('double-optin');
-			$user = SendPress_Data::get_template_id_by_slug('user-style');
-			SendPress_Posts::copy_meta_info($optin,$user);
+		$subscriber = SendPress_Data::get_subscriber( $subscriberID );
 
 		
-			$message = new SendPress_Email();
-			$message->id($optin);
-			$message->subscriber_id($subscriberID);
-			$message->remove_links(true);
-			$message->purge(true);
-			$html = $message->html();
-			$message->purge(false);
-			$text = $message->text();
-			
-			
-			$code = array(
-					"id"=>$subscriberID,
-					"listids"=> implode(',',$listids),
-					"view"=>"confirm"
-				);
-			$code = SendPress_Data::encrypt( $code );
+		
+		SendPress_Email_Cache::build_cache_for_system_email($optin);
 
-			if( SendPress_Option::get('old_permalink') || !get_option('permalink_structure') ){
-				$link = home_url() ."?sendpress=".$code;
-			} else {
-				$link = home_url() ."/sendpress/".$code;
-			}
-			
-			$href = $link;
-			$html_href = "<a href='". $link  ."'>". $link  ."</a>";
-			
-			
-			$html = str_replace("*|SP:CONFIRMLINK|*", $html_href , $html );
-			$text = str_replace("*|SP:CONFIRMLINK|*", $href , $text );
-			$text = nl2br($text);
-			$sub =  $message->subject();
-			SendPress_Data::register_event( 'confirm_sent', $subscriberID );			
-			SendPress_Manager::send( $subscriber->email, $sub , $html, $text, false );
+
+
+
+
+
+		
 	}
 
 
@@ -405,9 +383,14 @@ class SendPress_Manager {
 
 	static function send($to , $subject, $body, $text, $test = false, $sid=0 ,$list_id = 0, $report_id = 0 ){
 
+		//SendPress_Error::log('Send me an email!');
+		
 		global $sendpress_sender_factory;
 	   //	$senders = $sendpress_sender_factory->get_all_senders();
    		$method = SendPress_Option::get( 'sendmethod' );
+
+		//SendPress_Error::log(array($to, $subject,$method));
+
    		$sender = $sendpress_sender_factory->get_sender($method);
    		if( $sender != false ){
    			if( empty($text) || $text == '' || empty($body) || $body== '' || $body == " "){
