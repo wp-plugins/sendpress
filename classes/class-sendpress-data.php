@@ -951,6 +951,23 @@ class SendPress_Data extends SendPress_DB_Tables {
 		//$result = $wpdb->update($table, $values, array('email'=> $email) );
 	}
 
+	static function update_subscriber_post_notification_schedule($listId, $schedule){
+		global $wpdb;
+		$subs_table = SendPress_Data::list_subcribers_table();
+		$meta_table = SendPress_Data::subscriber_meta_table();
+
+		//insert new meta values for users with a status of 1 AND on the post notifications list
+		$q = $wpdb->prepare("insert into $meta_table (subscriberID, listID, meta_key, meta_value) select subscriberID, $listId, 'post_notifications', '$schedule' from $subs_table where listID = %d and status = 1", $listId);
+		$wpdb->query($q);
+
+		//update meta values to the new value based on the schedule
+		$updated = $wpdb->update($meta_table , array('meta_value' => $schedule), array( 'listID' => $listId, 'meta_key' => 'post_notifications' ) );
+
+		//set all users in post notification list to a status of 2 (active)
+		$updated = $wpdb->update($subs_table , array('status' => 2), array( 'listID' => $listId, 'status' => 1 ) );
+		
+	}
+
 
 	static function get_subcribers_by_meta($meta_key = false, $meta_value = false, $list_id= false){
 
@@ -1275,9 +1292,10 @@ class SendPress_Data extends SendPress_DB_Tables {
 		);
 		
 		$wpdb->insert( SendPress_Data::subscriber_event_table(),  $event_data);
-		*/
+		
 		//if instant, check if we need a notification and send one
-		SendPress_Notifications_Manager::send_instant_notification($event_data);
+		//SendPress_Notifications_Manager::send_instant_notification($event_data);
+		*/
 	}
 
 	static function unsubscribe_from_list( $sid, $rid, $lid ) {
@@ -1401,6 +1419,8 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$success = false;
 		$subscriberID = SendPress_Data::add_subscriber(array('firstname' => $first,'lastname' => $last,'email' => $email));
 		
+		//SendPress_Error::log($subscriberID);
+
 		if( false === $subscriberID ){
 			return false;
 		}
@@ -1423,6 +1443,9 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$already_subscribed = false;
 		if( $status == 2 && SendPress_Option::is_double_optin() ) {
 			$inlists = SendPress_Data::get_active_list_ids_for_subscriber( $subscriberID );
+			
+			//SendPress_Error::log($inlists);
+
 			if( $inlists ){
 				$already_subscribed = true;
 			} else { 
@@ -1792,6 +1815,8 @@ class SendPress_Data extends SendPress_DB_Tables {
                 }
                 if( $slug == 'system-base' ){
                     update_post_meta( $_id, '_system_template', true );
+                    $fcp = SendPress_Tag_Footer_Page::content( true );
+                    update_post_meta( $_id, '_footer_page', $fcp   );
                 }
                 
                 update_post_meta( $_id, '_header_content', SendPress_Tag_Header_Content::content() );
@@ -2258,15 +2283,21 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$system_emails = SendPress_Option::base_get('system-emails');
 		$defaults = array("opt_in" => "Opt In","manage_subscriptions" => "Manage Subscriptions");
 
-		foreach ($system_emails as $key => $value) {
-			unset($defaults[$value]);
-		}
+		// foreach ($system_emails as $key => $value) {
+		// 	unset($defaults[$value]);
+		// }
 
-		if(count($defaults) === 0){
-			return false;
-		}
+		// if(count($defaults) === 0){
+		// 	return false;
+		// }
 
 		return $defaults;
+		
+	}
+
+	static function set_system_email_default($id, $type){
+
+		
 		
 	}
 
