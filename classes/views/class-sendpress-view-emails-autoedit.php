@@ -11,22 +11,22 @@ class SendPress_View_Emails_Autoedit extends SendPress_View_Emails {
 	
 
 	function save_email(){
- 		$post_id =  $_POST['post_ID'];
+ 		$post_id =  SPNL()->validate->int($_POST['post_ID']);
+ 		if($post_id > 0){
+	 		
+	 		$myData = array(
+	 			'type' => $_POST['sp-autoresponder-type'],
+	 			'when' => $_POST['sp-timing'],
+	 			'delay' => $_POST['sp-delay']
+	 		);
 
- 		$myData = array(
- 			'type' => $_POST['sp-autoresponder-type'],
- 			'when' => $_POST['sp-timing'],
- 			'delay' => $_POST['sp-delay']
- 		);
-
-
-
- 		SendPress_Option::email_set( 'autoresponder_' . $post_id  ,  $myData );
+	 		SendPress_Option::email_set( 'autoresponder_' . $post_id  ,  $myData );
+ 		}
 	}
 
 	function admin_init(){
 		global $is_IE;
-		remove_filter('the_editor',					'qtrans_modifyRichEditor');
+		remove_filter('the_editor','qtrans_modifyRichEditor');
 		/*
 		if (  ! wp_is_mobile() &&
 			 ! ( $is_IE && preg_match( '/MSIE [5678]/', $_SERVER['HTTP_USER_AGENT'] ) ) ) {
@@ -48,11 +48,11 @@ class SendPress_View_Emails_Autoedit extends SendPress_View_Emails {
 			$_wp_autoresize_on = true;
 		}
 		*/
-		$view = isset($_GET['view']) ? $_GET['view'] : '' ;
+		$view = isset($_GET['view']) ? sanitize_text_field( $_GET['view'] ) : '' ;
 
 		if(isset($_GET['emailID'])){
-			$emailID = $_GET['emailID'];
-			$post = get_post( $_GET['emailID'] );
+			$emailID = SPNL()->validate->int($_GET['emailID']);
+			$post = get_post( $emailID );
 			$post_ID = $post->ID;
 		}
 	
@@ -71,7 +71,7 @@ class SendPress_View_Emails_Autoedit extends SendPress_View_Emails {
        <div style="float:right;" class="btn-toolbar">
             <div id="sp-cancel-btn" class="btn-group">
                <?php if($post->post_status != 'sp-autoresponder'  ) { ?>
-                <a href="?page=<?php echo $_GET['page']; ?>" id="cancel-update" class="btn btn-default"><?php echo __('Cancel','sendpress'); ?></a>&nbsp;
+                <a href="?page=<?php echo SPNL()->validate->page($_GET['page']); ?>" id="cancel-update" class="btn btn-default"><?php echo __('Cancel','sendpress'); ?></a>&nbsp;
             
             <?php 
             } else { ?>
