@@ -19,33 +19,35 @@ class SendPress_View_Emails_Edit extends SendPress_View_Emails {
  	//$my_post = _wp_translate_postdata(true);
  	//print_r($my_post);
  	//$template['post_content'] = $my_post->content_area_one_edit;
- 	$post_update = array(
- 		'ID'           => $_POST['post_ID'],
-      	'post_content' => $_POST['content_area_one_edit']
-    );
- 	
-	update_post_meta( $_POST['post_ID'], '_sendpress_template', $_POST['template'] );
-	update_post_meta( $_POST['post_ID'], '_sendpress_subject', $_POST['post_subject'] );
-	update_post_meta( $_POST['post_ID'], '_header_content', $_POST['header_content_edit'] );
-	update_post_meta( $_POST['post_ID'], '_footer_content', $_POST['footer_content_edit'] );
+	$post =	SPNL()->validate->int($_POST['post_ID']);
+		if($post > 0){
+		 	$post_update = array(
+		 		'ID'           => $_POST['post_ID'],
+		      	'post_content' => $_POST['content_area_one_edit']
+		    );
+		 	
+			update_post_meta( $_POST['post_ID'], '_sendpress_template', SPNL()->validate->int($_POST['template']) );
+			update_post_meta( $_POST['post_ID'], '_sendpress_subject', sanitize_text_field( $_POST['post_subject'] ) );
+			update_post_meta( $_POST['post_ID'], '_header_content', $_POST['header_content_edit'] );
+			update_post_meta( $_POST['post_ID'], '_footer_content', $_POST['footer_content_edit'] );
 
- 	//	print_r($template);
-	wp_update_post( $post_update );
-	
-
+		 	//	print_r($template);
+			wp_update_post( $post_update );
+		
+		}
         if(isset($_POST['submit']) && $_POST['submit'] == 'save-next'){
-            SendPress_Admin::redirect('Emails_Send', array('emailID'=>$_GET['emailID'] ));
+            SendPress_Admin::redirect('Emails_Send', array('emailID'=> SPNL()->validate->int($_GET['emailID']) ) );
         } else if (isset($_POST['submit']) && $_POST['submit'] == 'send-test'){
             $email = new stdClass;
-            $email->emailID  = $_POST['post_ID'];
+            $email->emailID  = SPNL()->validate->int($_POST['post_ID']);
             $email->subscriberID = 0;
             $email->listID = 0;
             $email->to_email = $_POST['test-email'];
             $d =SendPress_Manager::send_test_email( $email );
             //print_r($d);
-           SendPress_Admin::redirect('Emails_Edit', array('emailID'=>$_GET['emailID'] ));
+           SendPress_Admin::redirect('Emails_Edit', array('emailID'=>SPNL()->validate->int($_GET['emailID']) ));
         } else {
-            SendPress_Admin::redirect('Emails_Edit', array('emailID'=>$_GET['emailID'] ));
+            SendPress_Admin::redirect('Emails_Edit', array('emailID'=>SPNL()->validate->int($_GET['emailID']) ));
         }
 
 	}
@@ -77,8 +79,8 @@ class SendPress_View_Emails_Edit extends SendPress_View_Emails {
 		$view = isset($_GET['view']) ? $_GET['view'] : '' ;
 
 		if(isset($_GET['emailID'])){
-			$emailID = $_GET['emailID'];
-			$post = get_post( $_GET['emailID'] );
+			$emailID = SPNL()->validate->int($_GET['emailID']);
+			$post = get_post( $emailID );
 			$post_ID = $post->ID;
 		}
 	
@@ -96,7 +98,7 @@ class SendPress_View_Emails_Edit extends SendPress_View_Emails {
        <div style="float:right;" class="btn-toolbar">
             <div id="sp-cancel-btn" class="btn-group">
                <?php if($post->post_status != 'sp-autoresponder'  ) { ?>
-                <a href="?page=<?php echo $_GET['page']; ?>" id="cancel-update" class="btn btn-default"><?php echo __('Cancel','sendpress'); ?></a>&nbsp;
+                <a href="?page=<?php echo SPNL()->validate->page($_GET['page']); ?>" id="cancel-update" class="btn btn-default"><?php echo __('Cancel','sendpress'); ?></a>&nbsp;
             
             <?php 
             } else { ?>

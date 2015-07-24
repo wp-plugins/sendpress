@@ -109,11 +109,11 @@ echo $time;//11:09
 	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
 	<form id="email-filter" action="<?php echo SendPress_Admin::link('Queue_All'); ?>" method="get">
 		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
-	     <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" /> 
+	     <input type="hidden" name="page" value="<?php echo SPNL()->validate->page($_REQUEST['page']) ?>" /> 
 	       <?php if(isset($_GET['listID']) && $_GET['listID'] > 0 ){ ?>
-	    <input type="hidden" name="listID" value="<?php echo $_GET['listID']; ?>" />
+	    <input type="hidden" name="listID" value="<?php echo SPNL()->validate->int( $_POST['listID'] ); ?>" />
 	    <?php  } ?>
-	    <input type="hidden" name="view" value="<?php echo $_GET['view']; ?>" />
+	    <input type="hidden" name="view" value="<?php echo esc_html($_GET['view']); ?>" />
 	    <!-- Now we can render the completed list table -->
 	    <?php $testListTable->display() ?>
 	    <?php wp_nonce_field($sp->_nonce_value); ?>
@@ -121,7 +121,7 @@ echo $time;//11:09
 	<br>
 	
 	<form  method='get'>
-		<input type='hidden' value="<?php echo $_GET['page']; ?>" name="page" />
+		<input type='hidden' value="<?php echo SPNL()->validate->page($_GET['page']); ?>" name="page" />
 		
 		
 		<?php wp_nonce_field($sp->_nonce_value); ?>
