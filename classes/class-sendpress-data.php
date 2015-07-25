@@ -114,6 +114,12 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 	}
 
+	static function remove_email_from_queue($id){
+		global $wpdb;
+		$table = self::queue_table();
+		$wpdb->query( $wpdb->prepare("DELETE FROM $table WHERE id = %d", $id ) );
+	}
+
 	static function remove_from_queue($id){
 		global $wpdb;
 		$table = self::queue_table();
@@ -141,6 +147,15 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$table = self::queue_table();
 		global $wpdb;
 		$result = $wpdb->update( $table ,array('attempts'=>'0'), array('attempts'=> '1' ,'success'=>'0') );
+
+	}
+
+	function requeue_email( $emailid ) {
+		global $wpdb;
+
+		$table = SendPress_Data::queue_table();
+
+		$result = $wpdb->update( $table, array( 'attempts' => 0, 'inprocess' => 0 ), array( 'id' => $emailid ) );
 
 	}
 
@@ -1058,13 +1073,13 @@ class SendPress_Data extends SendPress_DB_Tables {
 	}
 
 	
-	function export_subscirbers($listID = false){
+	static function export_subscirbers($listID = false){
 		global $wpdb;
 		if($listID){
-        $query = "SELECT t1.*, t3.status FROM " .  SendPress_Data::subscriber_table() ." as t1,". SendPress_Data::list_subcribers_table()." as t2,". SendPress_Data::subscriber_status_table()." as t3 " ;
+        	$query = "SELECT t1.*, t3.status FROM " .  SendPress_Data::subscriber_table() ." as t1,". SendPress_Data::list_subcribers_table()." as t2,". SendPress_Data::subscriber_status_table()." as t3 " ;
 
         
-            $query .= " WHERE (t1.subscriberID = t2.subscriberID) AND ( t3.statusid = t2.status ) AND (t2.listID =  ". $listID .")";
+         	$query .= $wpdb->prepare(" WHERE (t1.subscriberID = t2.subscriberID) AND ( t3.statusid = t2.status ) AND (t2.listID =  %d)", $listID );
         } else {
             $query = "SELECT * FROM " .  SendPress_Data::subscriber_table();
         }
@@ -1397,6 +1412,16 @@ class SendPress_Data extends SendPress_DB_Tables {
 		$result = $wpdb->get_results("SELECT listID FROM $table WHERE subscriberID = '$value'");
 		return $result;	
 	}
+
+	static function delete_list( $listID ) {
+		global $wpdb;
+		wp_delete_post( $listID, true );
+		$table  = SendPress_Data::list_subcribers_table();
+		$result = $wpdb->query( $wpdb->prepare( "DELETE FROM $table WHERE listID = %d", $listID ) );
+
+		return $result;
+	}
+
 
 	static function get_active_list_ids_for_subscriber( $value ) {
 		global $wpdb;
