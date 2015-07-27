@@ -1,10 +1,10 @@
 === SendPress Newsletters ===
 Plugin URI: https://sendpress.com
-Contributors: brewlabs, joshl, jaredharbour, itdoug
+Contributors: brewlabs
 Tags: newsletter, newsletters, manager newsletter, newsletter signup, newsletter widget, subscribers, subscription, email marketing, email, emailing, smtp, sendpress, sendgrid, mandrill
 Requires at least: 3.7
-Tested up to: 4.2.2
-Stable tag: 1.2.7.26
+Tested up to: 4.0
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,9 @@ Easy to use Email Newsletter Plugin for WordPress to create, send, manage and tr
 
 == Description ==
 
-SendPress is an easy to use WordPress newsletter plugin that has all the features you need. Create newsletter templates with your style and edit content just like you would a post in WordPress. Easily import post content from your site and schedule newsletters to be sent at the right time. Start sending great emails and newsletters today right from WordPress with our newsletter plugin. 
+SendPress is a plugin for WordPress that allows to write and send newsletters, and to gather and manage the subscribers. Built on the WordPress UI you already know. It's just as easy as creating a new Post.
+
+Sending great emails and newsletters is something that should be easy and not require a third party system forget MailChimp, Aweber, etc.
 
 = Check out our 2 minute run through video =
 
@@ -22,13 +24,13 @@ Features of the plugin include:
 
 * Simple editor. With an html-free experience
 * Easy to use theme styler with ability to create a default style
-* Stat tracking for each email: clicks, opens and unsubscribes. Bounce handling and report details with [SendPress Pro](https://sendpress.com/).
+* Stat tracking for each email: clicks, opens and unsubscribes. Bounce handling and report details with [SendPress Pro](http://sendpress.com/).
 * Add a subscription form as a sidebar widget or in your pages
 * Send with your web host or Gmail for free (Mandrill, Sendgrid, Amazon SES and more with PRO).
 * Scheduled Sending of emails
 * Sync Lists to WordPress Roles
 
-More information at [SendPress.com](https://sendpress.com/).
+More information at [SendPress.com](http://sendpress.com/).
 
 = Support =
 
@@ -71,7 +73,7 @@ We only recommend you do this only in a test enviroment. You can get the [SendPr
 
 = How do you contact us? =
 
-Main Site: [https://sendpress.com](https://sendpress.com)
+Main Site: [http://sendpress.com](http://sendpress.com)
 
 Twitter: [@sendpress](http://twitter.com/sendpress)
 
@@ -96,168 +98,6 @@ Twitter: [@sendpress](http://twitter.com/sendpress)
 15. Pro Tab.
 
 == Changelog ==
-
-Previous releases can be downloaded from [GitHub](https://github.com/brewlabs/sendpress/releases)
-
-= 1.2.7.26 - 2015.7.26 =
-* Fix: Import CSV not loading correctly
-* Fix: Templates having path saved in database
-* Update: SendPress_Data added $wpdb->prepare to some queries
-* Update: added hex validation for editor
-
-= 1.2.1 - 2015.7.24 =
-* Update: Code cleanup
-* Update: Tighten security
-* Fix: Some area's not working from security update
-
-= 1.2 - 2015.7.24 =
-* Update: Security Release.
-
-= 1.1.7.21 - 2015.7.21 =
-* Update: Pro post notification list setup
-* Update: Translation files
-* New: Linked plugin to http://wp-translations.org/
-* Pro: Elastive Email module
-* Fix: email tracker in gmail not always getting stats
-* Fix: slow link tracker response to click
-* Fix: Various spelling and missing tranlated text
-
-= 1.1.7.14 - 2015.7.14 =
-* Update: Language Translations
-* Update: link tracker to use wp_remote_post
-* New: website sending to support Postman SMTP
-* New: add system check to api
-* Fix: Post notification bulk update
-
-= 1.1.6.23 - 2015.6.23 =
-* Update: Sending Code
-* Update: link tracker
-* Fix: API bug
-* Fix: Slow loading on pages
-* Fix: Error when plugin can't connect to sendpress.com
-
-= 1.1.6.12 - 2015.6.12 =
-* Fix: install on WP Engine
-* Fix: shortcode placeholder issue
-* Fix: shortcode post data
-* Update: Add new phpmailer code for sending emails
-
-= 1.1.6.4 - 2015.6.4 =
-* Fix: sp-recent-posts shortcode update
-* Fix: link tracker encoding
-* New: SendPress JSON API
-* New: User Meta Query SYNC for lists
-
-= 1.1.5.4 - 2015.5.4 =
-* Fix: Update redirects causing premission issue
-* Fix: Removed unused vars
-* Fix: Small bug fixes
-
-= 1.1.4.22 - 2015.4.22 =
-* Fix: lowered filter priority on 'template_include'
-* Fix: Some redirects missing admin.php
-
-= 1.1.4.21 - 2015.4.21 =
-* Fix: XSS Fixes and security review
-* Fix: Test report stats
-* Fix: Manage shortcode display
-* Fix: Link tracking for mailto links
-* Update: Recent Post shortcode - responsive update
-* Update: Added IP to CSV Import
-
-= 1.1.4.3 - 2015.4.3 =
-* Fix: error_log call removed
-
-= 1.1.4.2 - 2015.4.3 =
-* Beta: Overide header and footer when editing email
-* Update: Added links to new docs site
-* Update: sp-recent-posts resposive email support
-* Update: Confirmation email uses new templates
-* Update: Query to calculate total sent
-* New: System Starter email Template
-* Pro: Run shortcodes on custom templates
-
-= 1.1.3.17 - 2015.3.17 =
-* Fix: Manange Page and Shortcode
-
-= 1.1.3.10.1 - 2015.3.10 =
-* Fix: Some Ajax calls not working on Front End
-
-= 1.1.3.10 - 2015.3.10 =
-* New: Manage Page Shortcode with redirect option
-* Fix: Query Optimization for Queue
-* Fix: Optimized subscriber tables
-* Fix: SP edit button on visual editor
-* Update: Better Stat Notification Query
-* Update: Ajax subscribe call return status for existing subscibers
-
-
-= 1.1.2.25 - 2015.2.25 =
-* Fix: Autocron check increased to 5 minutes
-* Fix: Overview page not loading on some sites
-* WP.org SVN cleanup
-
-= 1.1.2.24 - 2015.2.24 =
-* Fix: SQL error on some installs
-
-= 1.1.2.22 - 2015.2.22 =
-* Fix: Autocron running speed
-* Fix: Send now not updating
-* Update: Soft delete Reports
-* Update: added new stat tracker
-
-
-= 1.1.2.11 - 2015.2.11 =
-* Fix: Sending popup not always responding
-* Fix: AutoCron stoping for some sites
-* Fix: Loading icon when CSS is off
-* Fix: options sometimes returning wp_error
-* Fix: Video embeds in emails
-* New: AutoCron status check
-
-= 1.1.0.2 - 2015.1.22 =
-* Fix: Sending not working in some cases
-* Fix: pdfprnt_content conflict
-* Fix: mailto: missing @ symbol
-* Fix: Email Titles not always showing
-
-= 1.1.0.1 - 2015.1.19 =
-* Fix: tables not installing
-
-= 1.1 - 2015.1.19 =
-* Fix: Link tracking updates
-* Fix: Sending speed improved
-* Fix: Update to overview page
-* Fix: Widget breaking on some admin screens
-
-= 1.0.12.11 - 2014.12.11 =
-* Fix: Removed redirect to Whats New Page
-
-= 1.0.12.10.1 - 2014.12.10 =
-* Fix: Whats new page showing more then it should
-
-= 1.0.12.10 - 2014.12.10 =
-* Fix: dont track links starting with #
-* Fix: pro custom templates not loading 
-* Fix: SSL error on template style page
-* Fix: Multiple templates created in some cases
-* Fix: Moved update script to admin init and check user permissions first
-* Fix: Update dwidget code to prevent broken widgets page
-* Fix: Changed plugin widget loader
-
-
-= 1.0.9 - 2014.12.07 =
-* Fix: Template updates
-* Update: Translation Strings
-* Update: Transifex files updated
-* New: Recent Post Shortcode
-
-
-= 1.0.3 - 2014.11.08 =
-* Fix: Multisite Setup
-* Fix: Custom tags showing in emails
-* Fix: Plugin install when site is created
-* Fix: Update sending to improve speed
 
 = 1.0.2 - 2014.10.14 =
 * Fix: form shortcode missing list id
@@ -709,66 +549,6 @@ Previous releases can be downloaded from [GitHub](https://github.com/brewlabs/se
 * First version on WP.org
 
 == Upgrade Notice ==
-
-= 1.2.7.26 =
-CSV Import fix and template updates
-
-= 1.2.1 =
-Fixes bugs from Security Update
-
-= 1.2 =
-Security Fixes: Please update now to 1.2+
-
-= 1.1.7.21 =
-Bug fixes and translation updates
-
-= 1.1.7.14 =
-Support for Postman SMTP
-
-= 1.1.6.23 =
-Sending fixes and tracking updates
-
-= 1.1.6.12 =
-Shortcode updates and other bug fixes
-
-= 1.1.6.4 =
-New API and bug fixes
-
-= 1.1.5.4 =
-Bug fixes from security updates
-
-= 1.1.4.21 =
-Security Updates and bug fixes
-
-= 1.1.3.17 =
-Manage Page Fix
-
-= 1.1.3.10.1 = 
-Fix some broken ajax calls
-
-= 1.1.3.10 =
-Manage shortcode and bug fixes
-
-= 1.1.2.24 =
-Fix SQL error
-
-= 1.1.2.22 =
-Autocron update and Report soft delete
-
-= 1.1.2.11 =
-Bug fixes for sending and templates
-
-= 1.1.0.2 =
-Emails stuck sending fix
-
-= 1.1 =
-Multiple bug fixes
-
-= 1.0.12.10.1 =
-Stop Whats New page from showing multiple times
-
-= 1.0.12.10 =
-Multiple bug fixes
 
 = 1.0.2 =
 Template fixes and shortcode updates
