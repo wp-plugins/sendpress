@@ -39,7 +39,7 @@ class SendPress_View_Emails extends SendPress_View{
       <span class="icon-bar"></span>
 
     </button>
-    <a class="navbar-brand" href="#"><?php _e('Emails','sendpress'); ?></a>
+   <a class="navbar-brand" href="#"><?php _e('Emails','sendpress'); ?></a>
 	</div>
 		 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 		<ul class="nav navbar-nav">
@@ -69,6 +69,10 @@ class SendPress_View_Emails extends SendPress_View{
 				    	<a href="<?php echo SendPress_Admin::link('Emails_Autoresponder'); ?>"><?php _e('Autoresponders','sendpress'); ?></a>
 				  	</li>
             -->
+
+            <li <?php if(isset($_GET['view']) &&  in_array($_GET['view'], array('postnotifications')) ) { ?>class="active"<?php } ?> >
+              <a href="<?php echo SendPress_Admin::link('Emails_Postnotifications'); ?>"><?php _e('Post Notifications','sendpress'); ?></a>
+            </li>
 				</ul>
 			</div>
 		</div>
