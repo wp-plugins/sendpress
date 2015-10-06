@@ -758,6 +758,7 @@ class SendPress_Data extends SendPress_DB_Tables {
 	}
 
 
+
 	/********************* END REPORTS static functionS **************************/
 
 	/************************* LIST static functionS ****************************/
@@ -1046,6 +1047,13 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 	static function update_subscriber_meta($subscriber_id,$meta_key,$meta_value,$list_id = false){
 		global $wpdb;
+		$lists = SendPress_Option::get('pro_notification_lists');
+		$pnid = $lists['post_notifications']['id'];
+
+		if($pnid !== $list_id && $meta_key === 'post_notifications'){
+			return;
+		}
+
 		$meta_table = SendPress_Data::subscriber_meta_table();
 		$has_data = SendPress_Data::get_subscriber_meta( $subscriber_id, $meta_key, $list_id, true );
 		if(empty($has_data)){
@@ -1193,6 +1201,23 @@ class SendPress_Data extends SendPress_DB_Tables {
 		return false;
 	}
 
+	static function is_subsriber_active_on_any_list( $sid ){
+		global $wpdb;
+		$table = SendPress_Data::list_subcribers_table();
+		$id = $wpdb->get_var( $wpdb->prepare("SELECT id FROM $table WHERE subscriberID = %d AND status  = 2 ", $sid) );
+		if($id > 0 ){
+			return true;
+		}
+		return false;
+	}
+
+	static function get_recent_subscribers($limit = 10){
+		global $wpdb;
+		$table = SendPress_Data::list_subcribers_table();
+		$list = $wpdb->get_results( $wpdb->prepare("SELECT subscriberID,updated,listID FROM $table WHERE status = 2 order by updated DESC limit %d ", $limit) );
+		return $list;
+
+	}
 
 	static function get_subscriber_events($sid){
 		global $wpdb;
@@ -1207,6 +1232,8 @@ class SendPress_Data extends SendPress_DB_Tables {
 		return $wpdb->get_results( $wpdb->prepare("SELECT * FROM $table WHERE type = 'optin' order by eventID DESC LIMIT %d", $limit) );
 
 	}
+
+
 
 	static function get_subscribed_events($limit = 10){
 		global $wpdb;
@@ -2325,6 +2352,14 @@ class SendPress_Data extends SendPress_DB_Tables {
 
 	public static function post_img_right(){
 		return '<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td width="100%"><!--[if mso]><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td width="30%" valign="top"><![endif]--><table width="30%" border="0" cellpadding="0" cellspacing="0" align="right" class="force-row"><tr><td class="col" valign="top" style="width:100%"><img style="margin-bottom:10px;" class="image_fix" width="100%" src="{sp-post-image}"/></td></tr></table><!--[if mso]></td><td width="70%" valign="top"><![endif]--><table width="60%" border="0" cellpadding="0" cellspacing="0" align="left" class="force-row"><tr><td class="col" valign="top" style="width:100%"><div><a href="{sp-post-link}">{sp-post-title}</a></div><div>{sp-post-excerpt}</div><div><a href="{sp-post-link}">{sp-post-readmore}</a></div><br></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table><br>';
+	}
+
+	public static function two_column(){
+		return '<table width="100%" border="0" cellpadding="0" cellspacing="0" align="left" class="force-row"><tr><td class="col" valign="top" style="width:45%">{sp-col-1}</td><td class="col" valign="top" style="width:10%"><!-- --></td><td class="col" valign="top" style="width:45%">{sp-col-2}</td></tr></table>';
+	}
+
+	public static function three_column(){
+		return '<table width="100%" border="0" cellpadding="0" cellspacing="0" align="left" class="force-row"><tr><td class="col" valign="top" style="width:30%">{sp-col-1}</td><td class="col" valign="top" style="width:5%"><!-- --></td><td class="col" valign="top" style="width:30%">{sp-col-2}</td><td class="col" valign="top" style="width:5%"><!-- --></td><td class="col" valign="top" style="width:30%">{sp-col-3}</td></tr></table>';
 	}
 
 	/*************************** Templating functions *****************************/

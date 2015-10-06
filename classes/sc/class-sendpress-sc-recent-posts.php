@@ -32,9 +32,16 @@ class SendPress_SC_Recent_Posts extends SendPress_SC_Base {
 			 'featuredimg' => 'thumbnail',
 			 'cat' => '',
 			 'tag' => '',
-			 'category_name' => ''
+			 'category_name' => '',
+			 'columns' => 1,
+			 'datespan' => ''
 			);
 	}
+
+	 //'show_title'=>true,
+	 //'show_text'=>true,
+	 //'show_readmore'=>true,
+	 //'show_photo'=>true,
 
 	public static function html(){
 		return __('You can provide a Title. This is added before the post loop begins.','sendpress');
@@ -93,6 +100,10 @@ class SendPress_SC_Recent_Posts extends SendPress_SC_Base {
 			$args['tag'] = $tag;
 		}
 
+		if($columns < 1){
+			$columns = 1;
+		}
+
 		//SendPress_Error::log($args);
 
 		$return_string = '';
@@ -105,20 +116,85 @@ class SendPress_SC_Recent_Posts extends SendPress_SC_Base {
 	  	//$return_string .= '<div>';
 	   	//query_posts($args);
 
-	  	
+	  	/*
+
+		$after = get_date_from_gmt(date('Y-m-d H:i:s',strtotime('-1 day')));
+		$before = get_date_from_gmt(date('Y-m-d H:i:s',strtotime('now')));
+
+		$default_args = array(
+			'date_query' => array(
+				array(
+					'after'     => $after,
+					'before'    => $before,
+					'inclusive' => true
+				)
+			)
+		);
+
+		if($type === 'weekly'){
+
+			$after = get_date_from_gmt(date('Y-m-d H:i:s',strtotime('-1 week')));
+			$before = get_date_from_gmt(date('Y-m-d H:i:s',strtotime('now')));
+
+			$default_args = array(
+				'date_query' => array(
+					array(
+						'after'     => $after,
+						'before'    => $before,
+						'inclusive' => true
+					)
+				)
+			);
+		}
+		*/
+
+
+
 
 	   	$query = new WP_Query($args);
 		if($query->have_posts()){
+
+
+			SendPress_Error::log("cols: ".$columns);
+			SendPress_Error::log("posts found: ".$query->found_posts);
+
+			$number_of_columns = 1;
+			if($query->found_posts > 1){
+				$number_of_columns = $columns;
+			}
+
+			if($number_of_columns > 3){
+				$number_of_columns = 3;
+			}
+
+			SendPress_Error::log("number of cols: ".$number_of_columns);
+
+			$column_template = "";
+			$col1 = "";
+			$col2 = "";
+			$col3 = "";
+			switch($number_of_columns){
+				case 2:
+					$column_template = SendPress_Data::two_column();
+					break;
+				case 3:
+					$column_template = SendPress_Data::three_column();
+					break;
+			}
+
+			$idx = 0;
+			$current_column = 0;
+
 			while($query->have_posts()){
 				$query->the_post();
 
 				if(has_post_thumbnail()){
 					//reset the template because we have an image
-					$template = (strtolower($imgalign) === 'left') ? SendPress_SC_Recent_Posts::post_img_left() : SendPress_SC_Recent_Posts::post_img_right();
+					$template = (strtolower($imgalign) === 'left') ? SendPress_Data::post_img_left() : SendPress_Data::post_img_right();
 					$img = wp_get_attachment_image_src( get_post_thumbnail_id( get_the_ID() ), $featuredimg);
 					$template = str_replace('{sp-post-image}',$img[0],$template);
 				} else {
-					$template = SendPress_SC_Recent_Posts::post_text_only();
+					$template = SendPress_Data::post_text_only();
 				}
 
 				$template = str_replace( '{sp-post-link}' , get_permalink() ,$template);
@@ -132,10 +208,48 @@ class SendPress_SC_Recent_Posts extends SendPress_SC_Base {
 
 	          	$imgalign = ($alternate && strtolower($imgalign) === 'left') ? 'right' : 'left';
 
-	          	$return_string .= $template;
+	          	//put things into columns always
+	          	if($number_of_columns < 2){
+	          		$col1 .= $template;
+	          	}else{
+
+	          		switch($current_column){
+	          			case 0:
+	          				$col1 .= $template;
+	          				break;
+	          			case 1:
+	          				$col2 .= $template;
+	          				break;
+	          			case 2:
+	          				$col3 .= $template;
+	          				break;
+	          		}
+
+	          	}	          	
 	          	$template = '';
+	          	$idx++;
+	          	$current_column++;
+
+	          	SendPress_Error::log("current column: ".$current_column ." - num: ".$number_of_columns);
+
+	          	if( $current_column == $number_of_columns){
+	          		$current_column = 0;
+	          	}
 			}
 		}
+
+		if(strlen($column_template) === 0){
+			$return_string = $col1;
+		}else{
+
+			//add columns to column template
+			$column_template = str_replace( '{sp-col-1}' , $col1 ,$column_template);
+			$column_template = str_replace( '{sp-col-2}' , $col2 ,$column_template);
+			$column_template = str_replace( '{sp-col-3}' , $col3 ,$column_template);
+
+			$return_string = $column_template;
+		}
+
 		wp_reset_postdata();
 
 	   	//$return_string .= '</div>';
@@ -211,7 +325,7 @@ class SendPress_SC_Recent_Posts extends SendPress_SC_Base {
 	}
 
 	public static function docs(){
-		return __('This shortcode creates a listing of Posts in emails or on pages.  Use the following options to customize the output: <br><br><b>posts</b> - number of posts to display. (defaults to 1)<br><b>uid</b> - the user id of the author you would like to see.<br><b>imgalign</b> - Align images left or right. (defaults to left)<br><b>alternate</b> - when writing posts, alternate the thumbnail images. (defaults to false)<br><b>readmoretext</b> - the text for the readmore link (defaults to Read More)', 'sendpress');
+		return __('This shortcode creates a listing of Posts in emails or on pages.  Use the following options to customize the output: <br><br><b>posts</b> - number of posts to display. (defaults to 1)<br><b>uid</b> - the user id of the author you would like to see.<br><b>imgalign</b> - Align images left or right. (defaults to left)<br><b>alternate</b> - when writing posts, alternate the thumbnail images. (defaults to false)<br><b>readmoretext</b> - the text for the readmore link (defaults to Read More)<br><b>columns</b> - the number of columns your posts should display in.  Max number of columns is 3.', 'sendpress');
 	}
 
 
